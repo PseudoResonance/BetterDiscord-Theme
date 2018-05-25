@@ -2069,7 +2069,7 @@
 	position:absolute;
 	background-image: linear-gradient(to right,rgba(var(--background-screen-cover), var(--background-screen-opacity)) 0%,rgba(var(--background-screen-cover), var(--background-screen-opacity)) 100%),var(--background-url); /* Please use this to change background image */
 	background-size: cover;
-	z-index: -1;
+	z-index: -2;
 }
 
 .theme-dark .item-3T2z1R {
