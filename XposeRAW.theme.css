@@ -2467,7 +2467,7 @@
 .guilds-wrapper .guilds {
     padding-left: 25px;
     align-items: center;
-    height: calc(105% - 105px);
+    height: calc(105% - 55px);
 }
 
 .typing-2GQL18 .ellipsis-19qdx6 {
@@ -3050,7 +3050,7 @@ body:active .popout.popout-right.no-arrow[style*="visibility: visible;"]:not(:ac
 .guilds-wrapper .guilds {
     padding-left: 15px; 
     align-items: center;
-    height: calc(100% - 105px);
+    height: calc(100% - 77px);
 }
   .guilds-wrapper .guilds .guild+.guild {
     display: block;
@@ -3065,7 +3065,7 @@ body:active .popout.popout-right.no-arrow[style*="visibility: visible;"]:not(:ac
 
     position: absolute!important;
     left: 23px;
-    bottom: 20px;
+    bottom: 5px;
     color: transparent;
 
 
