@@ -570,6 +570,11 @@
     transition: all 100ms cubic-bezier(.43, 0, 0, 1);
 }
 
+.video-1FfuMD,
+.theme-dark .private-channel-call {
+    background: transparent;
+}
+
 .members-1998pB .member-3W1lQa:hover .activity-1IYsbk,
 .members-1998pB .member-3W1lQa.popout-open .activity-1IYsbk,
 .members-1998pB .member-3W1lQa:hover .nameTag-3p0yK-,
