@@ -5,8 +5,8 @@
     --greybackground: #33363B !important;
     --accent: rgb(114, 137, 218);
     --background-screen-cover: 0, 0, 0; /* Color of screen over background */
-    --background-screen-opacity: 0.3; /* Value from 0-1 - 0 being least opaque, 1 being most opaque */
-    --background-url: url("https://i.imgur.com/MPXZh2E.jpg"); /* URL for background */
+    --background-screen-opacity: 0.45; /* Value from 0-1 - 0 being least opaque, 1 being most opaque */
+    --background-url: url("https://i.imgur.com/avzaqfC.jpg"); /* URL for background */
 }
 
 /* Music Player | New Feature in Discord | Date: 5/14/18 */
@@ -1391,7 +1391,7 @@
     height: 40px;
     width: 40px;
     display: block;
-    border-radius: 3px;
+    border-radius: 2px;
     opacity: 1!important;
     margin-top: -20px;
 }
@@ -1671,7 +1671,7 @@
 .lookOutlined-3sRXeN.colorRed-1TFJan {
     border-color: rgba(240,71,71,.3);
     color: #f04747;
-    border-radius: 50px;
+    border-radius: 2px;
 }
 
 .theme-dark .cardPrimaryEditable-3KtE4g {
@@ -1685,7 +1685,7 @@
     color: #FFF;
     border-radius: 5px;
     margin-left: 10px;
-    border-radius: 50px;
+    border-radius: 2px;
     margin-top: 10px;
 }
 
@@ -1996,13 +1996,13 @@
 }
 
 .premium-settings .payment-source .payment-info .card-tools-button {
-    border-radius: 103px;
+    border-radius: 2px;
 }
 
 .theme-dark .lookFilled-1Gx00P.colorPrimary-3b3xI6 {
     background-color: #4f545c;
     color: #f6f6f7;
-    border-radius: 50px;
+    border-radius: 2px;
 }
 
 .theme-dark .body-3iLsc4, .theme-dark .footer-1fjuF6 {
@@ -2019,7 +2019,7 @@
 .premium-settings .subscription .premium-tools-button {
     margin-left: 10px;
     position: relative;
-    border-radius: 50px;
+    border-radius: 2px;
 }
 
 
@@ -2036,12 +2036,12 @@
     -webkit-box-sizing: border-box;
     box-sizing: border-box;
     margin-left: 10px;
-    border-right: 50px;
+    border-right: 2px;
 }
 
 .item-3T2z1R:first-child {
     border-left-width: 0px;
-    border-radius: 50px;
+    border-radius: 2px;
 }
 
 .emoji.jumboable {
@@ -2077,7 +2077,7 @@
 }
 
 .item-3T2z1R:last-child {
-    border-radius: 50px;
+    border-radius: 2px;
 }
 
 .removeWebhook-3PNViU.button-mM-y8i {
@@ -2092,7 +2092,7 @@
 
 .lookOutlined-3sRXeN.colorWhite-rEQuAQ:hover {
     border-color: transparent;
-    border-radius: 50px;
+    border-radius: 2px;
 }
 
 .colorPickerSwatch-5GX3Ve {
@@ -2304,7 +2304,7 @@
 .private-channels .channel.selected a {
     background-color: var(--accent);
     color: #f6f6f7;
-    border-radius: 5px;
+    border-radius: 2px;
 }
 
 .theme-dark .attachButtonDivider-3Glu60 {
@@ -2977,7 +2977,7 @@ div.avatar-large {
 .theme-dark .chat .has-more button {
     background: #32353a;
     border: 1px solid #2f3136;
-    border-radius: 50px;
+    border-radius: 2px;
 }
 
 
