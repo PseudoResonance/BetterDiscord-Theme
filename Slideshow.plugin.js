@@ -1,15 +1,15 @@
 //META{"name":"Slideshow"}*//
 
 // Delay (in seconds) between image changes
-var delay = 900;
+var delay = 2;
 // Transition speed (in milliseconds)
 var speed = 1500;
 // List of all pictures to use as backgrounds
-var links = ["https://i.imgur.com/Ey80Lpp.jpg", "https://i.imgur.com/t0v923r.jpg", "https://i.imgur.com/JTtvGOw.jpg", "https://i.imgur.com/avzaqfC.jpg", "https://i.imgur.com/MPXZh2E.jpg", "https://i.imgur.com/x6oKs2B.jpg"];
+var links = ["https://i.imgur.com/Ey80Lpp.jpg", "https://i.imgur.com/t0v923r.jpg", "https://i.imgur.com/JTtvGOw.jpg", "https://i.imgur.com/avzaqfC.jpg", "https://i.imgur.com/MPXZh2E.jpg", "https://i.imgur.com/x6oKs2B.jpg", "https://i.imgur.com/0xTS9zY.jpg", "https://i.imgur.com/fEZUUxQ.jpg", "https://i.imgur.com/OBIAgWl.jpg"];
 // Opacity of each picture to use as a background
-var opacity = [0.6, 0.6, 0.6, 0.5, 0.3, 0.55];
+var opacity = [0.6, 0.5, 0.6, 0.5, 0.3, 0.50, 0.4, 0.45, 0.5];
 // Color of transparent screen over background
-var screenColor = ["0, 0, 0", "0, 0, 0", "0, 0, 0", "0, 0, 0", "0, 0, 0", "0, 0, 0"];
+var screenColor = ["0, 0, 0", "0, 0, 0", "0, 0, 0", "0, 0, 0", "0, 0, 0", "0, 0, 0", "0, 0, 0", "0, 0, 0", "0, 0, 0"];
 
 var hasRun = false;
 var interval = 0;
