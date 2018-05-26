@@ -2374,7 +2374,7 @@
     color: rgb(153, 170, 181);
     margin-top: 30px;
     background-color: #2f3136;
-	border-radius: 2px;
+    border-radius: 2px;
 }
 
 .theme-dark #autocomplete-popout .autocomplete-arrow, .theme-dark #autocomplete-popout .autocomplete-shadow {
