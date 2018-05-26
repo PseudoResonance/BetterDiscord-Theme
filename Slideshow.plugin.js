@@ -7,7 +7,7 @@ var speed = 1500;
 // List of all pictures to use as backgrounds
 var links = ["https://i.imgur.com/Ey80Lpp.jpg", "https://i.imgur.com/t0v923r.jpg", "https://i.imgur.com/JTtvGOw.jpg", "https://i.imgur.com/avzaqfC.jpg", "https://i.imgur.com/MPXZh2E.jpg"];
 // Opacity of each picture to use as a background
-var opacity = [0.55, 0.65, 0.7, 0.65, 0.3];
+var opacity = [0.55, 0.65, 0.55, 0.45, 0.3];
 // Color of transparent screen over background
 var screenColor = ["0, 0, 0", "0, 0, 0", "0, 0, 0", "0, 0, 0", "0, 0, 0"];
 
