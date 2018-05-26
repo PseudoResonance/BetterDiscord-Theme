@@ -1,7 +1,7 @@
 //META{"name":"Slideshow"}*//
 
 // Delay (in seconds) between image changes
-var delay = 2;
+var delay = 900;
 // Transition speed (in milliseconds)
 var speed = 1500;
 // List of all pictures to use as backgrounds
