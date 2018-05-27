@@ -2611,34 +2611,31 @@
 .message-group .reaction {
     background: none;
     position: relative;
+    padding: 2px;
+	min-width:40px;
+    transform: none !important;
+    margin-right: 7px;
+    animation: scale 300ms ease;
   }
   .theme-dark .reaction.reaction-me {
     border-radius: 2px;
     filter: saturate(2);
     padding: 2px;
+	min-width:40px;
 }
   
   .message-group .reaction, .message-group .reaction .emoji {
     border-radius: 0%;
     border: none;
     background: var(--top-nav-color);
-    padding-left:4px;
-    padding-right:4px;
   }
   
   .message-group .reaction .emoji {
     background: none;
     background: var(--channels-color);
     border-radius: 3px;
-  }
-
-  
-  
-  .message-group .reaction {
-    padding: 0;
-    transform: none !important;
-    margin-right: 7px;
-    animation: scale 300ms ease;
+    padding-left:4px;
+    padding-right:4px;
   }
   
   .message-group .reaction .reaction-count {
@@ -2651,13 +2648,18 @@
     text-align: center;
     transition: opacity 0.2s;
     padding-right:2px;
+    border-radius: 2px;
   }
 
   .theme-dark .reaction.reaction-me .reaction-count {
     color: var(--accent-color)!important;
-    border-radius: 3px;
+    border-radius: 2px;
     color: #000000;
 
+}
+
+.theme-dark .message-group h2 .timestamp {
+	color:hsla(0,0%,100%,.45);
 }
   
 
