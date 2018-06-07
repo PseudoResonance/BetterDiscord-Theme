@@ -3463,5 +3463,5 @@ body:active .popout.popout-right.no-arrow[style*="visibility: visible;"]:not(:ac
 }
 
 .theme-dark .message-group .comment .edited {
-	color: hsla(0,0%,100%,.45);
+	color: hsla(0,0%,100%,.35);
 }
