@@ -47,11 +47,9 @@
 /* Mention Bubble*/
 
 .badge {
-    -webkit-box-shadow: 0 1px 0 rgba(0,0,0,.25), inset 0 1px 0 hsla(0,0%,100%,.15);
     background-clip: padding-box;
     background-color: rgba(0, 0, 0, 0.5);
     border-radius: 2px;
-    box-shadow: 0 1px 0 rgba(0,0,0,.25), inset 0 1px 0 hsla(0,0%,100%,.15);
     color: #fff;
     display: inline-block;
     font-size: 18px;
@@ -60,13 +58,18 @@
     text-shadow: 0 1px 0 rgba(0,0,0,.25);
     top: 0px;
     left: 0px;
+    box-shadow: none;
+    -webkit-box-shadow: none;
 }
 
 .guilds-wrapper .guilds .guild .badge {
     bottom: 0px;
+	border-radius: 25px;
     pointer-events: none;
     position: absolute;
     right: 0px;
+    box-shadow: none;
+    -webkit-box-shadow: none;
 }
 
 
@@ -2230,7 +2233,7 @@
 
 .guilds-wrapper .guilds .guild .guild-inner {
     background: transparent;
-    border-radius: 25px;
+	border-radius: 25px !important;
     cursor: pointer;
     font-size: 18px;
     line-height: 50px;
