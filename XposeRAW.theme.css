@@ -2634,8 +2634,8 @@
 
 }
 
-.theme-dark .message-group h2 .timestamp {
-	color:hsla(0,0%,100%,.45);
+.da-timestampCozy {
+	color:hsla(0,0%,100%,.4) !important;
 }
   
 
