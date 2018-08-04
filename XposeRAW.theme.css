@@ -33,6 +33,12 @@
     margin-top: 0px;
 }
 
+/* Timestamp */
+
+.da-divider > span {
+	border-radius: 2px;
+}
+
 /* Mention Bubble*/
 
 .badge-1GsMF2 {
@@ -476,11 +482,11 @@
 
 
 
-.theme-dark .members-1998pB .member-3W1lQa.popout-open .content-OzHfo4 {
+.theme-dark .members-1998pB .member-3W1lQa.popout-open .da-content-OzHfo4 {
     background:var(--lvl3);
 }
 
-.members-1998pB .member-3W1lQa .content-OzHfo4 {
+.members-1998pB .member-3W1lQa .da-content-OzHfo4 {
     padding: 6px 0px 6px 10px;
     border-radius: 2px!important;
     margin-left:8px
@@ -812,7 +818,7 @@
     color: #f1f1f1;
 }
 
-.content-region #bd-customcss-attach-controls, #bd-customcss-detach-container #bd-customcss-attach-controls {
+.da-contentRegion #bd-customcss-attach-controls, #bd-customcss-detach-container #bd-customcss-attach-controls {
     background: #131313;
     color: #FFF;
     border: 0;
@@ -1095,6 +1101,10 @@
 
 .bda-slist .bda-footer button:disabled {
     opacity: .0;
+}
+
+.da-uiSwitchCheckbox,.da-uiSwitch {
+	border-radius: 2px !important;
 }
 
 /* Server Folder Plugin */
@@ -1734,7 +1744,7 @@
     border-radius: 2px;
 }
 
-.theme-dark .friends-table .scroller-wrap ::-webkit-scrollbar-track-piece, .theme-dark .messages-wrapper .scroller-wrap ::-webkit-scrollbar-track-piece {
+.theme-dark .friends-table .scroller-wrap ::-webkit-scrollbar-track-piece, .theme-dark .da-messagesWrapper .scroller-wrap ::-webkit-scrollbar-track-piece {
     background-color: rgba(64, 66, 70, 0);
     border-color: rgba(54, 57, 62, 0);
 }
@@ -1745,7 +1755,7 @@
     width: 10px;
 }
 
-.theme-dark .friends-table .scroller-wrap ::-webkit-scrollbar-thumb, .theme-dark .messages-wrapper .scroller-wrap ::-webkit-scrollbar-thumb {
+.theme-dark .friends-table .scroller-wrap ::-webkit-scrollbar-thumb, .theme-dark .da-messagesWrapper .scroller-wrap ::-webkit-scrollbar-thumb {
     background-color: rgba(53, 57, 62, 0.46);
     border-color: rgba(120, 62, 89, 0);
 }
@@ -1830,7 +1840,7 @@
 
 }
 
-.chat .new-messages-bar {
+.da-chat .new-messages-bar {
     -webkit-transition: background-color .2s;
     background-color: rgba(114,137,218,.9);
     border-radius: 2px;
@@ -1849,11 +1859,11 @@
     z-index: 2;
 }
 
-.chat .new-message-bar:hover {
+.da-chat .new-message-bar:hover {
     transform: scale(1.05);
 }
 
-.chat .jump-to-present-bar {
+.da-chat .jump-to-present-bar {
     -webkit-transition: background-color .2s;
     background-color: rgba(153,170,181,.9);
     border-radius: 2px;
@@ -2104,14 +2114,14 @@
 
 
 
-.theme-dark .chat form {
+.theme-dark .da-chat form {
     -webkit-box-shadow: 0 -1px 0 hsla(0,0%,100%,.06);
     background-color: transparent;
     box-shadow: 0 -1px 0 hsla(0, 0%, 100%, 0);
     margin-bottom: 5px;
 }
 
-.theme-dark .chat {
+.theme-dark .da-chat {
     background-color: rgba(41, 53, 72, 0);
 }
 
@@ -2126,7 +2136,7 @@
 }
 
 
-.theme-dark .friends-table, .theme-dark .messages-wrapper {
+.theme-dark .friends-table, .theme-dark .da-messagesWrapper {
     background-color: transparent;
 }
 
@@ -2134,7 +2144,7 @@
     background: rgba(168, 187, 234, 0);
 }
 
-.theme-dark .ui-standard-sidebar-view .content-region {
+.theme-dark .ui-standard-sidebar-view .da-contentRegion {
     background: rgba(54, 57, 63, 0);
 }
 
@@ -2211,7 +2221,7 @@
     text-align: center;
 }
 
-.theme-dark .chat>.content {
+.theme-dark .da-chat>.da-content {
     background-color: transparent;
 }
 
@@ -2342,7 +2352,7 @@
     background-color: transparent;
 }
 
-.theme-dark .friends-table .messages .divider:not(.red) span, .theme-dark .messages-wrapper .messages .divider:not(.red) span {
+.theme-dark .friends-table .messages .divider:not(.red) span, .theme-dark .da-messagesWrapper .messages .divider:not(.red) span {
     color: rgb(153, 170, 181);
     margin-top: 30px;
     background-color: #2f3136;
@@ -2413,7 +2423,7 @@
     background-color: rgba(0, 0, 0, 0.5);
 }
 
-.theme-dark .friends-table .messages .divider:not(.red) div, .theme-dark .messages-wrapper .messages .divider:not(.red) div {
+.theme-dark .friends-table .messages .divider:not(.red) div, .theme-dark .da-messagesWrapper .messages .divider:not(.red) div {
     background: rgba(71, 74, 79, 0);
 }
 
@@ -2562,7 +2572,7 @@
 
 
 
-.chat .avatar-large:hover {
+.da-chat .avatar-large:hover {
     transform: scale(0.8);
 }
 
@@ -2949,7 +2959,7 @@ div.avatar-large {
     margin-top: -100px;
 }
 
-.theme-dark .chat .has-more button {
+.theme-dark .da-chat .has-more button {
     background: #32353a;
     border: 1px solid #2f3136;
     border-radius: 2px;
@@ -3083,7 +3093,7 @@ body:active .popout.popout-right.no-arrow[style*="visibility: visible;"]:not(:ac
     line-height:53px;
 }   
 
-.theme-dark .member-3W1lQa:hover .content-OzHfo4 {
+.theme-dark .member-3W1lQa:hover .da-content-OzHfo4 {
     background-color: #36393f;
     color: #fff;
     transform: scale(1.1);
@@ -3091,7 +3101,7 @@ body:active .popout.popout-right.no-arrow[style*="visibility: visible;"]:not(:ac
     transition: all 0.1s cubic-bezier(0.29, 0.29, 0.26, 0.3) !important;
 }
 
-.theme-dark .member-3W1lQa:hover .content-OzHfo4 {
+.theme-dark .member-3W1lQa:hover .da-content-OzHfo4 {
     background-color: rgba(54, 57, 63, 0);
     color: #fff;
     transform: scale(1.1);
@@ -3099,7 +3109,7 @@ body:active .popout.popout-right.no-arrow[style*="visibility: visible;"]:not(:ac
     transition: all 0.1s cubic-bezier(0.29, 0.29, 0.26, 0.3) !important;
 }
 
-.theme-dark .member-3W1lQa.popout-open .content-OzHfo4, .theme-dark .member-3W1lQa.popout-open:hover .content-OzHfo4 {
+.theme-dark .member-3W1lQa.popout-open .da-content-OzHfo4, .theme-dark .member-3W1lQa.popout-open:hover .da-content-OzHfo4 {
     background-color: rgba(79, 84, 92, 0);
     color: #fff;
 }
@@ -3268,7 +3278,7 @@ body:active .popout.popout-right.no-arrow[style*="visibility: visible;"]:not(:ac
 
 
 
-.theme-dark .friends-table .messages .divider:before, .theme-dark .friends-table .messages .divider span, .theme-dark .messages-wrapper .messages .divider:before, .theme-dark .messages-wrapper .messages .divider span {
+.theme-dark .friends-table .messages .divider:before, .theme-dark .friends-table .messages .divider span, .theme-dark .da-messagesWrapper .messages .divider:before, .theme-dark .da-messagesWrapper .messages .divider span {
     background-color: rgba(54, 57, 62, 0);
 }
 
