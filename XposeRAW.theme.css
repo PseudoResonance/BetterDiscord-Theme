@@ -1,4 +1,4 @@
-//META{"name":"Xpose","description":" Supports the following plugins: Better Reddux, Server Folders, Birthday Plugin, and Clock plugin.","author":"PseudoResonance","version":"1.0"}*//{}
+//META{"name":"XposeRAW","description":" Supports the following plugins: Better Reddux, Server Folders, Birthday Plugin, and Clock plugin.","author":"PseudoResonance","version":"1.0"}*//{}
 
 :root {
     --version: "Xpose v1.0";
@@ -7,6 +7,16 @@
     --background-screen-cover: 0, 0, 0; /* Color of screen over background */
     --background-screen-opacity: 0.45; /* Value from 0-1 - 0 being least opaque, 1 being most opaque */
     --background-url: url("https://i.imgur.com/avzaqfC.jpg"); /* URL for background */
+}
+
+/* Member List */
+
+.member-3W1lQa,.member-3W1lQa:hover,content-OzHfo4,content-OzHfo4:hover {
+	background: transparent !important;
+}
+
+.theme-dark .member-3W1lQa:hover .content-OzHfo4 {
+	background: transparent !important;
 }
 
 /* Music Player | New Feature in Discord | Date: 5/14/18 */
@@ -1103,7 +1113,7 @@
     opacity: .0;
 }
 
-.da-uiSwitchCheckbox,.da-uiSwitch {
+.ui-switch-checkbox,.ui-switch {
 	border-radius: 2px !important;
 }
 
@@ -3094,7 +3104,7 @@ body:active .popout.popout-right.no-arrow[style*="visibility: visible;"]:not(:ac
 }   
 
 .theme-dark .member-3W1lQa:hover .da-content-OzHfo4 {
-    background-color: #36393f;
+    background-color: transparent;
     color: #fff;
     transform: scale(1.1);
     margin-left: 9px;
