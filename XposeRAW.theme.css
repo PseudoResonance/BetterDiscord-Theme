@@ -19,6 +19,18 @@
 	background: transparent !important;
 }
 
+.theme-dark .member-3W1lQa.popout-open .content-OzHfo4, .theme-dark .member-3W1lQa.popout-open:hover .content-OzHfo4 {
+	background: transparent !important;
+}
+
+.nameTag-3p0yK-.nameTag-m8r81H.da-nameTag{
+	color:#999;
+}
+
+.nameTag-3p0yK-.nameTag-m8r81H.da-nameTag:hover {
+	color:#bbb;
+}
+
 /* Music Player | New Feature in Discord | Date: 5/14/18 */
 
 .audioControls-2HsaU6 {
