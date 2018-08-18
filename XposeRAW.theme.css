@@ -1908,7 +1908,7 @@
     -ms-flex-negative: 0;
     -webkit-box-align: center;
     align-items: center;
-    background: rgba(32, 34, 37, 0);
+    background: rgba(32, 34, 37, 0) !important;
     color: #fff;
     display: -webkit-box;
     display: -ms-flexbox;
