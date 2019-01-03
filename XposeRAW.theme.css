@@ -9,6 +9,12 @@
     --background-url: url("https://i.imgur.com/avzaqfC.jpg"); /* URL for background */
 }
 
+/* Gift Button */
+
+.buttonWrapper-1ZmCpA {
+	display: none;
+}
+
 /* Member List */
 
 .member-3W1lQa,.member-3W1lQa:hover,content-OzHfo4,content-OzHfo4:hover {
