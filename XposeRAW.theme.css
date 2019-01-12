@@ -1777,6 +1777,10 @@
     border-color: rgba(54, 57, 62, 0);
 }
 
+.container-3gCOGc, .gameLibrary-TTDw4Y{
+	background:transparent!important;
+}
+
 /* scroll bar */
 
 .scroller-wrap .scroller::-webkit-scrollbar {
@@ -1786,6 +1790,34 @@
 .theme-dark .friends-table .scroller-wrap ::-webkit-scrollbar-thumb, .theme-dark .da-messagesWrapper .scroller-wrap ::-webkit-scrollbar-thumb {
     background-color: rgba(53, 57, 62, 0.46);
     border-color: rgba(120, 62, 89, 0);
+}
+
+.scroller-2FKFPG.messages-3amgkR::-webkit-scrollbar, .scroller-2FKFPG::-webkit-scrollbar{
+    width:8px;
+}
+.scroller-2FKFPG.messages-3amgkR::-webkit-scrollbar-track-piece, .scroller-2FKFPG::-webkit-scrollbar-track-piece{
+    background: transparent !important;
+	border: none !important;
+}
+.scroller-2FKFPG.messages-3amgkR::-webkit-scrollbar-thumb, .scroller-2FKFPG::-webkit-scrollbar-thumb{
+    background: rgba(255,255,255,0)!important;
+	border: none !important;
+	border-radius:0!important;
+}
+.scroller-2FKFPG.messages-3amgkR:hover::-webkit-scrollbar-thumb, .scroller-2FKFPG:hover::-webkit-scrollbar-thumb{
+    background: rgba(255,255,255,.1)!important;
+	border-radius:0!important;
+}
+.scroller-2FKFPG.messages-3amgkR::-webkit-scrollbar-thumb{
+    width:4px;
+    border:none;
+    border-radius:0;
+    background:rgba(255,255,255,.08);
+    border-left:6px solid var(--lvl3)!important;
+    display:var(--settings-scrollbar);
+}
+.scroller-2FKFPG.messages-3amgkR::-webkit-scrollbar-thumb:active{
+    background:rgba(255,255,255,.12);
 }
 
 /* */
