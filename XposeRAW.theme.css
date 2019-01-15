@@ -2092,7 +2092,7 @@
 
 
 
-.appMount-3lHmkl {
+#app-mount {
     background: transparent;
     width: 100%;
     height: 100%;
@@ -2101,7 +2101,7 @@
     position:absolute;
 }
 
-.appMount-3lHmkl::before {
+#app-mount::before {
     content: "";
     width: 100%;
     height: 100%;
