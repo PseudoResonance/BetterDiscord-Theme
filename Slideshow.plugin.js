@@ -1,7 +1,7 @@
 //META{"name":"Slideshow"}*//
 
 // Delay (in seconds) between image changes
-var delay = 900;
+var delay = 600;
 // Transition speed (in milliseconds)
 var speed = 1500;
 // List of all pictures to use as backgrounds
@@ -25,7 +25,7 @@ class Slideshow {
     start() {
 		if (!hasRun) {
 			hasRun = true;
-			$('<div id="betterdiscord-background" style="width:100%;height:100%;left:0px;top:0px;position:absolute;"></div>').insertBefore('.appMount-3VJmYg');
+			$('<div id="betterdiscord-background" style="width:100%;height:100%;left:0px;top:0px;position:absolute;"></div>').insertBefore('#app-mount');
 			for (var i = 0; i < links.length; i++) {
 				$('#betterdiscord-background').append('<div style="display:none;width:100%;height:100%;left:0px;top:0px;position:absolute;background-size:cover;z-index:-3;background-image:linear-gradient(to right,rgba(' + screenColor[i] + ', ' + opacity[i] + ') 0%,rgba(' + screenColor[i] + ', ' + opacity[i] + ') 100%),url(' + links[i] + ');"></div>');
 			}
