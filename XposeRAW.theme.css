@@ -57,8 +57,13 @@
 
 /* Element Resizing */
 .da-content .da-flex .da-form .da-flex .da-channelTextArea {
-	margin-bottom: 5px;
+	margin-bottom: 10px;
 	padding-top:10px;
+}
+
+.da-content .da-flex .da-form .da-typing.da-base {
+	bottom: 1px !important;
+	height: 20px !important;
 }
 
 /* Transparent background for main content */
