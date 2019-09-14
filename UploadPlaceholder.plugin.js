@@ -12,7 +12,12 @@ class UploadPlaceholder {
 
     start() {
 		interval = window.setInterval(function(){
-            $('.da-uploadModal .da-inner .da-comment .da-flex .da-channelTextAreaUpload .da-flex textarea').attr('placeholder', 'Comment (Optional)');
+			var text = "";
+			$('.da-uploadModal .da-inner .da-comment .da-label').children('span').each(function(){
+				text += $(this).text() + " ";
+			});
+			text = text.substring(0, text.length - 1);
+            $('.da-uploadModal .da-inner .da-comment .da-flex .da-channelTextAreaUpload .da-flex textarea').attr('placeholder', text);
         }, 1);
     }
 
