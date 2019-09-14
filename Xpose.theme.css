@@ -1,9 +1,8 @@
-//META{"name":"Xpose","description":" Supports the following plugins: Better Reddux, Server Folders, Birthday Plugin, and Clock plugin.","author":"PseudoResonance","version":"1.0"}*//{}
+//META{"name":"Xpose","description":"Custom theme","author":"PseudoResonance","version":"2.0"}*//
 
 @import url("https://rawgit.com/PseudoResonance/BetterDiscord-Theme/master/XposeRAW.theme.css");
 
 :root {
-    --accent: rgb(114, 137, 218) !important;
 	--background-screen-cover: 0, 0, 0 !important; /* Color of screen over background */
 	--background-screen-opacity: 0.55 !important; /* Value from 0-1 - 0 being least opaque, 1 being most opaque */
 	--background-url: url("https://i.imgur.com/MoKvTtu.jpg") !important; /* URL for background */
