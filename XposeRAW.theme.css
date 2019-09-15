@@ -1,4 +1,4 @@
-//META{"name":"Xpose","description":"Custom theme","author":"PseudoResonance","version":"2.0"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.0"}*//
 
 :root {
 	--version: "Xpose v2.0";
@@ -76,6 +76,10 @@
 	background: transparent;
 }
 
+.da-videoHeight, .da-videoHeight .da-flex {
+	background: transparent !important;
+}
+
 /* Transparent background for Nitro page */
 .da-applicationStore {
 	background: transparent;
@@ -96,6 +100,10 @@
 	background: transparent;
 }
 
+.da-app .da-layers .da-layer, .da-app .da-layers .da-layer > div .da-standardSidebarView, .da-app .da-layers .da-layer > div .da-standardSidebarView .da-sidebarRegion, .da-app .da-layers .da-layer > div .da-standardSidebarView .da-contentRegion {
+	background: transparent;
+}
+
 /* Transparent background for BetterDiscord settings page */
 #bd-settingspane-container {
 	background: transparent;
@@ -103,6 +111,10 @@
 
 /* Remove borders */
 .da-friendsTableHeader, .da-friendsColumn {
+	border: 0 !important;
+}
+
+.da-videoBottom .da-iconsWrapper {
 	border: 0 !important;
 }
 
