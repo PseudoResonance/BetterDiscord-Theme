@@ -105,7 +105,7 @@
 }
 
 /* Transparent background for BetterDiscord settings page */
-#bd-settingspane-container {
+#bd-settingspane-container, .content-region-scroller {
 	background: transparent !important;
 }
 
