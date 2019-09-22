@@ -67,13 +67,13 @@
 }
 
 /* Transparent background for main content */
-.da-appMount, .da-app, .da-guilds, .da-base .da-content .da-sidebar .da-container, .da-base .da-content .da-sidebar .da-panels, .da-base .da-content .da-chat, .da-base .da-content .da-chat .da-container, .da-base .da-content .da-chat .da-content, .da-base .da-content .da-chat .da-content .da-membersWrap .da-scrollerWrap .da-scroller, .da-channelTextArea .da-flex, .da-searchBar {
-	background: transparent;
+.da-appMount, .da-app, .da-guilds, .da-base .da-content .da-sidebar .da-container, .da-base .da-content .da-sidebar .da-panels, .da-base .da-content .da-chat, .da-base .da-content .da-chat .da-container, .da-base .da-content .da-chat .da-content, .da-base .da-content .da-chat .da-content .da-membersWrap .da-scrollerWrap .da-scroller, .da-channelTextArea .da-flex, .da-searchBar, .da-scroller, .da-sidebar {
+	background: transparent !important;
 }
 
 /* Transparent background for friends page */
-.da-base .da-content .da-sidebar .da-privateChannels, .da-base .da-content .da-container {
-	background: transparent;
+.da-base .da-content .da-sidebar .da-privateChannels, .da-base .da-content .da-container, .da-friendsTableBody {
+	background: transparent !important;
 }
 
 .da-videoHeight, .da-videoHeight .da-flex {
@@ -82,31 +82,31 @@
 
 /* Transparent background for Nitro page */
 .da-applicationStore {
-	background: transparent;
+	background: transparent !important;
 }
 
 /* Transparent background for library page */
 .da-gameLibrary, .da-gameUpdates, .da-gameLibrary .da-scrollerWrap .da-scroller .da-table .da-header {
-	background: transparent;
+	background: transparent !important;
 }
 
 /* Transparent background for activity page */
 .da-activityFeed, .da-activityFeed .da-scrollerWrap .da-scroller {
-	background: transparent;
+	background: transparent !important;
 }
 
 /* Transparent background for settings page */
 #user-settings, #user-settings > div > .da-standardSidebarView, #user-settings > div > .da-standardSidebarView .da-sidebarRegion, #user-settings > div > .da-standardSidebarView .da-contentRegion {
-	background: transparent;
+	background: transparent !important;
 }
 
 .da-app .da-layers .da-layer, .da-app .da-layers .da-layer > div .da-standardSidebarView, .da-app .da-layers .da-layer > div .da-standardSidebarView .da-sidebarRegion, .da-app .da-layers .da-layer > div .da-standardSidebarView .da-contentRegion {
-	background: transparent;
+	background: transparent !important;
 }
 
 /* Transparent background for BetterDiscord settings page */
 #bd-settingspane-container {
-	background: transparent;
+	background: transparent !important;
 }
 
 /* Remove borders */
