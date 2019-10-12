@@ -1,7 +1,7 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.0"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.1"}*//
 
 :root {
-	--version: "Xpose v2.0";
+	--version: "Xpose v2.1";
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
 	--background-screen-opacity: 0.45; /* Value from 0-1 - 0 being least opaque, 1 being most opaque */
 	--background-url: url("https://i.imgur.com/avzaqfC.jpg"); /* URL for background */
@@ -67,7 +67,7 @@
 }
 
 /* Transparent background for main content */
-.da-appMount, .da-app, .da-guilds, .da-base .da-content .da-sidebar .da-container, .da-base .da-content .da-sidebar .da-panels, .da-base .da-content .da-chat, .da-base .da-content .da-chat .da-container, .da-base .da-content .da-chat .da-content, .da-base .da-content .da-chat .da-content .da-membersWrap .da-scrollerWrap .da-scroller, .da-channelTextArea .da-flex, .da-searchBar, .da-scroller, .da-sidebar {
+.da-appMount, .da-app, .da-bg, .da-guilds, .da-base .da-content .da-sidebar .da-container, .da-base .da-content .da-sidebar .da-panels, .da-base .da-content .da-chat, .da-base .da-content .da-chat .da-container, .da-base .da-content .da-chat .da-content, .da-base .da-content .da-chat .da-content .da-membersWrap .da-scrollerWrap .da-scroller, .da-channelTextArea .da-flex, .da-searchBar, .da-scroller, .da-sidebar {
 	background: transparent !important;
 }
 
@@ -124,18 +124,28 @@
 	backdrop-filter: blur(10px);
 }
 
-.da-layerContainer .da-layer .da-didRender .da-userPopout .da-header {
+.da-userPopout .da-headerPlaying {
 	background: rgba(100, 100, 150, 0.8) !important;
 	backdrop-filter: blur(10px);
 }
 
-.da-layerContainer .da-layer .da-didRender .da-userPopout .da-header .da-activity .da-flex {
+.da-userPopout .da-headerNormal {
+	background: rgba(25, 25, 25, 0.9) !important;
+	backdrop-filter: blur(10px);
+}
+
+.da-userPopout .da-header .da-activity .da-flex {
 	background: transparent !important;
 }
 
-.da-layerContainer .da-layer .da-didRender .da-userPopout .da-body, .da-layerContainer .da-layer .da-didRender .da-userPopout .da-footer, .da-layerContainer .da-layer .da-contextMenu, .da-layerContainer .da-layer .da-didRender .da-menu {
+.da-userPopout .da-body, .da-userPopout .da-footer, .da-layerContainer .da-layer .da-contextMenu, .da-layerContainer .da-layer .da-didRender .da-menu {
 	background: rgba(45, 45, 45, 0.9) !important;
 	backdrop-filter: blur(10px);
+}
+
+/* Audio control background */
+.da-audioControls {
+	background: rgba(0, 0, 0, 0.4) !important;
 }
 
 /* Remove borders */
