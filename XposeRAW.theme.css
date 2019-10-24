@@ -1,7 +1,7 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.1"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.2"}*//
 
 :root {
-	--version: "Xpose v2.1";
+	--version: "Xpose v2.2";
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
 	--background-screen-opacity: 0.45; /* Value from 0-1 - 0 being least opaque, 1 being most opaque */
 	--background-url: url("https://i.imgur.com/avzaqfC.jpg"); /* URL for background */
@@ -67,7 +67,7 @@
 }
 
 /* Transparent background for main content */
-.da-appMount, .da-app, .da-bg, .da-guilds, .da-base .da-content .da-sidebar .da-container, .da-base .da-content .da-sidebar .da-panels, .da-base .da-content .da-chat, .da-base .da-content .da-chat .da-container, .da-base .da-content .da-chat .da-content, .da-base .da-content .da-chat .da-content .da-membersWrap .da-scrollerWrap .da-scroller, .da-channelTextArea .da-flex, .da-searchBar, .da-scroller, .da-sidebar {
+.da-appMount, .da-app, .da-bg, .da-guilds, .da-base .da-content .da-sidebar .da-container, .da-layer .da-container .da-wrapper, .da-base .da-content .da-sidebar .da-panels, .da-base .da-content .da-chat, .da-base .da-content .da-chat .da-container, .da-base .da-content .da-chat .da-content, .da-base .da-content .da-chat .da-content .da-membersWrap .da-scrollerWrap .da-scroller, .da-channelTextArea .da-flex, .da-searchBar, .da-scroller, .da-sidebar {
 	background: transparent !important;
 }
 
