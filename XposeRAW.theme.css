@@ -1,7 +1,7 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.2"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.3"}*//
 
 :root {
-	--version: "Xpose v2.2";
+	--version: "Xpose v2.3";
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
 	--background-screen-opacity: 0.45; /* Value from 0-1 - 0 being least opaque, 1 being most opaque */
 	--background-url: url("https://i.imgur.com/avzaqfC.jpg"); /* URL for background */
@@ -66,9 +66,36 @@
 	height: 20px !important;
 }
 
+/* Shrink guilds inside expanded folder */
+.da-expandedGuilds > .bd-guild > div > div > svg, .da-expandedGuilds > .bd-guild > div > div {
+	width: 38px;
+	height: 38px;
+}
+
+.da-expandedGuilds {
+	height: auto !important;
+}
+
 /* Transparent background for main content */
-.da-appMount, .da-app, .da-bg, .da-guilds, .da-base .da-content .da-sidebar .da-container, .da-layer .da-container .da-wrapper, .da-base .da-content .da-sidebar .da-panels, .da-base .da-content .da-chat, .da-base .da-content .da-chat .da-container, .da-base .da-content .da-chat .da-content, .da-base .da-content .da-chat .da-content .da-membersWrap .da-scrollerWrap .da-scroller, .da-channelTextArea .da-flex, .da-searchBar, .da-scroller, .da-sidebar {
+.da-appMount, .da-app, .da-bg, .da-guilds, .da-base .da-content .da-sidebar .da-container, .da-layer .da-container .da-wrapper, .da-base .da-content .da-sidebar .da-panels, .da-base .da-content .da-chat, .da-base .da-content .da-chat .da-container, .da-base .da-content .da-chat .da-content, .da-base .da-content .da-chat .da-content .da-membersWrap .da-scrollerWrap .da-scroller, .da-channelTextArea .da-flex, .da-searchBar, .da-scroller, .da-sidebar, .da-expandedFolderBackground .da-collapsed {
 	background: transparent !important;
+}
+
+.da-embedWrapper {
+	background: rgba(47, 49, 54, 0.4) !important;
+}
+
+.da-markup > pre > code {
+	border: 1px solid rgba(47, 49, 54, 0.8) !important;
+	background: rgba(47, 49, 54, 0.5) !important;
+}
+
+.da-expandedFolderBackground {
+	background: rgba(47, 49, 54, 0.7);
+}
+
+.da-folder {
+	background: rgba(47, 49, 54, 0.5) !important;
 }
 
 /* Transparent background for friends page */
