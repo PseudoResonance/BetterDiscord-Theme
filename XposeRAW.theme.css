@@ -1,7 +1,7 @@
 //META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.4"}*//
 
 :root {
-	--version: "Xpose v2.4";
+	--version: "Xpose v2.5";
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
 	--background-screen-opacity: 0.45; /* Value from 0-1 - 0 being least opaque, 1 being most opaque */
 	--background-url: url("https://i.imgur.com/avzaqfC.jpg"); /* URL for background */
@@ -56,9 +56,10 @@
 }
 
 /* Element Resizing */
-.da-content .da-chatContent .da-form .da-flex .da-channelTextArea {
+.da-content .da-chatContent .da-form .da-channelTextArea {
 	margin-bottom: 10px;
 	padding-top:10px;
+	margin-top:0px;
 }
 
 .da-content .da-flex .da-form .da-typing.da-base {
@@ -77,7 +78,7 @@
 }
 
 /* Transparent background for main content */
-.da-appMount, .da-app, .da-bg, .da-guilds, .da-base .da-content .da-sidebar .da-container, .da-layer .da-container .da-wrapper, .da-base .da-content .da-sidebar .da-panels, .da-base .da-content .da-chat, .da-base .da-content .da-chat .da-container, .da-base .da-content .da-chat .da-content, .da-base .da-content .da-chat .da-content .da-membersWrap .da-scrollerWrap .da-scroller, .da-channelTextArea .da-flex, .da-searchBar, .da-scroller, .da-sidebar, .da-expandedFolderBackground .da-collapsed {
+.da-appMount, .da-app, .da-bg, .da-guilds, .da-base .da-content .da-sidebar .da-container, .da-layer .da-container .da-wrapper, .da-base .da-content .da-sidebar .da-panels, .da-base .da-content .da-chat, .da-base .da-content .da-chat .da-container, .da-base .da-content .da-chat .da-content, .da-base .da-content .da-chat .da-content .da-membersWrap .da-scrollerWrap .da-scroller, .da-channelTextArea .da-scrollableContainer, .da-searchBar, .da-scroller, .da-sidebar, .da-expandedFolderBackground .da-collapsed {
 	background: transparent !important;
 }
 
@@ -98,12 +99,21 @@
 	background: rgba(47, 49, 54, 0.5) !important;
 }
 
+/* Hiding right part of channel description*/
+.da-title .da-children::after {
+	visibility: hidden;
+}
+
 /* Transparent background for friends page */
 .da-base .da-content .da-sidebar .da-privateChannels, .da-base .da-content .da-container, .da-friendsTableBody {
 	background: transparent !important;
 }
 
 .da-videoHeight, .da-videoHeight .da-flex {
+	background: transparent !important;
+}
+
+.da-searchBar .da-searchBarComponent {
 	background: transparent !important;
 }
 
@@ -170,6 +180,11 @@
 	backdrop-filter: blur(10px);
 }
 
+.da-headerSpotify {
+	background: rgba(29, 185, 84, 0.8) !important;
+	backdrop-filter: blur(10px);
+}
+
 /* Audio control background */
 .da-audioControls {
 	background: rgba(0, 0, 0, 0.4) !important;
@@ -190,7 +205,7 @@
 }
 
 /* Remove Nitro present icon */
-.da-chat .da-content .da-chatContent .da-form .da-flex .da-channelTextArea .da-inner .da-buttons > button:first-child {
+.da-chat .da-content .da-chatContent .da-form .da-channelTextArea .da-scrollableContainer .da-inner .da-buttons > button:first-child {
 	visibility: hidden;
 }
 
