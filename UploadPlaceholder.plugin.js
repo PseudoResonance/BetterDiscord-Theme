@@ -13,12 +13,21 @@ class UploadPlaceholder {
     start() {
 		interval = window.setInterval(function(){
 			var text = "";
-			$('.da-uploadArea .da-uploadDropModal .da-inner .da-instructions').children('pre').each(function(){
+			$('.da-uploadModal .da-inner .da-comment .da-label').children('span').each(function(){
 				text += $(this).text() + " ";
 			});
 			text = text.substring(0, text.length - 1).replace(/\n/g, " ");
-			var input = $('.da-uploadModal .da-inner .da-comment .da-channelTextArea .da-scrollableContainer .da-inner .da-textArea .da-slateTextArea');
-			input.attr('data-content', (input.text().trim() == "" ? text : ""));
+			if (text.length > 0) {
+				var input = $('.da-uploadModal .da-inner .da-comment .da-channelTextArea .da-scrollableContainer .da-inner .da-textArea .da-slateTextArea');
+				if (input.text().trim() != "") text = ""
+				input.attr('placeholder', text);
+				if ($('#pseudo-customUploadModalPlaceholder').length === 0) {
+					input.before($("<div class='placeholder-P6ptfj da-placeholder' id='pseudo-customUploadModalPlaceholder'>" + text + "</div>"));
+				} else {
+					if ($('#pseudo-customUploadModalPlaceholder').html() != text)
+						$('#pseudo-customUploadModalPlaceholder').html(text);
+				}
+			}
         }, 1);
     }
 
