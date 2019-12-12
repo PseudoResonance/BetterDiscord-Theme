@@ -1,7 +1,7 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.5"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.5.1"}*//
 
 :root {
-	--version: "Xpose v2.5";
+	--version: "Xpose v2.5.1";
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
 	--background-screen-opacity: 0.45; /* Value from 0-1 - 0 being least opaque, 1 being most opaque */
 	--background-url: url("https://i.imgur.com/avzaqfC.jpg"); /* URL for background */
@@ -277,17 +277,25 @@
 	padding: 0;
 }
 
-.da-uploadModal .da-inner .da-comment .da-flex .da-channelTextAreaUpload {
+.da-uploadModal .da-inner .da-comment .da-channelTextArea {
 	position: absolute;
 	bottom: -15px;
 }
 
-.da-uploadModal .da-inner .da-comment .da-flex .da-channelTextAreaUpload .da-flex textarea::placeholder {
+.da-uploadModal .da-inner .da-comment .da-channelTextArea .da-scrollableContainer .da-inner .da-textArea .da-slateTextArea::placeholder {
 	color: #888;
 }
 
-.da-uploadModal .da-inner .da-comment .da-flex .da-channelTextAreaUpload .da-flex textarea {
+.da-uploadModal .da-inner .da-comment .da-channelTextArea .da-scrollableContainer .da-inner .da-textArea .da-slateTextArea {
 	color: #fff;
+	overflow-y: ;
+}
+
+.da-uploadModal .da-inner .da-comment .da-channelTextArea .da-scrollableContainer .da-inner .da-textArea .da-slateTextArea:after {
+	position: absolute;
+	bottom: 0px;
+	color: #888;
+	content: attr(data-content);
 }
 
 .da-uploadModal .da-footer {
