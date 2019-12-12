@@ -5,7 +5,7 @@ var interval = 0;
 class UploadPlaceholder {
     getName() { return "Upload Placeholder"; }
     getDescription() { return "Adds a placeholder to the upload box"; }
-    getVersion() { return "1.0"; }
+    getVersion() { return "1.1"; }
     getAuthor() { return "PseudoResonance"; }
 
     load() {}
@@ -13,11 +13,12 @@ class UploadPlaceholder {
     start() {
 		interval = window.setInterval(function(){
 			var text = "";
-			$('.da-uploadModal .da-inner .da-comment .da-label').children('span').each(function(){
+			$('.da-uploadArea .da-uploadDropModal .da-inner .da-instructions').children('pre').each(function(){
 				text += $(this).text() + " ";
 			});
-			text = text.substring(0, text.length - 1);
-            $('.da-uploadModal .da-inner .da-comment .da-flex .da-channelTextAreaUpload .da-flex textarea').attr('placeholder', text);
+			text = text.substring(0, text.length - 1).replace(/\n/g, " ");
+			var input = $('.da-uploadModal .da-inner .da-comment .da-channelTextArea .da-scrollableContainer .da-inner .da-textArea .da-slateTextArea');
+			input.attr('data-content', (input.text().trim() == "" ? text : ""));
         }, 1);
     }
 
