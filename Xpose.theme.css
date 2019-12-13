@@ -1,6 +1,6 @@
 //META{"name":"Xpose","description":"Custom theme","author":"PseudoResonance","version":"2.5.3"}*//
 
-@import url("https://raw.githack.com/PseudoResonance/BetterDiscord-Theme/master/XposeRAW.theme.css");
+@import url("https://pseudoresonance.github.io/BetterDiscord-Theme/XposeRAW.theme.css");
 
 :root {
 	--background-screen-cover: 0, 0, 0 !important; /* Color of screen over background */
