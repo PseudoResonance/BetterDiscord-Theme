@@ -1,7 +1,7 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.5.3"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.5.4"}*//
 
 :root {
-	--version: "Xpose v2.5.3";
+	--version: "Xpose v2.5.4";
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
 	--background-screen-opacity: 0.45; /* Value from 0-1 - 0 being least opaque, 1 being most opaque */
 	--background-url: url("https://i.imgur.com/avzaqfC.jpg"); /* URL for background */
@@ -78,7 +78,7 @@
 }
 
 /* Transparent background for main content */
-.da-appMount, .da-app, .da-bg, .da-guilds, .da-base .da-content .da-sidebar .da-container, .da-layer .da-container .da-wrapper, .da-base .da-content .da-sidebar .da-panels, .da-base .da-content .da-chat, .da-base .da-content .da-chat .da-container, .da-base .da-content .da-chat .da-content, .da-base .da-content .da-chat .da-content .da-membersWrap .da-scrollerWrap .da-scroller, .da-channelTextArea .da-scrollableContainer, .da-searchBar, .da-scroller, .da-sidebar, .da-expandedFolderBackground .da-collapsed {
+.da-appMount, .da-app, .da-bg, .da-guilds, .da-base .da-content .da-sidebar .da-container, .da-layer .da-container .da-wrapper, .da-base .da-content .da-sidebar .da-panels, .da-base .da-content .da-chat, .da-base .da-content .da-chat .da-container, .da-base .da-content .da-chat .da-content, .da-base .da-content .da-chat .da-content .da-membersWrap .da-scrollerWrap .da-scroller, .da-channelTextArea .scrollableContainer-2NUZem, .da-searchBar, .da-scroller, .da-sidebar, .da-expandedFolderBackground .da-collapsed {
 	background: transparent !important;
 }
 
@@ -210,7 +210,7 @@
 }
 
 /* Remove Nitro present icon */
-.da-chat .da-content .da-chatContent .da-form .da-channelTextArea .da-scrollableContainer .da-inner .da-buttons > button:first-child {
+.da-chat .da-content .da-chatContent .da-form .da-channelTextArea .scrollableContainer-2NUZem .da-inner .da-buttons > button:first-child {
 	visibility: hidden;
 }
 
@@ -287,11 +287,11 @@
 	bottom: -15px;
 }
 
-.da-uploadModal .da-inner .da-comment .da-channelTextArea .da-scrollableContainer .da-inner .da-textArea .da-slateTextArea::placeholder {
+.da-uploadModal .da-inner .da-comment .da-channelTextArea .scrollableContainer-2NUZem .da-inner .da-textArea .da-slateTextArea::placeholder {
 	color: #888;
 }
 
-.da-uploadModal .da-inner .da-comment .da-channelTextArea .da-scrollableContainer .da-inner .da-textArea .da-slateTextArea {
+.da-uploadModal .da-inner .da-comment .da-channelTextArea .scrollableContainer-2NUZem .da-inner .da-textArea .da-slateTextArea {
 	color: #fff;
 }
 
