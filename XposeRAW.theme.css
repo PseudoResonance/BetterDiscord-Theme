@@ -1,7 +1,7 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.5.4"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.5.5"}*//
 
 :root {
-	--version: "Xpose v2.5.4";
+	--version: "Xpose v2.5.5";
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
 	--background-screen-opacity: 0.45; /* Value from 0-1 - 0 being least opaque, 1 being most opaque */
 	--background-url: url("https://i.imgur.com/avzaqfC.jpg"); /* URL for background */
@@ -100,7 +100,7 @@
 }
 
 /* Hiding right part of channel description*/
-.da-title .da-children::after {
+.da-themed .da-children::after {
 	visibility: hidden;
 }
 
@@ -110,7 +110,7 @@
 }
 
 /* Transparent background for friends page */
-.da-base .da-content .da-sidebar .da-privateChannels, .da-base .da-content .da-container, .da-friendsTableBody {
+.da-base .da-content .da-sidebar .da-privateChannels, .da-base .da-content .da-container, .da-base .da-content .da-container .da-container, .da-base .da-content .da-container .da-tabBody, .da-peopleColumn, .da-nowPlayingColumn, .da-emptyCard {
 	background: transparent !important;
 }
 
@@ -188,6 +188,26 @@
 .da-headerSpotify {
 	background: rgba(29, 185, 84, 0.8) !important;
 	backdrop-filter: blur(10px);
+}
+
+.da-themedPopout {
+	background: rgba(45, 45, 45, 0.9) !important;
+	backdrop-filter: blur(10px);
+}
+
+.da-themedPopout .da-header {
+	background: rgba(35, 35, 35, 0.9) !important;
+	backdrop-filter: blur(10px);
+}
+
+.da-messageGroupWrapper {
+	background: rgba(25, 25, 25, 0.4) !important;
+	backdrop-filter: blur(10px);
+}
+
+/* Transparent buttons */
+.da-actionButton {
+	background: rgba(25, 25, 25, 0.6) !important;
 }
 
 /* Audio control background */
