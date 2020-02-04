@@ -1,7 +1,7 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.5.7"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.5.8"}*//
 
 :root {
-	--version: "Xpose v2.5.7";
+	--version: "Xpose v2.5.8";
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
 	--background-screen-opacity: 0.45; /* Value from 0-1 - 0 being least opaque, 1 being most opaque */
 	--background-url: url("https://i.imgur.com/avzaqfC.jpg"); /* URL for background */
@@ -280,6 +280,27 @@
 .da-scroller .da-divider + .da-groupStart {
 	border-top:none !important;
 	padding-top:0px !important;
+}
+
+/* New message divider */
+.da-scroller .da-divider.da-isUnread {
+	width:100%;
+	margin-left:0;
+}
+
+.da-scroller .da-divider.da-isUnread .da-unreadPill {
+	left:0;
+	right:0;
+	background-color:transparent;
+	color:#f04747;
+}
+
+.da-scroller .da-divider.da-isUnread .da-unreadPill .da-unreadPillCap {
+	visibility:hidden;
+	width:0;
+	height:0;
+	padding:0;
+	margin:0;
 }
 
 /* Text Colors */
