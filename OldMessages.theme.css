@@ -26,10 +26,11 @@
 /* Spacing between message bar and messages */
 .da-channelTextArea {
 	padding-top:15px;
+	border-top:thin solid var(--background-modifier-accent);
 }
 
 .da-scroller:after {
-	height:5px;
+	height:15px;
 }
 
 /* Resize Message Buttons */
@@ -46,7 +47,12 @@
 	background-color:transparent !important;
 }
 
-.da-scroller .da-message.da-mentioned .da-buttonContainer .da-buttons .da-wrapper {
+.da-buttonContainer .da-buttons {
+	top:-4px;
+	background-color:transparent !important;
+}
+
+.da-scroller .da-message.da-mentioned .da-buttonContainer .da-buttons .da-wrapper, .da-buttonContainer, .da-buttonContainer .da-buttons .da-wrapper {
 	background-color:transparent !important;
 }
 
