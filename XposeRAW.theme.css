@@ -1,7 +1,7 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.5.6"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.5.7"}*//
 
 :root {
-	--version: "Xpose v2.5.6";
+	--version: "Xpose v2.5.7";
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
 	--background-screen-opacity: 0.45; /* Value from 0-1 - 0 being least opaque, 1 being most opaque */
 	--background-url: url("https://i.imgur.com/avzaqfC.jpg"); /* URL for background */
@@ -388,4 +388,12 @@
 	background-image: linear-gradient(to right,rgba(var(--background-screen-cover), var(--background-screen-opacity)) 0%,rgba(var(--background-screen-cover), var(--background-screen-opacity)) 100%),var(--background-url); /* Please use this to change background image */
 	background-size: cover;
 	z-index: -5;
+}
+
+/* Display version info */
+.da-sidebar .side-8zPYf6 .da-info::after {
+	content: "Theme: " var(--version);
+	color: var(--text-muted);
+	font-size: 12px;
+	line-height: 16px;
 }
