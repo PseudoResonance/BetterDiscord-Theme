@@ -1,0 +1,6 @@
+//META{"name":"HideMenuIcons","description":"Hides the new dropdown menu icons","author":"PseudoResonance","version":"1.0"}*//
+
+/* Hide menu icons */
+.contextMenu-HLZMGh .itemGroup-1tL0uz .item-1Yvehc .hint-22uc-R {
+	visibility:hidden;
+}
