@@ -1,7 +1,7 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.5.5"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.5.6"}*//
 
 :root {
-	--version: "Xpose v2.5.5";
+	--version: "Xpose v2.5.6";
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
 	--background-screen-opacity: 0.45; /* Value from 0-1 - 0 being least opaque, 1 being most opaque */
 	--background-url: url("https://i.imgur.com/avzaqfC.jpg"); /* URL for background */
@@ -78,7 +78,7 @@
 }
 
 /* Transparent background for main content */
-.da-appMount, .da-app, .da-bg, .da-guilds, .da-base .da-content .da-sidebar .da-container, .da-layer .da-container .da-wrapper, .da-base .da-content .da-sidebar .da-panels, .da-base .da-content .da-chat, .da-base .da-content .da-chat .da-container, .da-base .da-content .da-chat .da-content, .da-base .da-content .da-chat .da-content .da-membersWrap .da-scrollerWrap .da-scroller, .da-channelTextArea .scrollableContainer-2NUZem, .da-searchBar, .da-scroller, .da-sidebar, .da-expandedFolderBackground .da-collapsed {
+.da-appMount, .da-app, .da-bg, .da-guilds, .da-base .da-content .da-sidebar .da-container, .da-layer .da-container .da-wrapper, .da-base .da-content .da-sidebar .da-panels, .da-base .da-content .da-chat, .da-base .da-content .da-chat .da-container, .da-base .da-content .da-chat .da-content, .da-base .da-content .da-chat .da-content .da-membersWrap .da-scrollerWrap .da-scroller, .da-channelTextArea, .da-channelTextArea .scrollableContainer-2NUZem, .da-searchBar, .da-scroller, .da-sidebar, .da-expandedFolderBackground .da-collapsed {
 	background: transparent !important;
 }
 
@@ -101,6 +101,11 @@
 
 /* Hiding right part of channel description*/
 .da-themed .da-children::after {
+	visibility: hidden;
+}
+
+/* Hiding top part of message box*/
+.da-chatContent .da-form::before {
 	visibility: hidden;
 }
 
@@ -232,6 +237,49 @@
 /* Remove Nitro present icon */
 .da-chat .da-content .da-chatContent .da-form .da-channelTextArea .scrollableContainer-2NUZem .da-inner .da-buttons > button:first-child {
 	visibility: hidden;
+}
+
+/* Remove Emoji Suggestions */
+.da-buttonContainer .da-buttons .da-wrapper .da-emojiButton, .da-buttonContainer .da-buttons .da-wrapper .da-emojiSeparator {
+	visibility: hidden !important;
+	width:0px !important;
+	min-width:0px !important;
+	padding:0px !important;
+	margin:0px !important;
+}
+
+.da-buttonContainer .da-buttons .da-wrapper {
+	box-shadow: none !important;
+	border: 0px !important;
+}
+
+/* Resize Message Buttons */
+.da-buttonContainer .da-buttons .da-wrapper .da-button {
+	height:16px !important;
+	width:16px !important;
+	min-height:16px !important;
+	min-width:16px !important;
+	color:rgba(185, 187, 190, 0.6) !important;
+}
+
+.da-buttonContainer .da-buttons .da-wrapper .da-button:hover, .da-buttonContainer .da-buttons .da-wrapper .da-button:active {
+	color:rgba(155, 157, 160, 0.6) !important;
+	background-color:transparent !important;
+}
+
+/* Spacer Between Uesrs */
+.da-scroller .da-groupStart {
+	border-top:thin solid var(--background-modifier-accent);
+	padding-top:1.0625rem;
+}
+
+.da-scroller .da-groupStart .da-buttonContainer {
+	top:1.0625rem;
+}
+
+.da-scroller .da-divider + .da-groupStart {
+	border-top:none !important;
+	padding-top:0px !important;
 }
 
 /* Text Colors */
