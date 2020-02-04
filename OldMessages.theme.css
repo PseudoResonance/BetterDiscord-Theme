@@ -1,0 +1,97 @@
+//META{"name":"OldMessages","description":"Restores old messages style","author":"PseudoResonance","version":"1.0"}*//
+
+/* Disable message hover */
+.da-scroller .da-message:not(.da-mentioned):hover, .da-scroller .da-message:not(.da-mentioned):active, .da-scroller .da-message.da-selected:not(.da-mentioned) {
+	background-color:transparent !important;
+}
+
+.da-scroller .da-message.da-mentioned:hover, .da-scroller .da-message.da-mentioned:active, .da-scroller .da-message.da-selected.da-mentioned {
+	background-color:var(--background-mentioned) !important;
+}
+
+/* Remove Emoji Suggestions */
+.da-buttonContainer .da-buttons .da-wrapper .da-emojiButton, .da-buttonContainer .da-buttons .da-wrapper .da-emojiSeparator {
+	visibility: hidden !important;
+	width:0px !important;
+	min-width:0px !important;
+	padding:0px !important;
+	margin:0px !important;
+}
+
+.da-buttonContainer .da-buttons .da-wrapper {
+	box-shadow: none !important;
+	border: 0px !important;
+}
+
+/* Spacing between message bar and messages */
+.da-channelTextArea {
+	padding-top:15px;
+}
+
+.da-scroller:after {
+	height:5px;
+}
+
+/* Resize Message Buttons */
+.da-buttonContainer .da-buttons .da-wrapper .da-button {
+	height:16px !important;
+	width:16px !important;
+	min-height:16px !important;
+	min-width:16px !important;
+	color:rgba(185, 187, 190, 0.6) !important;
+}
+
+.da-buttonContainer .da-buttons .da-wrapper .da-button:hover, .da-buttonContainer .da-buttons .da-wrapper .da-button:active, .da-buttonContainer .da-buttons .da-wrapper .da-button.da-selected {
+	color:rgba(155, 157, 160, 0.6) !important;
+	background-color:transparent !important;
+}
+
+.da-scroller .da-message.da-mentioned .da-buttonContainer .da-buttons .da-wrapper {
+	background-color:transparent !important;
+}
+
+/* Hide timestamps */
+.da-scroller .da-message .da-timestampCompact {
+	visibility:hidden;
+}
+
+/* Spacer Between Uesrs */
+.da-scroller .da-groupStart {
+	border-top:thin solid var(--background-modifier-accent);
+	padding-top:1.0625rem;
+}
+
+.da-scroller .da-groupStart .da-buttonContainer {
+	top:1.0625rem;
+}
+
+.da-scroller .da-divider + .da-groupStart {
+	border-top:none !important;
+	padding-top:0px !important;
+}
+
+/* Spacing between messages */
+.da-scroller .da-message:not(.da-groupStart) {
+	padding-top:0px;
+}
+
+/* New message divider */
+.da-scroller .da-divider.da-isUnread {
+	width:100%;
+	margin-left:0;
+}
+
+.da-scroller .da-divider.da-isUnread .da-unreadPill {
+	left:0;
+	right:0;
+	background-color:transparent;
+	color:#f04747;
+}
+
+.da-scroller .da-divider.da-isUnread .da-unreadPill .da-unreadPillCap {
+	visibility:hidden;
+	width:0;
+	height:0;
+	padding:0;
+	margin:0;
+}
