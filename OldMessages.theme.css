@@ -5,8 +5,28 @@
 	background-color:transparent !important;
 }
 
-.messages-3amgkR .message-2qnXI6.mentioned-xhSam7:hover, .messages-3amgkR .message-2qnXI6.mentioned-xhSam7:active, .messages-3amgkR .message-2qnXI6.selected-2P5D_Z.mentioned-xhSam7 {
+.messages-3amgkR .message-2qnXI6.mentioned-xhSam7::before, .messages-3amgkR .message-2qnXI6.mentioned-xhSam7, .messages-3amgkR .message-2qnXI6.mentioned-xhSam7:hover, .messages-3amgkR .message-2qnXI6.mentioned-xhSam7:active, .messages-3amgkR .message-2qnXI6.selected-2P5D_Z.mentioned-xhSam7 {
+	background-color:transparent !important;
+}
+
+.messages-3amgkR .message-2qnXI6.mentioned-xhSam7 .markup-2BOw-j {
 	background-color:var(--background-mentioned) !important;
+	position:relative;
+	padding-left:5px;
+	left:-5px;
+}
+
+.messages-3amgkR .message-2qnXI6.mentioned-xhSam7 .markup-2BOw-j::before {
+	background-color:#faa61a !important;
+	content:"";
+	display:inline-block;
+	position:absolute;
+	top:0;
+	left:-5px;
+	bottom:0;
+    pointer-events: none;
+    width: 5px;
+	border-radius:3px 0 0 3px;
 }
 
 /* Remove Emoji Suggestions */
@@ -80,13 +100,34 @@
 .messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 {
 	width:100%;
 	margin-left:0;
+	border:none;
+	height:calc(1.0625rem * 1.5);
 }
 
 .messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 .unreadPill-2HyYtt {
 	left:0;
-	right:0;
 	background-color:transparent;
 	color:#f04747;
+	padding:0;
+    display: flex;
+	align-items: center;
+	text-align: center;
+	font-size:12px;
+	height:calc(1.0625rem * 2);
+}
+
+.messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 .unreadPill-2HyYtt::before, .messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 .unreadPill-2HyYtt::after {
+	content: '';
+	flex: 1;
+	border-bottom: thin solid #f04747;
+}
+
+.messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 .unreadPill-2HyYtt::before {
+	margin-right: 1em;
+}
+
+.messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 .unreadPill-2HyYtt::after {
+	margin-left: 1em;
 }
 
 .messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 .unreadPill-2HyYtt .unreadPillCap-3_K2q2 {
