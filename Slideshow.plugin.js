@@ -25,7 +25,7 @@ var backgroundIndex = 0;
 class Slideshow {
     getName() { return "Slideshow"; }
     getDescription() { return "Turns the background into a slideshow"; }
-    getVersion() { return "2.0"; }
+    getVersion() { return "2.1"; }
     getAuthor() { return "PseudoResonance"; }
 
     start() {
@@ -39,8 +39,8 @@ class Slideshow {
     }
 
     load() {
-		delay = BdApi.loadData("Slideshow", "delay");
-		speed = BdApi.loadData("Slideshow", "speed");
+		delay = BdApi.loadData("Slideshow", "delay", delay);
+		speed = BdApi.loadData("Slideshow", "speed", speed);
     }
 	
 	initializeBackgrounds() {
