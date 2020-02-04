@@ -1,16 +1,16 @@
 //META{"name":"OldMessages","description":"Restores old messages style","author":"PseudoResonance","version":"1.0"}*//
 
 /* Disable message hover */
-.da-scroller .da-message:not(.da-mentioned):hover, .da-scroller .da-message:not(.da-mentioned):active, .da-scroller .da-message.da-selected:not(.da-mentioned) {
+.messages-3amgkR .message-2qnXI6:not(.mentioned-xhSam7):hover, .messages-3amgkR .message-2qnXI6:not(.mentioned-xhSam7):active, .messages-3amgkR .message-2qnXI6.selected-2P5D_Z:not(.mentioned-xhSam7) {
 	background-color:transparent !important;
 }
 
-.da-scroller .da-message.da-mentioned:hover, .da-scroller .da-message.da-mentioned:active, .da-scroller .da-message.da-selected.da-mentioned {
+.messages-3amgkR .message-2qnXI6.mentioned-xhSam7:hover, .messages-3amgkR .message-2qnXI6.mentioned-xhSam7:active, .messages-3amgkR .message-2qnXI6.selected-2P5D_Z.mentioned-xhSam7 {
 	background-color:var(--background-mentioned) !important;
 }
 
 /* Remove Emoji Suggestions */
-.da-buttonContainer .da-buttons .da-wrapper .da-emojiButton, .da-buttonContainer .da-buttons .da-wrapper .da-emojiSeparator {
+.buttonContainer-DHceWr .buttons-cl5qTG div .emojiButton-jE9tXC, .buttonContainer-DHceWr .buttons-cl5qTG div .emojiSeparator-10VgEJ {
 	visibility: hidden !important;
 	width:0px !important;
 	min-width:0px !important;
@@ -18,23 +18,23 @@
 	margin:0px !important;
 }
 
-.da-buttonContainer .da-buttons .da-wrapper {
+.buttonContainer-DHceWr .buttons-cl5qTG div {
 	box-shadow: none !important;
 	border: 0px !important;
 }
 
 /* Spacing between message bar and messages */
-.da-channelTextArea {
+.channelTextArea-rNsIhG {
 	padding-top:15px;
 	border-top:thin solid var(--background-modifier-accent);
 }
 
-.da-scroller:after {
-	height:15px;
+.messages-3amgkR::after {
+	height:20px;
 }
 
 /* Resize Message Buttons */
-.da-buttonContainer .da-buttons .da-wrapper .da-button {
+.buttonContainer-DHceWr .buttons-cl5qTG div .button-1ZiXG9 {
 	height:16px !important;
 	width:16px !important;
 	min-height:16px !important;
@@ -42,59 +42,54 @@
 	color:rgba(185, 187, 190, 0.6) !important;
 }
 
-.da-buttonContainer .da-buttons .da-wrapper .da-button:hover, .da-buttonContainer .da-buttons .da-wrapper .da-button:active, .da-buttonContainer .da-buttons .da-wrapper .da-button.da-selected {
+.buttonContainer-DHceWr .buttons-cl5qTG div .button-1ZiXG9:hover, .buttonContainer-DHceWr .buttons-cl5qTG div .button-1ZiXG9:active, .buttonContainer-DHceWr .buttons-cl5qTG div .button-1ZiXG9.selected-2P5D_Z {
 	color:rgba(155, 157, 160, 0.6) !important;
 	background-color:transparent !important;
 }
 
-.da-buttonContainer .da-buttons {
+.buttonContainer-DHceWr .buttons-cl5qTG {
 	top:-4px;
 	background-color:transparent !important;
 }
 
-.da-scroller .da-message.da-mentioned .da-buttonContainer .da-buttons .da-wrapper, .da-buttonContainer, .da-buttonContainer .da-buttons .da-wrapper {
+.messages-3amgkR .message-2qnXI6.mentioned-xhSam7 .buttonContainer-DHceWr .buttons-cl5qTG div, .buttonContainer-DHceWr, .buttonContainer-DHceWr .buttons-cl5qTG div {
 	background-color:transparent !important;
 }
 
-/* Hide timestamps */
-.da-scroller .da-message .da-timestampCompact {
-	visibility:hidden;
-}
-
 /* Spacer Between Uesrs */
-.da-scroller .da-groupStart {
+.messages-3amgkR .groupStart-23k01U {
 	border-top:thin solid var(--background-modifier-accent);
 	padding-top:1.0625rem;
 }
 
-.da-scroller .da-groupStart .da-buttonContainer {
+.messages-3amgkR .groupStart-23k01U .buttonContainer-DHceWr {
 	top:1.0625rem;
 }
 
-.da-scroller .da-divider + .da-groupStart {
+.messages-3amgkR .divider-3_HH5L + .groupStart-23k01U {
 	border-top:none !important;
 	padding-top:0px !important;
 }
 
 /* Spacing between messages */
-.da-scroller .da-message:not(.da-groupStart) {
+.messages-3amgkR .message-2qnXI6:not(.groupStart-23k01U) {
 	padding-top:0px;
 }
 
 /* New message divider */
-.da-scroller .da-divider.da-isUnread {
+.messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 {
 	width:100%;
 	margin-left:0;
 }
 
-.da-scroller .da-divider.da-isUnread .da-unreadPill {
+.messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 .unreadPill-2HyYtt {
 	left:0;
 	right:0;
 	background-color:transparent;
 	color:#f04747;
 }
 
-.da-scroller .da-divider.da-isUnread .da-unreadPill .da-unreadPillCap {
+.messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 .unreadPill-2HyYtt .unreadPillCap-3_K2q2 {
 	visibility:hidden;
 	width:0;
 	height:0;
