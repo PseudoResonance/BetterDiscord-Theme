@@ -1,7 +1,7 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.5.9"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.5.10"}*//
 
 :root {
-	--version: "Xpose v2.5.9";
+	--version: "Xpose v2.5.10";
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
 	--background-screen-opacity: 0.45; /* Value from 0-1 - 0 being least opaque, 1 being most opaque */
 	--background-url: url("https://i.imgur.com/avzaqfC.jpg"); /* URL for background */
@@ -273,6 +273,15 @@
 
 .da-buttonContainer .da-buttons .da-wrapper .da-button:hover, .da-buttonContainer .da-buttons .da-wrapper .da-button:active, .da-buttonContainer .da-buttons .da-wrapper .da-button.da-selected {
 	color:rgba(155, 157, 160, 0.6) !important;
+	background-color:transparent !important;
+}
+
+.da-buttonContainer .da-buttons {
+	top:-4px;
+	background-color:transparent !important;
+}
+
+.da-scroller .da-message.da-mentioned .da-buttonContainer .da-buttons .da-wrapper, .da-buttonContainer, .da-buttonContainer .da-buttons .da-wrapper {
 	background-color:transparent !important;
 }
 
