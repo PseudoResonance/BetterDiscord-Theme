@@ -1,7 +1,7 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.5.8"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.5.9"}*//
 
 :root {
-	--version: "Xpose v2.5.8";
+	--version: "Xpose v2.5.9";
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
 	--background-screen-opacity: 0.45; /* Value from 0-1 - 0 being least opaque, 1 being most opaque */
 	--background-url: url("https://i.imgur.com/avzaqfC.jpg"); /* URL for background */
@@ -239,6 +239,15 @@
 	visibility: hidden;
 }
 
+/* Disable message hover */
+.da-scroller .da-message:hover, .da-scroller .da-message:active, .da-scroller .da-message.da-selected {
+	background-color:transparent !important;
+}
+
+.da-scroller:after {
+	height:5px;
+}
+
 /* Remove Emoji Suggestions */
 .da-buttonContainer .da-buttons .da-wrapper .da-emojiButton, .da-buttonContainer .da-buttons .da-wrapper .da-emojiSeparator {
 	visibility: hidden !important;
@@ -262,7 +271,7 @@
 	color:rgba(185, 187, 190, 0.6) !important;
 }
 
-.da-buttonContainer .da-buttons .da-wrapper .da-button:hover, .da-buttonContainer .da-buttons .da-wrapper .da-button:active {
+.da-buttonContainer .da-buttons .da-wrapper .da-button:hover, .da-buttonContainer .da-buttons .da-wrapper .da-button:active, .da-buttonContainer .da-buttons .da-wrapper .da-button.da-selected {
 	color:rgba(155, 157, 160, 0.6) !important;
 	background-color:transparent !important;
 }
@@ -280,6 +289,11 @@
 .da-scroller .da-divider + .da-groupStart {
 	border-top:none !important;
 	padding-top:0px !important;
+}
+
+/* Spacing between messages */
+.da-scroller .da-message:not(.da-groupStart) {
+	padding-top:0px;
 }
 
 /* New message divider */
