@@ -1,15 +1,26 @@
-//META{"name":"OldMessages","description":"Restores old messages style","author":"PseudoResonance","version":"1.0"}*//
+//META{"name":"OldMessages","description":"Restores old messages style","author":"PseudoResonance","version":"1.1"}*//
+
+:root {
+	--message-spacing:1.0625rem;
+	--header-height:1.375rem;
+}
 
 /* Disable message hover */
 .messages-3amgkR .message-2qnXI6:not(.mentioned-xhSam7):hover, .messages-3amgkR .message-2qnXI6:not(.mentioned-xhSam7):active, .messages-3amgkR .message-2qnXI6.selected-2P5D_Z:not(.mentioned-xhSam7) {
 	background-color:transparent !important;
 }
 
-.messages-3amgkR .message-2qnXI6.mentioned-xhSam7::before, .messages-3amgkR .message-2qnXI6.mentioned-xhSam7, .messages-3amgkR .message-2qnXI6.mentioned-xhSam7:hover, .messages-3amgkR .message-2qnXI6.mentioned-xhSam7:active, .messages-3amgkR .message-2qnXI6.selected-2P5D_Z.mentioned-xhSam7 {
+.messages-3amgkR .message-2qnXI6.mentioned-xhSam7, .messages-3amgkR .message-2qnXI6.mentioned-xhSam7:hover, .messages-3amgkR .message-2qnXI6.mentioned-xhSam7:active, .messages-3amgkR .message-2qnXI6.selected-2P5D_Z.mentioned-xhSam7 {
+	background-color:transparent !important;
+	#background-color:var(--background-mentioned) !important; /* Replace transparent background with background-mentioned if you want to keep the new mention highlighting */
+}
+
+/* Hide yellow bar to left of new mention highlighting */
+.messages-3amgkR .message-2qnXI6.mentioned-xhSam7::before {
 	background-color:transparent !important;
 }
 
-/* Mentions */
+/* Mentions - Comment these two sections out if you want to keep the new mention highlighting */
 .messages-3amgkR .message-2qnXI6.mentioned-xhSam7 .markup-2BOw-j {
 	background-color:var(--background-mentioned) !important;
 	position:relative;
@@ -25,26 +36,22 @@
 	top:0;
 	left:-5px;
 	bottom:0;
-    pointer-events: none;
-    width: 5px;
+    pointer-events:none;
+    width:5px;
 	border-radius:3px 0 0 3px;
 }
 
-/* Remove Emoji Suggestions */
+/* Remove emoji suggestions */
 .buttonContainer-DHceWr .buttons-cl5qTG div .emojiButton-jE9tXC, .buttonContainer-DHceWr .buttons-cl5qTG div .emojiSeparator-10VgEJ {
-	visibility: hidden !important;
-	width:0px !important;
-	min-width:0px !important;
-	padding:0px !important;
-	margin:0px !important;
+	display:none;
 }
 
 .buttonContainer-DHceWr .buttons-cl5qTG div {
-	box-shadow: none !important;
-	border: 0px !important;
+	box-shadow:none !important;
+	border:0px !important;
 }
 
-/* Spacing between message bar and messages */
+/* Spacing between text input and messages */
 .channelTextArea-rNsIhG {
 	padding-top:15px;
 	border-top:thin solid var(--background-modifier-accent);
@@ -54,7 +61,7 @@
 	height:20px;
 }
 
-/* Resize Message Buttons */
+/* Resize/move message buttons */
 .buttonContainer-DHceWr .buttons-cl5qTG div .button-1ZiXG9 {
 	height:16px !important;
 	width:16px !important;
@@ -71,70 +78,107 @@
 .buttonContainer-DHceWr .buttons-cl5qTG {
 	top:-4px;
 	background-color:transparent !important;
+	right:-6px;
 }
 
 .messages-3amgkR .message-2qnXI6.mentioned-xhSam7 .buttonContainer-DHceWr .buttons-cl5qTG div, .buttonContainer-DHceWr, .buttonContainer-DHceWr .buttons-cl5qTG div {
 	background-color:transparent !important;
 }
 
-/* Spacer Between Uesrs */
-.messages-3amgkR .groupStart-23k01U {
-	border-top:thin solid var(--background-modifier-accent);
-	padding-top:1.0625rem;
-}
-
 .messages-3amgkR .groupStart-23k01U .buttonContainer-DHceWr {
-	top:1.0625rem;
+	top:calc(var(--header-height) + 2px);
 }
 
-.messages-3amgkR .divider-3_HH5L + .groupStart-23k01U {
-	border-top:none !important;
-	padding-top:0px !important;
+/* Margin on text to accomodate buttons */
+.messages-3amgkR .message-2qnXI6 .markup-2BOw-j {
+	margin-right:34px;
 }
 
-/* Spacing between messages */
+/* Rotate settings button */
+.buttonContainer-DHceWr .buttons-cl5qTG div div:last-child {
+	transform:rotate(90deg);
+}
+
+/* Spacer between message groups */
+.messages-3amgkR .groupStart-23k01U::before {
+	content:'';
+	border-top:thin solid var(--background-modifier-accent);
+	top:calc(0px - var(--message-spacing));
+	left:1rem;
+	right:0.875rem;
+	display:block;
+	position:absolute;
+}
+
+.messages-3amgkR .groupStart-23k01U {
+	margin-top:calc(var(--message-spacing) * 2);
+}
+
+.messages-3amgkR .divider-3_HH5L + .groupStart-23k01U::before {
+	display:none;
+}
+
+.messages-3amgkR .divider-3_HH5L:not(.isUnread-3Ef-o9) + .groupStart-23k01U {
+	margin-top:calc(var(--message-spacing) * 0.5);
+}
+
+.messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 + .groupStart-23k01U {
+	margin-top:var(--message-spacing);
+}
+
+/* Spacing between messages within a group */
 .messages-3amgkR .message-2qnXI6:not(.groupStart-23k01U) {
 	padding-top:0px;
 }
 
-/* New message divider */
-.messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 {
+/* Message divider */
+.messages-3amgkR .divider-3_HH5L {
 	width:100%;
 	margin-left:0;
 	border:none;
-	height:calc(1.0625rem * 1.5);
+	height:calc(var(--message-spacing) * 1.5);
 }
 
-.messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 .unreadPill-2HyYtt {
-	left:0;
+.messages-3amgkR .divider-3_HH5L span {
 	background-color:transparent;
-	color:#f04747;
 	padding:0;
-    display: flex;
-	align-items: center;
-	text-align: center;
+    display:flex;
+	align-items:center;
+	text-align:center;
 	font-size:12px;
-	height:calc(1.0625rem * 2);
+	height:calc(var(--message-spacing) * 2);
+	left:1rem;
+	right:0.875rem;
+	position:absolute;
 }
 
-.messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 .unreadPill-2HyYtt::before, .messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 .unreadPill-2HyYtt::after {
-	content: '';
-	flex: 1;
-	border-bottom: thin solid #f04747;
+.messages-3amgkR .divider-3_HH5L span::before {
+	margin-right:1em;
 }
 
-.messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 .unreadPill-2HyYtt::before {
-	margin-right: 1em;
+.messages-3amgkR .divider-3_HH5L span::after {
+	margin-left:1em;
 }
 
-.messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 .unreadPill-2HyYtt::after {
-	margin-left: 1em;
+.messages-3amgkR .divider-3_HH5L span::before, .messages-3amgkR .divider-3_HH5L span::after {
+	content:'';
+	flex:1;
 }
 
-.messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 .unreadPill-2HyYtt .unreadPillCap-3_K2q2 {
-	visibility:hidden;
-	width:0;
-	height:0;
-	padding:0;
-	margin:0;
+/* New message color */
+.messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 span {
+	color:#f04747;
+}
+
+.messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 span::before, .messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 span::after {
+	border-bottom:thin solid #f04747;
+}
+
+.messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 span svg {
+	display:none;
+}
+
+/* Timestamp divider color */
+.messages-3amgkR .divider-3_HH5L:not(.isUnread-3Ef-o9) span::before, .messages-3amgkR .divider-3_HH5L:not(.isUnread-3Ef-o9) span::after {
+	border-bottom:thin solid var(--text-muted);
 }
