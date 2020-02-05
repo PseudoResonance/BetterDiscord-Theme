@@ -1,10 +1,12 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.5.10"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.6"}*//
 
 :root {
-	--version: "Xpose v2.5.10";
+	--version: "Xpose v2.6";
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
 	--background-screen-opacity: 0.45; /* Value from 0-1 - 0 being least opaque, 1 being most opaque */
 	--background-url: url("https://i.imgur.com/avzaqfC.jpg"); /* URL for background */
+	--message-spacing:1.0625rem;
+	--header-height:1.375rem;
 }
 
 /* Scrollbar */
@@ -79,7 +81,7 @@
 
 /* Transparent background for main content */
 .da-appMount, .da-app, .da-bg, .da-guilds, .da-base .da-content .da-sidebar .da-container, .da-layer .da-container .da-wrapper, .da-base .da-content .da-sidebar .da-panels, .da-base .da-content .da-chat, .da-base .da-content .da-chat .da-container, .da-base .da-content .da-chat .da-content, .da-base .da-content .da-chat .da-content .da-membersWrap .da-scrollerWrap .da-scroller, .da-channelTextArea, .da-channelTextArea .scrollableContainer-2NUZem, .da-searchBar, .da-scroller, .da-sidebar, .da-expandedFolderBackground .da-collapsed {
-	background: transparent !important;
+	background: transparent;
 }
 
 .da-embedWrapper {
@@ -101,12 +103,12 @@
 
 /* Hiding right part of channel description*/
 .da-themed .da-children::after {
-	visibility: hidden;
+	display:none;
 }
 
 /* Hiding top part of message box*/
-.da-chatContent .da-form::before {
-	visibility: hidden;
+.form-2fGMdU::before {
+	display:none;
 }
 
 /* Matching border color */
@@ -240,30 +242,36 @@
 }
 
 /* Disable message hover */
-.da-scroller .da-message:hover, .da-scroller .da-message:active, .da-scroller .da-message.da-selected {
+.messages-3amgkR .message-2qnXI6:not(.da-mentioned):hover, .messages-3amgkR .message-2qnXI6:not(.da-mentioned):active, .messages-3amgkR .message-2qnXI6.selected-2P5D_Z:not(.da-mentioned) {
 	background-color:transparent !important;
 }
 
-.da-scroller:after {
-	height:5px;
+.messages-3amgkR .message-2qnXI6.da-mentioned, .messages-3amgkR .message-2qnXI6.da-mentioned:hover, .messages-3amgkR .message-2qnXI6.da-mentioned:active, .messages-3amgkR .message-2qnXI6.selected-2P5D_Z.da-mentioned {
+	background-color:transparent !important;
 }
 
-/* Remove Emoji Suggestions */
-.da-buttonContainer .da-buttons .da-wrapper .da-emojiButton, .da-buttonContainer .da-buttons .da-wrapper .da-emojiSeparator {
-	visibility: hidden !important;
-	width:0px !important;
-	min-width:0px !important;
-	padding:0px !important;
-	margin:0px !important;
+/* Hide yellow bar to left of new mention highlighting */
+.messages-3amgkR .message-2qnXI6.da-mentioned::before {
+	background-color:#faa61a !important;
 }
 
-.da-buttonContainer .da-buttons .da-wrapper {
-	box-shadow: none !important;
-	border: 0px !important;
+/* Remove emoji suggestions */
+.buttonContainer-DHceWr .buttons-cl5qTG div .emojiButton-jE9tXC, .buttonContainer-DHceWr .buttons-cl5qTG div .emojiSeparator-10VgEJ {
+	display:none;
 }
 
-/* Resize Message Buttons */
-.da-buttonContainer .da-buttons .da-wrapper .da-button {
+.buttonContainer-DHceWr .buttons-cl5qTG div {
+	box-shadow:none !important;
+	border:0px !important;
+}
+
+/* Spacing between message bar and messages */
+.messages-3amgkR::after {
+	height:20px;
+}
+
+/* Resize/move message buttons */
+.buttonContainer-DHceWr .buttons-cl5qTG div .button-1ZiXG9 {
 	height:16px !important;
 	width:16px !important;
 	min-height:16px !important;
@@ -271,59 +279,117 @@
 	color:rgba(185, 187, 190, 0.6) !important;
 }
 
-.da-buttonContainer .da-buttons .da-wrapper .da-button:hover, .da-buttonContainer .da-buttons .da-wrapper .da-button:active, .da-buttonContainer .da-buttons .da-wrapper .da-button.da-selected {
+.buttonContainer-DHceWr .buttons-cl5qTG div .button-1ZiXG9:hover, .buttonContainer-DHceWr .buttons-cl5qTG div .button-1ZiXG9:active, .buttonContainer-DHceWr .buttons-cl5qTG div .button-1ZiXG9.selected-2P5D_Z {
 	color:rgba(155, 157, 160, 0.6) !important;
 	background-color:transparent !important;
 }
 
-.da-buttonContainer .da-buttons {
+.buttonContainer-DHceWr .buttons-cl5qTG {
 	top:-4px;
 	background-color:transparent !important;
+	right:-6px;
 }
 
-.da-scroller .da-message.da-mentioned .da-buttonContainer .da-buttons .da-wrapper, .da-buttonContainer, .da-buttonContainer .da-buttons .da-wrapper {
+.messages-3amgkR .message-2qnXI6.da-mentioned .buttonContainer-DHceWr .buttons-cl5qTG div, .buttonContainer-DHceWr, .buttonContainer-DHceWr .buttons-cl5qTG div {
 	background-color:transparent !important;
 }
 
-/* Spacer Between Uesrs */
-.da-scroller .da-groupStart {
+.messages-3amgkR .groupStart-23k01U .buttonContainer-DHceWr {
+	top:calc(var(--header-height) + 2px);
+}
+
+/* Margin on text to accomodate buttons */
+.messages-3amgkR .message-2qnXI6 .markup-2BOw-j {
+	margin-right:34px;
+}
+
+/* Rotate settings button */
+.buttonContainer-DHceWr .buttons-cl5qTG div div:last-child {
+	transform:rotate(90deg);
+}
+
+/* Spacer between message groups */
+.messages-3amgkR .groupStart-23k01U::before {
+	content:'';
 	border-top:thin solid var(--background-modifier-accent);
-	padding-top:1.0625rem;
+	top:calc(0px - var(--message-spacing));
+	left:1rem;
+	right:0.875rem;
+	display:block;
+	position:absolute;
 }
 
-.da-scroller .da-groupStart .da-buttonContainer {
-	top:1.0625rem;
+.messages-3amgkR .groupStart-23k01U {
+	margin-top:calc(var(--message-spacing) * 2);
 }
 
-.da-scroller .da-divider + .da-groupStart {
-	border-top:none !important;
-	padding-top:0px !important;
+.messages-3amgkR .divider-3_HH5L + .groupStart-23k01U::before {
+	display:none;
 }
 
-/* Spacing between messages */
-.da-scroller .da-message:not(.da-groupStart) {
+.messages-3amgkR .divider-3_HH5L:not(.isUnread-3Ef-o9) + .groupStart-23k01U {
+	margin-top:calc(var(--message-spacing) * 0.5);
+}
+
+.messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 + .groupStart-23k01U {
+	margin-top:var(--message-spacing);
+}
+
+/* Spacing between messages within a group */
+.messages-3amgkR .message-2qnXI6:not(.groupStart-23k01U) {
 	padding-top:0px;
 }
 
-/* New message divider */
-.da-scroller .da-divider.da-isUnread {
+/* Message divider */
+.messages-3amgkR .divider-3_HH5L {
 	width:100%;
 	margin-left:0;
+	border:none;
+	height:calc(var(--message-spacing) * 1.5);
 }
 
-.da-scroller .da-divider.da-isUnread .da-unreadPill {
-	left:0;
-	right:0;
+.messages-3amgkR .divider-3_HH5L span {
 	background-color:transparent;
+	padding:0;
+    display:flex;
+	align-items:center;
+	text-align:center;
+	font-size:12px;
+	height:calc(var(--message-spacing) * 2);
+	left:1rem;
+	right:0.875rem;
+	position:absolute;
+}
+
+.messages-3amgkR .divider-3_HH5L span::before {
+	margin-right:1em;
+}
+
+.messages-3amgkR .divider-3_HH5L span::after {
+	margin-left:1em;
+}
+
+.messages-3amgkR .divider-3_HH5L span::before, .messages-3amgkR .divider-3_HH5L span::after {
+	content:'';
+	flex:1;
+}
+
+/* New message color */
+.messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 span {
 	color:#f04747;
 }
 
-.da-scroller .da-divider.da-isUnread .da-unreadPill .da-unreadPillCap {
-	visibility:hidden;
-	width:0;
-	height:0;
-	padding:0;
-	margin:0;
+.messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 span::before, .messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 span::after {
+	border-bottom:thin solid #f04747;
+}
+
+.messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 span svg {
+	display:none;
+}
+
+/* Timestamp divider color */
+.messages-3amgkR .divider-3_HH5L:not(.isUnread-3Ef-o9) span::before, .messages-3amgkR .divider-3_HH5L:not(.isUnread-3Ef-o9) span::after {
+	border-bottom:thin solid var(--text-muted);
 }
 
 /* Text Colors */
@@ -332,23 +398,23 @@
 	--interactive-muted: #aaa;
 }
 
-.da-input::placeholder, .da-textArea::placeholder {
+.da-input::placeholder, .da-textArea::placeholder, .da-placeholder {
 	color: #999;
 }
 
 /* Upload */
-.da-uploadModal {
+.uploadModal-2ifh8j {
 	position: fixed !important;
 	top: 0px !important;
 	left: 0px !important;
 	background: transparent !important;
 }
 
-.da-uploadModal .da-inner {
+.uploadModal-2ifh8j div {
 	border: 0 !important;
 }
 
-.da-uploadModal .da-inner .da-file .da-icon {
+.uploadModal-2ifh8j div .da-file .da-icon {
 	border: 0 !important;
 	box-shadow: none !important;
 	margin: 0 !important;
@@ -362,7 +428,7 @@
 	background-color: transparent !important;
 }
 
-.da-uploadModal .da-inner .da-file .da-description {
+.uploadModal-2ifh8j div .da-file .da-description {
 	position: fixed !important;
 	left: 0 !important;
 	top: 10px !important;
@@ -371,7 +437,7 @@
 	text-align: center !important;
 }
 
-.da-uploadModal .da-inner .da-comment {
+.uploadModal-2ifh8j div .da-comment {
 	position: fixed !important;
 	width: 80vw !important;
 	left: 10vw !important;
@@ -381,11 +447,11 @@
 	padding: 0 !important;
 }
 
-.da-uploadModal .da-inner .da-comment .da-label {
+.uploadModal-2ifh8j div .da-comment .da-label {
 	visibility: hidden;
 }
 
-.da-uploadModal .da-inner .da-comment .da-flex {
+.uploadModal-2ifh8j div .da-comment .da-flex {
 	height: 100%;
 	width: 100%;
 	top: 0;
@@ -394,20 +460,20 @@
 	padding: 0;
 }
 
-.da-uploadModal .da-inner .da-comment .da-channelTextArea {
+.uploadModal-2ifh8j div .da-comment .da-channelTextArea {
 	position: absolute;
 	bottom: -15px;
 }
 
-.da-uploadModal .da-inner .da-comment .da-channelTextArea .scrollableContainer-2NUZem .da-inner .da-textArea .da-slateTextArea::placeholder {
+.uploadModal-2ifh8j div .da-comment .da-channelTextArea .scrollableContainer-2NUZem .da-inner .da-textArea .da-slateTextArea::placeholder {
 	color: #888;
 }
 
-.da-uploadModal .da-inner .da-comment .da-channelTextArea .scrollableContainer-2NUZem .da-inner .da-textArea .da-slateTextArea {
+.uploadModal-2ifh8j div .da-comment .da-channelTextArea .scrollableContainer-2NUZem .da-inner .da-textArea .da-slateTextArea {
 	color: #fff;
 }
 
-.da-uploadModal .da-footer {
+.uploadModal-2ifh8j .da-footer {
 	position: fixed !important;
 	background: transparent !important;
 	width: 80vw !important;
@@ -435,7 +501,7 @@
 }
 
 /* Display version info */
-.da-sidebar .side-8zPYf6 .da-info::after {
+.sidebar-CFHs9e .side-8zPYf6 .info-1VyQPT::after {
 	content: "Theme: " var(--version);
 	color: var(--text-muted);
 	font-size: 12px;
