@@ -2,5 +2,5 @@
 
 /* Hide menu icons */
 .contextMenu-HLZMGh .itemGroup-1tL0uz .item-1Yvehc .hint-22uc-R {
-	visibility:hidden;
+	display:none;
 }
