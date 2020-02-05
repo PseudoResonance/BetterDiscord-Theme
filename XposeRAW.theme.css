@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.6.3"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.6.4"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "Xpose v2.6.3";
+	--version: "Xpose v2.6.4";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -257,11 +257,6 @@ body {
 	background-color:transparent !important;
 }
 
-/* Hide yellow bar to left of new mention highlighting */
-.messages-3amgkR .message-2qnXI6.da-mentioned::before {
-	background-color:#faa61a !important;
-}
-
 /* Remove emoji suggestions */
 .buttonContainer-DHceWr .buttons-cl5qTG div .emojiButton-jE9tXC, .buttonContainer-DHceWr .buttons-cl5qTG div .emojiSeparator-10VgEJ {
 	display:none;
@@ -316,7 +311,7 @@ body {
 }
 
 /* Spacer between message groups */
-.messages-3amgkR .groupStart-23k01U::before {
+.messages-3amgkR .groupStart-23k01U::after {
 	content:'';
 	border-top:thin solid var(--background-modifier-accent);
 	top:calc(0px - var(--message-spacing));
@@ -330,7 +325,7 @@ body {
 	margin-top:calc(var(--message-spacing) * 2);
 }
 
-.messages-3amgkR .divider-3_HH5L + .groupStart-23k01U::before {
+.messages-3amgkR .divider-3_HH5L + .groupStart-23k01U::after {
 	display:none;
 }
 
