@@ -73,12 +73,12 @@ body {
 }
 
 /* Shrink guilds inside expanded folder */
-.da-expandedGuilds > .bd-guild > div > div > svg, .da-expandedGuilds > .bd-guild > div > div {
+.expandedGuilds-1JMD4M > .listItem-2P_4kh > div > div > svg, .expandedGuilds-1JMD4M > .listItem-2P_4kh > div > div {
 	width: 38px;
 	height: 38px;
 }
 
-.da-expandedGuilds {
+.expandedGuilds-1JMD4M {
 	height: auto !important;
 }
 
