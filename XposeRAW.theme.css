@@ -1,13 +1,13 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.6.1"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.6.2"}*//
 
 :root {
-	--version: "Xpose v2.6.1";
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
 	--background-screen-opacity: 0.45; /* Value from 0-1 - 0 being least opaque, 1 being most opaque */
 	--background-url: url("https://i.imgur.com/avzaqfC.jpg"); /* URL for background */
 }
 
 body {
+	--version: "Xpose v2.6.2";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
