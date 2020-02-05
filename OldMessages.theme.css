@@ -1,4 +1,4 @@
-//META{"name":"OldMessages","description":"Restores old messages style","author":"PseudoResonance","version":"1.1.1"}*//
+//META{"name":"OldMessages","description":"Restores old messages style","author":"PseudoResonance","version":"1.1.2"}*//
 
 :root {
 	--message-spacing:1.0625rem;
@@ -12,7 +12,7 @@
 
 .messages-3amgkR .message-2qnXI6.mentioned-xhSam7, .messages-3amgkR .message-2qnXI6.mentioned-xhSam7:hover, .messages-3amgkR .message-2qnXI6.mentioned-xhSam7:active, .messages-3amgkR .message-2qnXI6.selected-2P5D_Z.mentioned-xhSam7 {
 	background-color:transparent !important;
-	#background-color:var(--background-mentioned) !important; /* Replace transparent background with background-mentioned if you want to keep the new mention highlighting */
+	//background-color:var(--background-mentioned) !important; /* Replace transparent background with background-mentioned if you want to keep the new mention highlighting */
 }
 
 /* Hide yellow bar to left of new mention highlighting */
