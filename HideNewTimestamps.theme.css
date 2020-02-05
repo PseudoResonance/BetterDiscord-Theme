@@ -1,6 +1,6 @@
 //META{"name":"HideNewTimestamps","description":"Hides the new timestamps to the left of messages","author":"PseudoResonance","version":"1.0"}*//
 
 /* Hide timestamps */
-.messages-3amgkR .message-2qnXI6 .timestampCompact-29LLPQ {
-	visibility:hidden;
+.da-timestampVisibleOnHover {
+	display:none;
 }
