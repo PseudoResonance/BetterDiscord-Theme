@@ -33,6 +33,7 @@ class Slideshow {
 
     start() {
 		this.initializeBackgrounds();
+		this.resetImage();
 		this.startInterval();
     }
 
@@ -42,7 +43,7 @@ class Slideshow {
     }
 
     load() {
-		var temp = 
+		backgroundIndex = this.getData("index", 0);
 		delay = this.getData("delay", defaultDelay);
 		speed = this.getData("speed", defaultSpeed);
 		backgrounds = JSON.parse(this.getData("backgrounds", JSON.stringify(defaultBackgrounds)));
@@ -67,11 +68,13 @@ class Slideshow {
 	startInterval() {
         interval = window.setInterval(function(){
             backgroundIndex++;
+			BdApi.setData("Slideshow", "index", backgroundIndex);
             if (backgroundIndex >= backgrounds.length) {
 				$('#betterdiscord-background div:nth-child(1)').css("z-index", "-1").fadeIn(speed);
 				setTimeout(function() {
 					$('#betterdiscord-background div:nth-child(' + backgroundIndex + ')').hide();
 					backgroundIndex = 0;
+					BdApi.setData("Slideshow", "index", backgroundIndex);
 					$('#betterdiscord-background div:nth-child(1)').css("z-index", "-3");
 				}, speed + 1);
             } else {
@@ -85,11 +88,13 @@ class Slideshow {
 	}
 	
 	resetImage() {
-        backgroundIndex = 0;
+		if (backgroundIndex >= backgrounds.length)
+			backgroundIndex = 0;
+		BdApi.setData("Slideshow", "index", backgroundIndex);
 		for (var i = 1; i < backgrounds.length; i++) {
 			$('#betterdiscord-background div:nth-child(' + i + ')').hide();
 		}
-		$('#betterdiscord-background div:nth-child(1)').show();
+		$('#betterdiscord-background div:nth-child(' +  (backgroundIndex + 1) + ')').show();
 	}
 	
 	stopInterval() {
