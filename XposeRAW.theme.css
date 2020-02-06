@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.6.4"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.6.5"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,9 +7,54 @@
 }
 
 body {
-	--version: "Xpose v2.6.4";
+	--version: "Xpose v2.6.5";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
+}
+
+/* Table */
+.pseudotable {
+	width:100%;
+}
+
+.pseudotable, .pseudotable-header, .pseudotable-row, .pseudotable-header-obj, .pseudotable-row-obj {
+	border: thin solid var(--background-modifier-accent);
+	border-collapse: collapse;
+}
+
+.pseudotable-header-obj {
+	padding:10px;
+}
+
+.pseudotable-hint {
+	display:block;
+	margin-top:5px;
+	color:var(--text-muted);
+}
+
+.pseudotable-input {
+	background-color:transparent;
+	padding:10px;
+	border:none;
+	width:100%;
+	color:#f6f6f7;
+	font-size:100%;
+}
+
+.pseudotable-image {
+	width:calc(100% - 13rem);
+}
+
+.pseudotable-opacity {
+	width:6rem;
+}
+
+.pseudotable-color {
+	width:7rem;
+}
+
+.pseudoslideshow-invalid {
+	background-color:rgba(240, 71, 71, 0.3);
 }
 
 /* Scrollbar */
@@ -245,7 +290,7 @@ body {
 
 /* Remove Nitro present icon */
 .da-chat .da-content .da-chatContent .da-form .da-channelTextArea .scrollableContainer-2NUZem .da-inner .da-buttons > button:first-child {
-	visibility: hidden;
+	display:none;
 }
 
 /* Disable message hover */
@@ -398,6 +443,7 @@ body {
 .theme-dark {
 	--channels-default: #ccc;
 	--interactive-muted: #aaa;
+	--text-muted: #999;
 }
 
 .da-input::placeholder, .da-textArea::placeholder, .da-placeholder {
@@ -450,7 +496,7 @@ body {
 }
 
 .uploadModal-2ifh8j div .da-comment .da-label {
-	visibility: hidden;
+	display:none;
 }
 
 .uploadModal-2ifh8j div .da-comment .da-flex {
