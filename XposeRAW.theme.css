@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.6.12"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.6.13"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "Xpose v2.6.12";
+	--version: "Xpose v2.6.13";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -255,7 +255,7 @@ body {
 }
 
 .popout-38lTFE, .contextMenu-HLZMGh, .layer-v9HyYc > div:not(.contextMenu-HLZMGh) > div:not(.userPopout-3XzG_A), .menu-Sp6bN1, .footer-1fjuF6, .body-3iLsc4, .autocomplete-1vrmpx, .container-3ayLPN {
-	background: rgba(45, 45, 45, 0.6) !important;
+	background: rgba(45, 45, 45, 0.9) !important;
 }
 
 .headerNormal-T_seeN {
