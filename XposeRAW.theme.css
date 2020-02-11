@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.6.8"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.6.9"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,9 +7,18 @@
 }
 
 body {
-	--version: "Xpose v2.6.8";
+	--version: "Xpose v2.6.9";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
+}
+
+.theme-dark {
+	--channels-default: #ccc;
+	--interactive-muted: #aaa;
+	--text-muted: #999;
+	--elevation-low: 0;
+	--elevation-high: 0;
+	--blur-radius: 10px;
 }
 
 /* Table */
@@ -106,7 +115,7 @@ body {
 }
 
 /* Element Resizing */
-.da-content .da-chatContent .da-form .da-channelTextArea {
+.channelTextArea-rNsIhG {
 	margin-bottom: 10px;
 	padding-top:10px;
 	margin-top:0px;
@@ -181,6 +190,14 @@ body {
 	background: transparent !important;
 }
 
+.itemCard-v9viV7:hover, .itemCard-v9viV7:active {
+	background: var(--background-modifier-hover) !important;
+}
+
+.section-2gLsgF, .body-1ld4H7 {
+	background: transparent !important;
+}
+
 /* Transparent background for Nitro page */
 .da-applicationStore {
 	background: transparent !important;
@@ -211,67 +228,45 @@ body {
 }
 
 /* Transparent background for popouts */
-.da-layerContainer .da-layer .da-didRender .da-container {
+.layerContainer-yqaFcK, .layer-v9HyYc, .bodyInner-245q0L {
 	background: transparent !important;
 }
 
-.da-layerContainer .da-layer .da-didRender .da-container header {
-	background: rgba(35, 35, 35, 0.9) !important;
-	backdrop-filter: blur(10px);
-}
-
-.da-layerContainer .da-layer .da-didRender .da-container section {
+.popout-38lTFE, .contextMenu-HLZMGh, .layer-v9HyYc > div:not(.contextMenu-HLZMGh) > div:not(.userPopout-3XzG_A), .menu-Sp6bN1, .footer-1fjuF6, .body-3iLsc4 {
 	background: rgba(45, 45, 45, 0.9) !important;
-	backdrop-filter: blur(10px);
 }
 
-.da-userPopout .da-headerPlaying {
-	background: rgba(100, 100, 150, 0.8) !important;
-	backdrop-filter: blur(10px);
+.headerNormal-T_seeN {
+	background: rgba(32, 34, 37, 0.95) !important;
 }
 
-.da-userPopout .da-headerNormal {
-	background: rgba(25, 25, 25, 0.9) !important;
-	backdrop-filter: blur(10px);
+.headerPlaying-j0WQBV {
+	background: rgba(114, 137, 218, 0.8) !important;
 }
 
-.da-userPopout .da-header .da-activity .da-flex {
-	background: transparent !important;
-}
-
-.da-userPopout .da-body, .da-userPopout .da-footer, .da-layerContainer .da-layer .da-contextMenu, .da-layerContainer .da-layer .da-didRender .da-menu {
-	background: rgba(45, 45, 45, 0.9) !important;
-	backdrop-filter: blur(10px);
-}
-
-.da-headerSpotify {
+.headerSpotify-zpWxgT {
 	background: rgba(29, 185, 84, 0.8) !important;
-	backdrop-filter: blur(10px);
 }
 
-.da-themedPopout {
-	background: rgba(45, 45, 45, 0.9) !important;
-	backdrop-filter: blur(10px);
+.headerXbox-3G-4PF {
+	background: rgba(16, 124, 16, 0.8) !important;
 }
 
-.da-themedPopout .da-header {
-	background: rgba(35, 35, 35, 0.9) !important;
-	backdrop-filter: blur(10px);
-}
-
-.da-messageGroupWrapper {
-	background: rgba(25, 25, 25, 0.4) !important;
-	backdrop-filter: blur(10px);
+/* Blur popups */
+.popout-38lTFE, .contextMenu-HLZMGh, .layer-v9HyYc > div:not(.contextMenu-HLZMGh) > div, .menu-Sp6bN1 {
+	backdrop-filter: blur(var(--blur-radius));
 }
 
 /* Transparent buttons */
-.da-actionButton {
-	background: rgba(25, 25, 25, 0.6) !important;
+.actionButton-uPB8Fs {
+	background: rgba(47, 49, 54, 0.7) !important;
+	backdrop-filter: blur(var(--blur-radius));
 }
 
 /* Audio control background */
 .da-audioControls {
 	background: rgba(0, 0, 0, 0.4) !important;
+	backdrop-filter: blur(var(--blur-radius));
 }
 
 /* Remove borders */
@@ -281,11 +276,6 @@ body {
 
 .da-videoBottom .da-iconsWrapper {
 	border: 0 !important;
-}
-
-.theme-dark {
-	--elevation-low: 0;
-	--elevation-high: 0;
 }
 
 /* Remove Nitro present icon */
@@ -455,12 +445,6 @@ body {
 }
 
 /* Text Colors */
-.theme-dark {
-	--channels-default: #ccc;
-	--interactive-muted: #aaa;
-	--text-muted: #999;
-}
-
 .da-input::placeholder, .da-textArea::placeholder, .da-placeholder {
 	color: #999;
 }
