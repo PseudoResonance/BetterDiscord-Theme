@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.6.9"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.6.10"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "Xpose v2.6.9";
+	--version: "Xpose v2.6.10";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -228,7 +228,7 @@ body {
 }
 
 /* Transparent background for popouts */
-.layerContainer-yqaFcK, .layer-v9HyYc, .bodyInner-245q0L {
+.layerContainer-yqaFcK, .layer-v9HyYc, .bodyInner-245q0L, .layer-v9HyYc > div:not(.contextMenu-HLZMGh) > div:not(.userPopout-3XzG_A) > div {
 	background: transparent !important;
 }
 
@@ -253,8 +253,9 @@ body {
 }
 
 /* Blur popups */
-.popout-38lTFE, .contextMenu-HLZMGh, .layer-v9HyYc > div:not(.contextMenu-HLZMGh) > div, .menu-Sp6bN1 {
+.popout-38lTFE, .contextMenu-HLZMGh, .layer-v9HyYc > div:not(.contextMenu-HLZMGh) > div:not(.scrollerWrap-2lJEkd), .layer-v9HyYc > div:not(.contextMenu-HLZMGh) > div:not(.userPopout-3XzG_A) > div, .menu-Sp6bN1 {
 	backdrop-filter: blur(var(--blur-radius));
+	box-shadow:none;
 }
 
 /* Transparent buttons */
