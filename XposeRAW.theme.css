@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.6.10"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.6.11"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "Xpose v2.6.10";
+	--version: "Xpose v2.6.11";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -228,11 +228,11 @@ body {
 }
 
 /* Transparent background for popouts */
-.layerContainer-yqaFcK, .layer-v9HyYc, .bodyInner-245q0L, .layer-v9HyYc > div:not(.contextMenu-HLZMGh) > div:not(.userPopout-3XzG_A) > div {
+.layerContainer-yqaFcK, .layer-v9HyYc, .emojiPicker-3m1S-j, .bodyInner-245q0L, .layer-v9HyYc > div:not(.contextMenu-HLZMGh) > div:not(.userPopout-3XzG_A) > div, .messagesPopoutWrap-1MQ1bW, .messageGroupWrapper-o-Zw7G {
 	background: transparent !important;
 }
 
-.popout-38lTFE, .contextMenu-HLZMGh, .layer-v9HyYc > div:not(.contextMenu-HLZMGh) > div:not(.userPopout-3XzG_A), .menu-Sp6bN1, .footer-1fjuF6, .body-3iLsc4 {
+.popout-38lTFE, .contextMenu-HLZMGh, .layer-v9HyYc > div:not(.contextMenu-HLZMGh) > div:not(.userPopout-3XzG_A), .menu-Sp6bN1, .footer-1fjuF6, .body-3iLsc4, .autocomplete-1vrmpx, .container-3ayLPN {
 	background: rgba(45, 45, 45, 0.9) !important;
 }
 
@@ -252,8 +252,20 @@ body {
 	background: rgba(16, 124, 16, 0.8) !important;
 }
 
+.headerStreaming-2FjmGz {
+	background: rgba(89, 54, 149, 0.85) !important;
+}
+
+.selectorSelected-1_M1WV, .selected-rZcOL-, .messageGroupWrapper-o-Zw7G:hover {
+	background: var(--background-modifier-hover) !important;
+}
+
+.option-96V44q::after {
+	display:none;
+}
+
 /* Blur popups */
-.popout-38lTFE, .contextMenu-HLZMGh, .layer-v9HyYc > div:not(.contextMenu-HLZMGh) > div:not(.scrollerWrap-2lJEkd), .layer-v9HyYc > div:not(.contextMenu-HLZMGh) > div:not(.userPopout-3XzG_A) > div, .menu-Sp6bN1 {
+.popout-38lTFE, .contextMenu-HLZMGh, .layer-v9HyYc > div:not(.contextMenu-HLZMGh) > div:not(.scrollerWrap-2lJEkd), .layer-v9HyYc > div:not(.contextMenu-HLZMGh) > div:not(.userPopout-3XzG_A) > div, .menu-Sp6bN1, .autocomplete-1vrmpx, .container-3ayLPN, .messagesPopoutWrap-1MQ1bW {
 	backdrop-filter: blur(var(--blur-radius));
 	box-shadow:none;
 }
