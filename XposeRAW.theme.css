@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.6.11"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.6.12"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "Xpose v2.6.11";
+	--version: "Xpose v2.6.12";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -162,6 +162,28 @@ body {
 	background: rgba(47, 49, 54, 0.5) !important;
 }
 
+/* Transparent search */
+.searchResultsWrap-2DKFzt, .channelName-1QajIf {
+	background: transparent !important;
+}
+
+.hit-NLlWXA {
+	background: rgba(47, 49, 54, 0.7) !important;
+	border: none !important;
+	border:thin solid rgb(47, 49, 54) !important;
+	backdrop-filter: blur(var(--blur-radius));
+	border-radius:0px !important;
+	box-shadow:none !important;
+}
+
+.searchResult-3pzFAB::before, .searchResult-3pzFAB::after {
+	display:none;
+}
+
+.searchResult-3pzFAB {
+	border-top:thin solid var(--text-muted);
+}
+
 /* Hiding right part of channel description*/
 .da-themed .da-children::after {
 	display:none;
@@ -233,7 +255,7 @@ body {
 }
 
 .popout-38lTFE, .contextMenu-HLZMGh, .layer-v9HyYc > div:not(.contextMenu-HLZMGh) > div:not(.userPopout-3XzG_A), .menu-Sp6bN1, .footer-1fjuF6, .body-3iLsc4, .autocomplete-1vrmpx, .container-3ayLPN {
-	background: rgba(45, 45, 45, 0.9) !important;
+	background: rgba(45, 45, 45, 0.6) !important;
 }
 
 .headerNormal-T_seeN {
@@ -265,9 +287,9 @@ body {
 }
 
 /* Blur popups */
-.popout-38lTFE, .contextMenu-HLZMGh, .layer-v9HyYc > div:not(.contextMenu-HLZMGh) > div:not(.scrollerWrap-2lJEkd), .layer-v9HyYc > div:not(.contextMenu-HLZMGh) > div:not(.userPopout-3XzG_A) > div, .menu-Sp6bN1, .autocomplete-1vrmpx, .container-3ayLPN, .messagesPopoutWrap-1MQ1bW {
+.popout-2iWAc-, .popout-38lTFE, .contextMenu-HLZMGh, .layer-v9HyYc > div:not(.contextMenu-HLZMGh) > div:not(.scrollerWrap-2lJEkd), .layer-v9HyYc > div:not(.contextMenu-HLZMGh) > div:not(.userPopout-3XzG_A) > div, .menu-Sp6bN1, .autocomplete-1vrmpx, .container-3ayLPN, .messagesPopoutWrap-1MQ1bW {
 	backdrop-filter: blur(var(--blur-radius));
-	box-shadow:none;
+	box-shadow:none !important;
 }
 
 /* Transparent buttons */
