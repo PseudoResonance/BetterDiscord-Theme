@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.6.18"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.6.19"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "v2.6.18";
+	--version: "v2.6.19";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -162,7 +162,7 @@ body {
 	background: rgba(47, 49, 54, 0.5) !important;
 }
 
-/* New Messages / Jump to Bottom */
+/* Transparent New Messages / Jump to Bottom */
 .newMessagesBar-mujexs, .jumpToPresentBar-9P20AM {
 	background-color:rgba(47, 49, 54, 0.7) !important;
 	left:1rem;
@@ -174,6 +174,13 @@ body {
 
 .newMessagesBar-mujexs:hover, .newMessagesBar-mujexs:active, .jumpToPresentBar-9P20AM:hover, .jumpToPresentBar-9P20AM:active {
 	background-color:rgba(37, 39, 44, 0.7) !important;
+}
+
+/* Transparent Load More Messages */
+.hasMore-3e72_v {
+	border:0 !important;
+	box-shadow:none !important;
+	-webkit-box-shadow:none !important;
 }
 
 /* Transparent search */
