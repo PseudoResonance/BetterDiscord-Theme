@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.6.16"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.6.17"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "v2.6.16";
+	--version: "v2.6.17";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -242,6 +242,11 @@ body {
 
 .da-app .da-layers .da-layer, .da-app .da-layers .da-layer > div .da-standardSidebarView, .da-app .da-layers .da-layer > div .da-standardSidebarView .da-sidebarRegion, .da-app .da-layers .da-layer > div .da-standardSidebarView .da-contentRegion {
 	background: transparent !important;
+}
+
+.card-FDVird::before, .card-FDVird::before {
+	background-color: var(--background-modifier-hover) !important;
+	border:0;
 }
 
 /* Transparent background for BetterDiscord settings page */
