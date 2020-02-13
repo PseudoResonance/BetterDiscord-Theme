@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.6.17"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.6.18"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "v2.6.17";
+	--version: "v2.6.18";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -162,6 +162,20 @@ body {
 	background: rgba(47, 49, 54, 0.5) !important;
 }
 
+/* New Messages / Jump to Bottom */
+.newMessagesBar-mujexs, .jumpToPresentBar-9P20AM {
+	background-color:rgba(47, 49, 54, 0.7) !important;
+	left:1rem;
+	right:1.375rem;
+	border-radius:0px;
+	padding-bottom:0px;
+	backdrop-filter: blur(var(--blur-radius));
+}
+
+.newMessagesBar-mujexs:hover, .newMessagesBar-mujexs:active, .jumpToPresentBar-9P20AM:hover, .jumpToPresentBar-9P20AM:active {
+	background-color:rgba(37, 39, 44, 0.7) !important;
+}
+
 /* Transparent search */
 .searchResultsWrap-2DKFzt, .channelName-1QajIf {
 	background: transparent !important;
@@ -221,7 +235,7 @@ body {
 }
 
 /* Transparent background for Nitro page */
-.da-applicationStore {
+.applicationStore-1pNvnv, .perksModal-fSYqOq, .ctaBar-2UsjF2, .perk-2WeBWW {
 	background: transparent !important;
 }
 
