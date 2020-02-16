@@ -28,7 +28,7 @@ var backgroundIndex = 0;
 class Slideshow {
     getName() { return "Slideshow"; }
     getDescription() { return "Turns the background into a slideshow"; }
-    getVersion() { return "3.0"; }
+    getVersion() { return "3.1"; }
     getAuthor() { return "PseudoResonance"; }
 
     start() {
@@ -91,7 +91,7 @@ class Slideshow {
 		if (backgroundIndex >= backgrounds.length)
 			backgroundIndex = 0;
 		BdApi.setData("Slideshow", "index", backgroundIndex);
-		for (var i = 1; i < backgrounds.length; i++) {
+		for (var i = 1; i <= backgrounds.length; i++) {
 			$('#betterdiscord-background div:nth-child(' + i + ')').hide();
 		}
 		$('#betterdiscord-background div:nth-child(' +  (backgroundIndex + 1) + ')').show();
@@ -104,9 +104,14 @@ class Slideshow {
     getSettingsPanel() {
 		var backgroundList = "";
 		for (var i = 0; i < backgrounds.length; i++) {
-			backgroundList += `<tr class='pseudotable-row'><td class='pseudotable-row-obj pseudotable-image'><input class='pseudotable-input' onkeydown='BdApi.getPlugin("Slideshow").backgroundInput(this)' value='` + backgrounds[i].link + `'></input></td><td class='pseudotable-row-obj pseudotable-opacity'><input class='pseudotable-input' onkeydown='BdApi.getPlugin("Slideshow").backgroundInput(this)' value='` + backgrounds[i].opacity + `'></input></td><td class='pseudotable-row-obj pseudotable-color'><input class='pseudotable-input' onkeydown='BdApi.getPlugin("Slideshow").backgroundInput(this)' value='` + backgrounds[i].color + `'></input></td></tr>`
+			backgroundList += `<tr class='pseudotable-row'><td class='pseudotable-row-obj pseudotable-checkbox'>`;
+			if (backgroundIndex == i)
+				backgroundList += `<label class='checkboxWrapper-SkhIWG da-checkboxWrapper alignTop-1ntJ4-'><input class='inputDefault-3JxKJ2 input-3ITkQf da-inputDefault da-input' type='checkbox' style='width: 24px; height: 24px;' onclick='BdApi.getPlugin("Slideshow").check(this);' checked><div class='checkbox-1ix_J3 flexCenter-3_1bcw flex-1O1GKY justifyCenter-3D2jYp alignCenter-1dQNNs da-checkbox da-flexCenter da-flex da-justifyCenter da-alignCenter box-mmYMsp checked-3_4uQ9 da-checked' style='width: 24px; height: 24px; border-color: rgb(114, 137, 218);'><svg name='Checkmark' aria-hidden='true' width='18' height='18' viewBox='0 0 18 18' xmlns='http://www.w3.org/2000/svg'><g fill='none' fill-rule='evenodd'><polyline stroke='#7289da' stroke-width='2' points='3.5 9.5 7 13 15 5'></polyline></g></svg></div></label>`;
+			else
+				backgroundList += `<label class='checkboxWrapper-SkhIWG da-checkboxWrapper alignTop-1ntJ4-'><input class='inputDefault-3JxKJ2 input-3ITkQf da-inputDefault da-input' type='checkbox' style='width: 24px; height: 24px;' onclick='BdApi.getPlugin("Slideshow").check(this);'><div class='checkbox-1ix_J3 flexCenter-3_1bcw flex-1O1GKY justifyCenter-3D2jYp alignCenter-1dQNNs da-checkbox da-flexCenter da-flex da-justifyCenter da-alignCenter box-mmYMsp' style='width: 24px; height: 24px;'><svg name='Checkmark' aria-hidden='true' width='18' height='18' viewBox='0 0 18 18' xmlns='http://www.w3.org/2000/svg'><g fill='none' fill-rule='evenodd'><polyline stroke='transparent' stroke-width='2' points='3.5 9.5 7 13 15 5'></polyline></g></svg></div></label>`;
+			backgroundList += `</td><td class='pseudotable-row-obj pseudotable-image'><input class='pseudotable-input' onkeydown='BdApi.getPlugin("Slideshow").backgroundInput(this)' value='` + backgrounds[i].link + `'></input></td><td class='pseudotable-row-obj pseudotable-opacity'><input class='pseudotable-input' onkeydown='BdApi.getPlugin("Slideshow").backgroundInput(this)' value='` + backgrounds[i].opacity + `'></input></td><td class='pseudotable-row-obj pseudotable-color'><input class='pseudotable-input' onkeydown='BdApi.getPlugin("Slideshow").backgroundInput(this)' value='` + backgrounds[i].color + `'></input></td></tr>`;
 		}
-		backgroundList += `<tr class='pseudotable-row'><td class='pseudotable-row-obj pseudotable-image'><input class='pseudotable-input' onkeydown='BdApi.getPlugin("Slideshow").backgroundInput(this)' value=''></input></td><td class='pseudotable-row-obj pseudotable-opacity'><input class='pseudotable-input' onkeydown='BdApi.getPlugin("Slideshow").backgroundInput(this)' value=''></input></td><td class='pseudotable-row-obj pseudotable-color'><input class='pseudotable-input' onkeydown='BdApi.getPlugin("Slideshow").backgroundInput(this)' value=''></input></td></tr>`
+		backgroundList += `<tr class='pseudotable-row'><td class='pseudotable-row-obj pseudotable-checkbox'><label class='checkboxWrapper-SkhIWG da-checkboxWrapper alignTop-1ntJ4-'><input class='inputDefault-3JxKJ2 input-3ITkQf da-inputDefault da-input' type='checkbox' style='width: 24px; height: 24px;' onclick='BdApi.getPlugin("Slideshow").check(this);'><div class='checkbox-1ix_J3 flexCenter-3_1bcw flex-1O1GKY justifyCenter-3D2jYp alignCenter-1dQNNs da-checkbox da-flexCenter da-flex da-justifyCenter da-alignCenter box-mmYMsp' style='width: 24px; height: 24px;'><svg name='Checkmark' aria-hidden='true' width='18' height='18' viewBox='0 0 18 18' xmlns='http://www.w3.org/2000/svg'><g fill='none' fill-rule='evenodd'><polyline stroke='transparent' stroke-width='2' points='3.5 9.5 7 13 15 5'></polyline></g></svg></div></label></td><td class='pseudotable-row-obj pseudotable-image'><input class='pseudotable-input' onkeydown='BdApi.getPlugin("Slideshow").backgroundInput(this)' value=''></input></td><td class='pseudotable-row-obj pseudotable-opacity'><input class='pseudotable-input' onkeydown='BdApi.getPlugin("Slideshow").backgroundInput(this)' value=''></input></td><td class='pseudotable-row-obj pseudotable-color'><input class='pseudotable-input' onkeydown='BdApi.getPlugin("Slideshow").backgroundInput(this)' value=''></input></td></tr>`;
 		var ret = `<p>PseudoSlideshow Settings - Press enter after editing value to take effect!</p>
 		<p style='clear:none; display:inline-block'>Reset all settings to their defaults: </p>
 		<button style='display:inline-block' class='bd-pfbtn' onclick='BdApi.getPlugin("Slideshow").resetSettings();'>Reset Settings</button>
@@ -119,17 +124,52 @@ class Slideshow {
 		<br />
 		<p>Insert Backgrounds:</p>
 		<table id='pseudoslideshow-backgrounds' class='pseudotable'>
-		<tr id='pseudoslideshow-backgrounds-header' class='pseudotable-header'><th class='pseudotable-header-obj pseudotable-image'>Image <span class='pseudotable-hint'>(URL)</span></th><th class='pseudotable-header-obj pseudotable-opacity'>Opacity <span class='pseudotable-hint'>(0.0-1.0)</span></th><th class='pseudotable-header-obj pseudotable-color'>Screen Color <span class='pseudotable-hint'>(r, g, b)</span></th></tr>` + backgroundList + `</table>`;
+		<tr id='pseudoslideshow-backgrounds-header' class='pseudotable-header'><th class='pseudotable-row-obj pseudotable-checkbox'></th><th class='pseudotable-header-obj pseudotable-image'>Image <span class='pseudotable-hint'>(URL)</span></th><th class='pseudotable-header-obj pseudotable-opacity'>Opacity <span class='pseudotable-hint'>(0.0-1.0)</span></th><th class='pseudotable-header-obj pseudotable-color'>Screen Color <span class='pseudotable-hint'>(r, g, b)</span></th></tr>` + backgroundList + `</table>`;
 		return ret;
+	}
+	
+	toggleCheck(ele, status) {
+		var jElem = $(ele.nextSibling);
+		var check = jElem.children().eq(0).children().eq(0).children().eq(0);
+		if (status) {
+			ele.checked = true;
+			jElem.css('border-color', 'rgb(114, 137, 218)');
+			jElem.addClass('checked-3_4uQ9 da-checked');
+			check.attr('stroke', '#7289da');
+		} else {
+			ele.checked = false;
+			jElem.css('border-color', '');
+			jElem.removeClass('checked-3_4uQ9 da-checked');
+			check.attr('stroke', 'transparent');
+		}
+	}
+	
+	check(ele) {
+		if (ele.checked) {
+			var eleId = parseInt(ele.parentElement.parentElement.parentElement.index() - 1);
+			if (eleId < backgrounds.length) {
+				this.toggleCheck(ele, true);
+				var rows = ele.parentElement.parentElement.parentElement.parentElement.children;
+				for (var i = 0; i < backgrounds.length; i++) {
+					if (i != eleId) {
+						this.toggleCheck(rows[i + 1].children[0].children[0].children[0], false);
+					}
+				}
+				backgroundIndex = eleId;
+				this.resetImage();
+			} else
+				ele.checked = false;
+		} else
+			ele.checked = true;
 	}
 	
 	backgroundInput(ele) {
 		if(event.key === 'Enter') {
 			var eleId = parseInt(ele.parentElement.parentElement.index() - 1);
 			var row = $(ele.parentElement.parentElement);
-			var eleImage = row.children().eq(0).children().eq(0);
-			var eleOpacity = row.children().eq(1).children().eq(0);
-			var eleColor = row.children().eq(2).children().eq(0);
+			var eleImage = row.children().eq(1).children().eq(0);
+			var eleOpacity = row.children().eq(2).children().eq(0);
+			var eleColor = row.children().eq(3).children().eq(0);
 			if (eleId >= backgrounds.length) {
 				var newImage = eleImage.val();
 				var newOpacity = eleOpacity.val()
@@ -139,7 +179,7 @@ class Slideshow {
 					$('#betterdiscord-background').append('<div style="display:none;width:100%;height:100%;left:0px;top:0px;position:absolute;background-size:cover;z-index:-3;background-image:' + this.genBackgroundImage(eleId) + '"></div>');
 					this.stopInterval();
 					this.startInterval();
-					$('#pseudoslideshow-backgrounds').append(`<tr class='pseudotable-row'><td class='pseudotable-row-obj pseudotable-image'><input class='pseudotable-input' onkeydown='BdApi.getPlugin("Slideshow").backgroundInput(this)' value=''></input></td><td class='pseudotable-row-obj pseudotable-opacity'><input class='pseudotable-input' onkeydown='BdApi.getPlugin("Slideshow").backgroundInput(this)' value=''></input></td><td class='pseudotable-row-obj pseudotable-color'><input class='pseudotable-input' onkeydown='BdApi.getPlugin("Slideshow").backgroundInput(this)' value=''></input></td></tr>`);
+					$('#pseudoslideshow-backgrounds').append(`<tr class='pseudotable-row'><td class='pseudotable-row-obj pseudotable-checkbox'><label class='checkboxWrapper-SkhIWG da-checkboxWrapper alignTop-1ntJ4-'><input class='inputDefault-3JxKJ2 input-3ITkQf da-inputDefault da-input' type='checkbox' style='width: 24px; height: 24px;' onclick='BdApi.getPlugin("Slideshow").check(this);'><div class='checkbox-1ix_J3 flexCenter-3_1bcw flex-1O1GKY justifyCenter-3D2jYp alignCenter-1dQNNs da-checkbox da-flexCenter da-flex da-justifyCenter da-alignCenter box-mmYMsp' style='width: 24px; height: 24px;'><svg name='Checkmark' aria-hidden='true' width='18' height='18' viewBox='0 0 18 18' xmlns='http://www.w3.org/2000/svg'><g fill='none' fill-rule='evenodd'><polyline stroke='transparent' stroke-width='2' points='3.5 9.5 7 13 15 5'></polyline></g></svg></div></label></td><td class='pseudotable-row-obj pseudotable-image'><input class='pseudotable-input' onkeydown='BdApi.getPlugin("Slideshow").backgroundInput(this)' value=''></input></td><td class='pseudotable-row-obj pseudotable-opacity'><input class='pseudotable-input' onkeydown='BdApi.getPlugin("Slideshow").backgroundInput(this)' value=''></input></td><td class='pseudotable-row-obj pseudotable-color'><input class='pseudotable-input' onkeydown='BdApi.getPlugin("Slideshow").backgroundInput(this)' value=''></input></td></tr>`);
 					this.saveBackgrounds();
 				}
 			} else {
