@@ -28,7 +28,7 @@ var backgroundIndex = 0;
 class Slideshow {
     getName() { return "Slideshow"; }
     getDescription() { return "Turns the background into a slideshow"; }
-    getVersion() { return "3.1.1"; }
+    getVersion() { return "3.1.2"; }
     getAuthor() { return "PseudoResonance"; }
 
     start() {
@@ -186,12 +186,12 @@ class Slideshow {
 			var eleImage = row.children().eq(1).children().eq(0);
 			var eleOpacity = row.children().eq(2).children().eq(0);
 			var eleColor = row.children().eq(3).children().eq(0);
+			var newImage = eleImage.val();
+			var newOpacity = eleOpacity.val();
+			var newColor = eleColor.val();
 			if (eleId >= backgrounds.length) {
-				var newImage = eleImage.val();
-				var newOpacity = eleOpacity.val()
-				var newColor = eleColor.val()
 				if (newImage.length != 0 && newOpacity.length != 0 && newColor.length != 0 && this.isOpacityValid(newOpacity, eleOpacity) && this.isColorValid(newColor, eleColor) && this.isImageValid(newImage, eleImage)) {
-					backgrounds.push({link:newImage, opacity:parseFloat(newOpacity), color:newColor})
+					backgrounds.push({link:newImage, opacity:parseFloat(newOpacity), color:newColor});
 					$('#betterdiscord-background').append('<div style="display:none;width:100%;height:100%;left:0px;top:0px;position:absolute;background-size:cover;z-index:-3;background-image:' + this.genBackgroundImage(eleId) + '"></div>');
 					this.stopInterval();
 					this.startInterval();
@@ -200,9 +200,6 @@ class Slideshow {
 				}
 			} else {
 				var bgEle = $('#betterdiscord-background div:nth-child(' + (eleId + 1) + ')');
-				var newImage = eleImage.val();
-				var newOpacity = eleOpacity.val()
-				var newColor = eleColor.val()
 				if (newImage.length == 0 && newOpacity.length == 0 && newColor.length == 0) {
 					backgrounds.splice(eleId, 1);
 					bgEle.remove();
