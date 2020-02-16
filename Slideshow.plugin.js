@@ -2,17 +2,17 @@
 
 // List of all pictures to use as backgrounds with opacity and color of transparent screen
 var defaultBackgrounds = [
-{link:"https://i.imgur.com/xjmfk81.jpg", opacity:0.5, color:"0, 0, 0"},
-{link:"https://i.imgur.com/XDzFDVJ.jpg", opacity:0.55, color:"0, 0, 0"},
-{link:"https://i.imgur.com/Ey80Lpp.jpg", opacity:0.65, color:"0, 0, 0"},
-{link:"https://i.imgur.com/t0v923r.jpg", opacity:0.5, color:"0, 0, 0"},
-{link:"https://i.imgur.com/JTtvGOw.jpg", opacity:0.6, color:"0, 0, 0"},
-{link:"https://i.imgur.com/avzaqfC.jpg", opacity:0.55, color:"0, 0, 0"},
-{link:"https://i.imgur.com/MPXZh2E.jpg", opacity:0.4, color:"0, 0, 0"},
-{link:"https://i.imgur.com/x6oKs2B.jpg", opacity:0.55, color:"0, 0, 0"},
-{link:"https://i.imgur.com/0xTS9zY.jpg", opacity:0.45, color:"0, 0, 0"},
-{link:"https://i.imgur.com/fEZUUxQ.jpg", opacity:0.5, color:"0, 0, 0"},
-{link:"https://i.imgur.com/OBIAgWl.jpg", opacity:0.55, color:"0, 0, 0"}
+{link:"https://i.imgur.com/xjmfk81.jpg", opacity:0.55, color:"0, 0, 0"},
+{link:"https://i.imgur.com/XDzFDVJ.jpg", opacity:0.65, color:"0, 0, 0"},
+{link:"https://i.imgur.com/Ey80Lpp.jpg", opacity:0.72, color:"0, 0, 0"},
+{link:"https://i.imgur.com/t0v923r.jpg", opacity:0.6, color:"0, 0, 0"},
+{link:"https://i.imgur.com/JTtvGOw.jpg", opacity:0.75, color:"0, 0, 0"},
+{link:"https://i.imgur.com/avzaqfC.jpg", opacity:0.6, color:"0, 0, 0"},
+{link:"https://i.imgur.com/MPXZh2E.jpg", opacity:0.65, color:"0, 0, 0"},
+{link:"https://i.imgur.com/x6oKs2B.jpg", opacity:0.65, color:"0, 0, 0"},
+{link:"https://i.imgur.com/0xTS9zY.jpg", opacity:0.5, color:"0, 0, 0"},
+{link:"https://i.imgur.com/fEZUUxQ.jpg", opacity:0.65, color:"0, 0, 0"},
+{link:"https://i.imgur.com/OBIAgWl.jpg", opacity:0.7, color:"0, 0, 0"}
 ];
 
 var defaultDelay = 600;
@@ -28,7 +28,7 @@ var backgroundIndex = 0;
 class Slideshow {
     getName() { return "Slideshow"; }
     getDescription() { return "Turns the background into a slideshow"; }
-    getVersion() { return "3.1"; }
+    getVersion() { return "3.1.1"; }
     getAuthor() { return "PseudoResonance"; }
 
     start() {
@@ -71,6 +71,7 @@ class Slideshow {
 			BdApi.setData("Slideshow", "index", backgroundIndex);
             if (backgroundIndex >= backgrounds.length) {
 				$('#betterdiscord-background div:nth-child(1)').css("z-index", "-1").fadeIn(speed);
+				BdApi.getPlugin("Slideshow").updateChecks(backgroundIndex);
 				setTimeout(function() {
 					$('#betterdiscord-background div:nth-child(' + backgroundIndex + ')').hide();
 					backgroundIndex = 0;
@@ -79,6 +80,7 @@ class Slideshow {
 				}, speed + 1);
             } else {
 				$('#betterdiscord-background div:nth-child(' + (backgroundIndex + 1) + ')').css("z-index", "-1").fadeIn(speed);
+				BdApi.getPlugin("Slideshow").updateChecks(backgroundIndex);
 				setTimeout(function() {
 					$('#betterdiscord-background div:nth-child(' + backgroundIndex + ')').hide();
 					$('#betterdiscord-background div:nth-child(' + (backgroundIndex + 1) + ')').css("z-index", "-3");
@@ -144,6 +146,19 @@ class Slideshow {
 		}
 	}
 	
+	updateChecks(id) {
+		var rowParent = document.getElementById("pseudoslideshow-backgrounds");
+		if (rowParent != null) {
+			var rows = rowParent.children[0].children;
+			for (var i = 0; i < backgrounds.length; i++) {
+				if (i != id)
+					this.toggleCheck(rows[i + 1].children[0].children[0].children[0], false);
+				else
+					this.toggleCheck(rows[i + 1].children[0].children[0].children[0], true);
+			}
+		}
+	}
+	
 	check(ele) {
 		if (ele.checked) {
 			var eleId = parseInt(ele.parentElement.parentElement.parentElement.index() - 1);
@@ -151,12 +166,13 @@ class Slideshow {
 				this.toggleCheck(ele, true);
 				var rows = ele.parentElement.parentElement.parentElement.parentElement.children;
 				for (var i = 0; i < backgrounds.length; i++) {
-					if (i != eleId) {
+					if (i != eleId)
 						this.toggleCheck(rows[i + 1].children[0].children[0].children[0], false);
-					}
 				}
 				backgroundIndex = eleId;
+				this.stopInterval();
 				this.resetImage();
+				this.startInterval();
 			} else
 				ele.checked = false;
 		} else
