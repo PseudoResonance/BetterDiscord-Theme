@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.6.20"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.7.0"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "v2.6.20";
+	--version: "v2.7.0";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -19,6 +19,7 @@ body {
 	--elevation-low: 0;
 	--elevation-high: 0;
 	--blur-radius: 10px;
+	--background-secondary: rgba(47, 49, 54, 0.4);
 }
 
 /* Table */
@@ -50,8 +51,12 @@ body {
 	font-size:100%;
 }
 
+.pseudotable-checkbox {
+	width:1rem;
+}
+
 .pseudotable-image {
-	width:calc(100% - 13rem);
+	width:calc(100% - 14rem);
 }
 
 .pseudotable-opacity {
@@ -221,7 +226,7 @@ body {
 }
 
 /* Transparent background for friends page */
-.da-base .da-content .da-sidebar .da-privateChannels, .da-base .da-content .da-container, .da-base .da-content .da-container .da-container, .da-base .da-content .da-container .da-tabBody, .da-peopleColumn, .da-nowPlayingColumn, .da-emptyCard {
+.da-base .da-content .da-sidebar .da-privateChannels, .da-base .da-content .da-container, .da-base .da-content .da-container .da-container, .da-base .da-content .da-container .da-tabBody, .da-peopleColumn, .da-nowPlayingColumn, .da-emptyCard, .card-2qZngs {
 	background: transparent !important;
 }
 
