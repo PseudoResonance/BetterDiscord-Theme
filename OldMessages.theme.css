@@ -1,4 +1,4 @@
-//META{"name":"OldMessages","description":"Restores old messages style","author":"PseudoResonance","version":"1.1.4"}*//
+//META{"name":"OldMessages","description":"Restores old messages style","author":"PseudoResonance","version":"1.1.5"}*//
 
 :root {
 	--message-spacing:1.0625rem;
@@ -136,12 +136,8 @@
 	display:none;
 }
 
-.messages-3amgkR .divider-3_HH5L:not(.isUnread-3Ef-o9) + .groupStart-23k01U {
+.messages-3amgkR .divider-3_HH5L + .groupStart-23k01U {
 	margin-top:calc(var(--message-spacing) * 0.5);
-}
-
-.messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 + .groupStart-23k01U {
-	margin-top:var(--message-spacing);
 }
 
 /* Spacing between messages within a group */
@@ -183,6 +179,10 @@
 .messages-3amgkR .divider-3_HH5L span::before, .messages-3amgkR .divider-3_HH5L span::after {
 	content:'';
 	flex:1;
+}
+
+.messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 span:nth-child(2) {
+	display:none;
 }
 
 /* New message color */
