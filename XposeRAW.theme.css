@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.7.1"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.7.2"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "v2.7.1";
+	--version: "v2.7.2";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -156,6 +156,10 @@ body {
 
 .da-markup > pre > code {
 	border: 1px solid rgba(20, 20, 20, 0.8) !important;
+	background: rgba(0, 0, 0, 0.65) !important;
+}
+
+.markup-2BOw-j > code {
 	background: rgba(0, 0, 0, 0.65) !important;
 }
 
