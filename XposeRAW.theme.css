@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.7.2"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.8.0"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "v2.7.2";
+	--version: "v2.8.0";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -145,30 +145,49 @@ body {
 	background: transparent !important;
 }
 
+/* Transparent placeholder guilds */
+.childWrapper-anI2G9, .circleIconButton-jET_ig {
+	background-color:rgba(54,57,63,0.85) !important;
+}
+
 /* Transparent background for main content */
 .da-appMount, .da-app, .da-bg, .da-guilds, .da-base .da-content .da-sidebar .da-container, .da-layer .da-container .da-wrapper, .da-base .da-content .da-sidebar .da-panels, .da-base .da-content .da-chat, .da-base .da-content .da-chat .da-container, .da-base .da-content .da-chat .da-content, .da-base .da-content .da-chat .da-content .da-membersWrap .da-scrollerWrap .da-scroller, .da-channelTextArea, .da-channelTextArea .scrollableContainer-2NUZem, .da-searchBar, .da-scroller, .da-sidebar, .da-expandedFolderBackground .da-collapsed {
 	background: transparent;
 }
 
 .da-embedWrapper {
-	background: rgba(47, 49, 54, 0.4) !important;
+	background: rgba(47, 49, 54, 0.2) !important;
+	backdrop-filter: blur(var(--blur-radius));
 }
 
 .da-markup > pre > code {
 	border: 1px solid rgba(20, 20, 20, 0.8) !important;
-	background: rgba(0, 0, 0, 0.65) !important;
+	background: rgba(0, 0, 0, 0.3) !important;
+	backdrop-filter: blur(var(--blur-radius));
 }
 
 .markup-2BOw-j > code {
-	background: rgba(0, 0, 0, 0.65) !important;
+	background: rgba(0, 0, 0, 0.3) !important;
+	backdrop-filter: blur(var(--blur-radius));
 }
 
-.da-expandedFolderBackground {
-	background: rgba(47, 49, 54, 0.7);
+.expandedFolderBackground-2sPsd-:not(.collapsed-1GMuSb) {
+	background: rgba(47, 49, 54, 0.4);
+	backdrop-filter: blur(var(--blur-radius));
 }
 
 .da-folder {
 	background: rgba(47, 49, 54, 0.5) !important;
+}
+
+.theme-dark .lookFilled-1Gx00P.colorPrimary-3b3xI6 {
+	background-color:rgba(79,84,92,0.5) !important;
+	backdrop-filter: blur(var(--blur-radius));
+}
+
+.lookFilled-1Gx00P.colorBrand-3pXr91 {
+	background-color:rgba(114,137,218,0.3) !important;
+	backdrop-filter: blur(var(--blur-radius));
 }
 
 /* Transparent New Messages / Jump to Bottom */
@@ -198,9 +217,9 @@ body {
 }
 
 .hit-NLlWXA {
-	background: rgba(47, 49, 54, 0.7) !important;
+	background: rgba(47, 49, 54, 0.2) !important;
 	border: none !important;
-	border:thin solid rgb(47, 49, 54) !important;
+	border:thin solid rgba(47, 49, 54, 0.4) !important;
 	backdrop-filter: blur(var(--blur-radius));
 	border-radius:0px !important;
 	box-shadow:none !important;
@@ -285,32 +304,36 @@ body {
 }
 
 /* Transparent background for popouts */
-.layerContainer-yqaFcK, .layer-v9HyYc, .emojiPicker-3m1S-j, .bodyInner-245q0L, .layer-v9HyYc > div:not(.contextMenu-HLZMGh) > div:not(.userPopout-3XzG_A) > div, .messagesPopoutWrap-1MQ1bW, .messageGroupWrapper-o-Zw7G {
+.layerContainer-yqaFcK, .layer-v9HyYc, .emojiPicker-3m1S-j, .bodyInner-245q0L, .layer-v9HyYc > div:not(.contextMenu-HLZMGh) > div:not(.userPopout-3XzG_A):not(.infoBar-U6oBFk):not(.diversitySelector-tmmMv0) > div, .messagesPopoutWrap-1MQ1bW, .messageGroupWrapper-o-Zw7G {
 	background: transparent !important;
 }
 
 .popout-38lTFE, .contextMenu-HLZMGh, .layer-v9HyYc > div:not(.contextMenu-HLZMGh) > div:not(.userPopout-3XzG_A):not(.rowGuildName-X4ae9_):not(.tooltipPointer-3ZfirK), .menu-Sp6bN1, .footer-1fjuF6, .body-3iLsc4, .autocomplete-1vrmpx, .container-3ayLPN, .tooltip-2QfLtc, .toolbar-2bjZV7 {
-	background: rgba(45, 45, 45, 0.9) !important;
+	background: rgba(45, 45, 45, 0.35) !important;
+}
+
+.tooltipPointer-3ZfirK, .toolbar-2bjZV7::before {
+	border-top-color:rgba(45, 45, 45, 0.35) !important;
 }
 
 .headerNormal-T_seeN {
-	background: rgba(32, 34, 37, 0.95) !important;
+	background: rgba(22, 24, 27, 0.45) !important;
 }
 
 .headerPlaying-j0WQBV {
-	background: rgba(114, 137, 218, 0.8) !important;
+	background: rgba(114, 137, 218, 0.35) !important;
 }
 
 .headerSpotify-zpWxgT {
-	background: rgba(29, 185, 84, 0.8) !important;
+	background: rgba(29, 185, 84, 0.3) !important;
 }
 
 .headerXbox-3G-4PF {
-	background: rgba(16, 124, 16, 0.8) !important;
+	background: rgba(16, 124, 16, 0.4) !important;
 }
 
 .headerStreaming-2FjmGz {
-	background: rgba(89, 54, 149, 0.85) !important;
+	background: rgba(89, 54, 149, 0.45) !important;
 }
 
 .selectorSelected-1_M1WV, .selected-rZcOL-, .messageGroupWrapper-o-Zw7G:hover {
@@ -321,19 +344,30 @@ body {
 	display:none;
 }
 
-.tooltipPointer-3ZfirK, .toolbar-2bjZV7::before {
-	border-top-color:rgba(45, 45, 45, 0.9) !important;
+.quickMessage-2XpSaN {
+	background-color: rgba(54, 57, 63, 0.3) !important;
+}
+
+.popout-2nUePc {
+	background: rgba(45, 45, 45, 0.35) !important;
+	border-color:rgba(45, 45, 45, 0.9) !important;
+}
+
+/* Activities list buttons */
+
+.memberListItem-31QoHj:hover, .enabled-1t_Gxm:hover {
+	background-color:rgba(45, 45, 45, 0.3) !important;
 }
 
 /* Blur popups */
-.popout-2iWAc-, .popout-38lTFE, .contextMenu-HLZMGh, .layer-v9HyYc > div:not(.contextMenu-HLZMGh) > div:not(.scrollerWrap-2lJEkd):not(.rowGuildName-X4ae9_), .layer-v9HyYc > div:not(.contextMenu-HLZMGh) > div:not(.userPopout-3XzG_A):not(.rowGuildName-X4ae9_) > div, .menu-Sp6bN1, .autocomplete-1vrmpx, .container-3ayLPN, .messagesPopoutWrap-1MQ1bW, .tooltip-2QfLtc, .toolbar-2bjZV7, .tooltipPointer-3ZfirK, .toolbar-2bjZV7::before {
+.popout-2iWAc-, .popout-38lTFE, .contextMenu-HLZMGh, .layer-v9HyYc > div:not(.contextMenu-HLZMGh) > div:not(.scrollerWrap-2lJEkd):not(.rowGuildName-X4ae9_), .layer-v9HyYc > div:not(.contextMenu-HLZMGh):not(.animatorLeft-1EQxU0) > div:not(.userPopout-3XzG_A):not(.rowGuildName-X4ae9_):not(.infoBar-U60BFk):not(.premiumPromo-yVfLiA):not(.header-1nkwgG):not(.infoBar-U6oBFk):not(.categories-1feg4n) > div:not(.memberListContainer-13tNU9), .menu-Sp6bN1, .autocomplete-1vrmpx, .container-3ayLPN, .messagesPopoutWrap-1MQ1bW, .tooltip-2QfLtc, .toolbar-2bjZV7, .tooltipPointer-3ZfirK, .toolbar-2bjZV7::before {
 	backdrop-filter: blur(var(--blur-radius));
 	box-shadow:none !important;
 }
 
 /* Transparent buttons */
 .actionButton-uPB8Fs {
-	background: rgba(47, 49, 54, 0.7) !important;
+	background: rgba(47, 49, 54, 0.45) !important;
 	backdrop-filter: blur(var(--blur-radius));
 }
 
