@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.8.0"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.8.1"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "v2.8.0";
+	--version: "v2.8.1";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -567,6 +567,7 @@ body {
 	top: 0px !important;
 	left: 0px !important;
 	background: transparent !important;
+	box-shadow:none !important;
 }
 
 .uploadModal-2ifh8j div {
