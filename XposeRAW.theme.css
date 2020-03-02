@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.8.2"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.8.3"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "v2.8.2";
+	--version: "v2.8.3";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -361,7 +361,6 @@ body {
 }
 
 /* Activities list buttons */
-
 .memberListItem-31QoHj:hover, .enabled-1t_Gxm:hover {
 	background-color:rgba(45, 45, 45, 0.3) !important;
 }
@@ -462,10 +461,15 @@ body {
 /* Margin on text to accomodate buttons */
 .messages-3amgkR .message-2qnXI6 .markup-2BOw-j::before {
 	content:'';
-	width:18px;
+	width:20px;
 	height:16px;
 	display:inline-flex;
 	float:right;
+}
+
+/* Make text area wider */
+.messages-3amgkR .message-2qnXI6 {
+	padding-right:0.875rem;
 }
 
 /* Rotate settings button */
