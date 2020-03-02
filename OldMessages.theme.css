@@ -1,4 +1,4 @@
-//META{"name":"OldMessages","description":"Restores old messages style","author":"PseudoResonance","version":"1.1.6"}*//
+//META{"name":"OldMessages","description":"Restores old messages style","author":"PseudoResonance","version":"1.1.7"}*//
 
 :root {
 	--message-spacing:1.0625rem;
@@ -6,7 +6,7 @@
 }
 
 body {
-	--version: "v1.1.6";
+	--version: "v1.1.7";
 }
 
 /* Disable message hover */
@@ -81,7 +81,7 @@ body {
 .buttonContainer-DHceWr .buttons-cl5qTG {
 	top:-5px;
 	background-color:transparent !important;
-	padding-right:0px;
+	padding-right:0.875rem;
 }
 
 .messages-3amgkR .message-2qnXI6.mentioned-xhSam7 .buttonContainer-DHceWr .buttons-cl5qTG div, .buttonContainer-DHceWr, .buttonContainer-DHceWr .buttons-cl5qTG div {
@@ -89,7 +89,7 @@ body {
 }
 
 .messages-3amgkR .groupStart-23k01U .buttonContainer-DHceWr {
-	top:var(--header-height);
+	top:calc(var(--header-height) + 2px);
 }
 
 .buttonContainer-DHceWr .buttons-cl5qTG div .button-1ZiXG9 {
@@ -104,7 +104,7 @@ body {
 /* Margin on text to accomodate buttons */
 .messages-3amgkR .message-2qnXI6 .markup-2BOw-j::before {
 	content:'';
-	width:20px;
+	width:2.1rem;
 	height:16px;
 	display:inline-flex;
 	float:right;
