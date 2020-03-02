@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.8.3"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.8.4"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "v2.8.3";
+	--version: "v2.8.4";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -438,7 +438,7 @@ body {
 .buttonContainer-DHceWr .buttons-cl5qTG {
 	top:-5px;
 	background-color:transparent !important;
-	padding-right:0px;
+	padding-right:0.875rem;
 }
 
 .messages-3amgkR .message-2qnXI6.mentioned-xhSam7 .buttonContainer-DHceWr .buttons-cl5qTG div, .buttonContainer-DHceWr, .buttonContainer-DHceWr .buttons-cl5qTG div {
@@ -446,7 +446,7 @@ body {
 }
 
 .messages-3amgkR .groupStart-23k01U .buttonContainer-DHceWr {
-	top:var(--header-height);
+	top:calc(var(--header-height) + 2px);
 }
 
 .buttonContainer-DHceWr .buttons-cl5qTG div .button-1ZiXG9 {
@@ -461,7 +461,7 @@ body {
 /* Margin on text to accomodate buttons */
 .messages-3amgkR .message-2qnXI6 .markup-2BOw-j::before {
 	content:'';
-	width:20px;
+	width:2.1rem;
 	height:16px;
 	display:inline-flex;
 	float:right;
