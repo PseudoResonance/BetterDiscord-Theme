@@ -680,6 +680,12 @@ code.inline {
 }
 
 /* Display version info */
+.sidebar-CFHs9e .side-8zPYf6 .info-1VyQPT::after {
+	content: "Xpose Theme Version: " var(--version);
+	color: var(--text-muted);
+	font-size: 12px;
+	line-height: 16px;
+}
 .bda-slist > li[data-name="XposeLoader"] > .bda-header > .bda-header-title::after {
 	content: "Theme Version: " var(--version);
 	padding-left:1em;
