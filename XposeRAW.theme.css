@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.8.5"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.8.6"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "v2.8.5";
+	--version: "v2.8.6";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -134,13 +134,19 @@ body {
 }
 
 /* Shrink guilds inside expanded folder */
-.expandedGuilds-1JMD4M > .listItem-2P_4kh > div > div > svg, .expandedGuilds-1JMD4M > .listItem-2P_4kh > div > div {
+.expandedFolderBackground-2sPsd- ~ div[role=group] > .listItem-2P_4kh > div > .wrapper-25eVIn, .expandedFolderBackground-2sPsd- ~ div[role=group] > .listItem-2P_4kh > div > .wrapper-25eVIn > svg {
 	width: 38px;
 	height: 38px;
 }
 
-.expandedGuilds-1JMD4M {
+div.wrapper-21YSNc[role=treeitem], div.wrapper-21YSNc[role=treeitem] > div[role=group] {
 	height: auto !important;
+}
+
+.expandedFolderBackground-2sPsd- {
+	bottom:auto;
+	top:auto;
+	height:100%;
 }
 
 .expandedFolderBackground-2sPsd-:not(.da-collapsed) + div:nth-child(2) .wrapper-25eVIn svg foreignObject div {
@@ -166,11 +172,13 @@ body {
 	border: 1px solid rgba(20, 20, 20, 0.8) !important;
 	background: rgba(0, 0, 0, 0.3) !important;
 	backdrop-filter: blur(var(--blur-radius));
+	border-radius:0 !important;
 }
 
-.markup-2BOw-j > code {
-	background: rgba(0, 0, 0, 0.3) !important;
+code.inline {
+	background: rgba(0, 0, 0, 0.5) !important;
 	backdrop-filter: blur(var(--blur-radius));
+	border-radius:0 !important;
 }
 
 .expandedFolderBackground-2sPsd-:not(.collapsed-1GMuSb) {
@@ -306,7 +314,7 @@ body {
 }
 
 /* Transparent background for popouts */
-.layerContainer-yqaFcK, .layer-v9HyYc, .emojiPicker-3m1S-j, .bodyInner-245q0L, .layer-v9HyYc > div:not(.contextMenu-HLZMGh) > div:not(.userPopout-3XzG_A):not(.infoBar-U6oBFk):not(.diversitySelector-tmmMv0) > div, .messagesPopoutWrap-1MQ1bW, .messageGroupWrapper-o-Zw7G {
+.layerContainer-yqaFcK, .layer-v9HyYc, .emojiPicker-3m1S-j, .bodyInner-245q0L, .layer-v9HyYc > div:not(.contextMenu-HLZMGh) > div:not(.userPopout-3XzG_A):not(.infoBar-U6oBFk):not(.diversitySelector-tmmMv0) > div, .messagesPopoutWrap-1MQ1bW, .messageGroupWrapper-o-Zw7G, .headerFill-adLl4x {
 	background: transparent !important;
 }
 
@@ -318,23 +326,23 @@ body {
 	border-top-color:rgba(45, 45, 45, 0.4) !important;
 }
 
-.headerNormal-T_seeN {
+.headerNormal-T_seeN, .topSectionNormal-2-vo2m {
 	background: rgba(22, 24, 27, 0.45) !important;
 }
 
-.headerPlaying-j0WQBV {
+.headerPlaying-j0WQBV, .topSectionPlaying-1J5E4n {
 	background: rgba(114, 137, 218, 0.35) !important;
 }
 
-.headerSpotify-zpWxgT {
-	background: rgba(29, 185, 84, 0.3) !important;
+.headerSpotify-zpWxgT, .topSectionSpotify-1lI0-P {
+	background: rgba(29, 185, 84, 0.4) !important;
 }
 
-.headerXbox-3G-4PF {
+.headerXbox-3G-4PF, .topSectionXbox-3fWLjS {
 	background: rgba(16, 124, 16, 0.4) !important;
 }
 
-.headerStreaming-2FjmGz {
+.headerStreaming-2FjmGz, .topSectionStreaming-1Tpf5X {
 	background: rgba(89, 54, 149, 0.45) !important;
 }
 
