@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.9.2"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.9.3"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "v2.9.2";
+	--version: "v2.9.3";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -39,6 +39,7 @@ body {
 	--activity-card-background: transparent;
 	--background-mentioned: transparent;
 	--background-mentioned-hover: transparent;
+	--border-color: rgba(255, 255, 255, 0.06);
 }
 
 .theme-light {
@@ -61,6 +62,7 @@ body {
 	--activity-card-background: transparent;
 	--background-mentioned: transparent;
 	--background-mentioned-hover: transparent;
+	--border-color: rgba(255, 255, 255, 0.06);
 }
 
 /* Table */
@@ -69,7 +71,7 @@ body {
 }
 
 .pseudotable, .pseudotable-header, .pseudotable-row, .pseudotable-header-obj, .pseudotable-row-obj {
-	border: thin solid var(--background-modifier-accent);
+	border: thin solid var(--border-color);
 	border-collapse: collapse;
 }
 
@@ -319,6 +321,19 @@ code.inline {
 	background: rgba(89, 54, 149, 0.45) !important;
 }
 
+.activityUserPopout-2yItg2, .headerFill-adLl4x {
+	background: transparent !important;
+}
+
+/* Border underneath user popout header */
+.header-QKLPzZ {
+	border-bottom:thin solid var(--border-color);
+}
+
+.tabBarContainer-1s1u-z, .activityUserPopout-2yItg2 {
+	border-top:thin solid var(--border-color);
+}
+
 /* Transparent background for nitro page */
 .applicationStore-1pNvnv {
 	background: transparent !important;
@@ -335,7 +350,7 @@ code.inline {
 }
 
 /* Blur popups */
-.layerContainer-yqaFcK > div > div, .tooltipPointer-3ZfirK, .container-3ISnnM, .modal-3c3bKg > .inner-1ilYF7 > .flex-2xMQg5, .autocomplete-1vrmpx {
+.layerContainer-yqaFcK > div > div, .tooltipPointer-3ZfirK, .container-3ISnnM, .autocomplete-1vrmpx {
 	backdrop-filter: blur(var(--blur-radius));
 	box-shadow:none !important;
 	background-color: var(--background-floating) !important;
@@ -346,6 +361,33 @@ code.inline {
 	box-shadow:none !important;
 	border-top-color: var(--background-floating) !important;
 	background-color:transparent !important;
+}
+
+.modal-3c3bKg > .inner-1ilYF7 div[class^="topSection"], .modal-3c3bKg > .inner-1ilYF7 div[class^="topSection"] + div {
+	backdrop-filter: blur(var(--blur-radius));
+	box-shadow:none !important;
+}
+
+/* Add role popout fix */
+.header-2bNvm4 {
+	background-color:transparent !important;
+	border-bottom:thin solid var(--border-color);
+}
+
+.sectionTag-pXyto9 {
+	background-color:transparent !important;
+}
+
+.autocompleteShadow-iiGWFU {
+	display:none !important;
+}
+
+.row-rrHHJU.selected-1pIgLL {
+	background: var(--background-modifier-hover) !important;
+}
+
+.autocompleteScroller-iInVqR {
+	overflow-y: auto;
 }
 
 /* Hide line under gif insert header */
@@ -448,7 +490,7 @@ code.inline {
 /* Spacer between message groups */
 .messages-3amgkR .groupStart-23k01U::after {
 	content:'';
-	border-top:thin solid var(--background-modifier-accent);
+	border-top:thin solid var(--border-color);
 	top:calc(0px - var(--message-spacing));
 	left:1rem;
 	right:0.875rem;
