@@ -1,4 +1,4 @@
-//META{"name":"OldMessages","description":"Restores old messages style","author":"PseudoResonance","version":"1.1.8"}*//
+//META{"name":"OldMessages","description":"Restores old messages style","author":"PseudoResonance","version":"1.1.9"}*//
 
 :root {
 	--message-spacing:1.0625rem;
@@ -6,7 +6,7 @@
 }
 
 body {
-	--version: "v1.1.8";
+	--version: "v1.1.9";
 }
 
 /* Disable message hover */
@@ -25,7 +25,7 @@ body {
 }
 
 /* Mentions - Comment these two sections out if you want to keep the new mention highlighting */
-.messages-3amgkR > .message-2qnXI6.mentioned-xhSam7 > .contents-2mQqc9 > .markup-2BOw-j {
+.messages-3amgkR .message-2qnXI6.mentioned-xhSam7 > .contents-2mQqc9 > .markup-2BOw-j {
 	background-color:var(--background-mentioned) !important;
 	margin-left:-8px;
 	padding-left:4px;
@@ -34,7 +34,7 @@ body {
 	border-radius:3px 0 0 3px;
 }
 
-.messages-3amgkR > .message-2qnXI6.mentioned-xhSam7 > .contents-2mQqc9 > .markup-2BOw-j::before {
+.messages-3amgkR .message-2qnXI6.mentioned-xhSam7 > .contents-2mQqc9 > .markup-2BOw-j::before {
 	content:"";
 	display:block;
 	position:absolute;
@@ -45,10 +45,6 @@ body {
 }
 
 /* Remove emoji suggestions */
-.emojiButton-jE9tXC, .emojiSeparator-10VgEJ {
-	display:none;
-}
-
 .buttonContainer-DHceWr .buttons-cl5qTG div {
 	box-shadow:none !important;
 	border:0px !important;
@@ -60,7 +56,7 @@ body {
 	border-top:thin solid var(--background-modifier-accent);
 }
 
-.messages-3amgkR::after {
+.scroller-3sQKXg:after {
 	height:20px;
 }
 
@@ -210,7 +206,13 @@ body {
 	border-bottom:thin solid var(--text-muted);
 }
 
-/* Display version info */
+/* Display version info */.sidebar-CFHs9e .side-8zPYf6 .info-1VyQPT::after {
+	content: "Old Messages Version: " var(--version);
+	color: var(--text-muted);
+	font-size: 12px;
+	line-height: 16px;
+}
+
 .bda-slist > li[data-name="OldMessagesLoader"] > .bda-header > .bda-header-title::after {
 	content: "Theme Version: " var(--version);
 	padding-left:1em;
