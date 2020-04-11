@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.9.4"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.9.5"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "v2.9.4";
+	--version: "v2.9.5";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -189,6 +189,13 @@ div.wrapper-21YSNc, div.wrapper-21YSNc > div[role=group] {
 .embedWrapper-lXpS3L {
 	background: rgba(47, 49, 54, 0.2) !important;
 	backdrop-filter: blur(var(--blur-radius));
+	border-right: 1px solid rgba(20, 20, 20, 0.2) !important;
+	border-top: 1px solid rgba(20, 20, 20, 0.2) !important;
+	border-bottom: 1px solid rgba(20, 20, 20, 0.2) !important;
+}
+
+.embedFull-2tM8-- {
+	border-left: 4px solid rgb(32, 34, 37);
 }
 
 .markup-2BOw-j > pre > code {
