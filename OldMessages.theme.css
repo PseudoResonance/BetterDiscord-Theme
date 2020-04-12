@@ -1,4 +1,4 @@
-//META{"name":"OldMessages","description":"Restores old messages style","author":"PseudoResonance","version":"1.1.9"}*//
+//META{"name":"OldMessages","description":"Restores old messages style","author":"PseudoResonance","version":"1.1.10"}*//
 
 :root {
 	--message-spacing:1.0625rem;
@@ -6,7 +6,7 @@
 }
 
 body {
-	--version: "v1.1.9";
+	--version: "v1.1.10";
 }
 
 /* Disable message hover */
@@ -186,6 +186,12 @@ body {
 
 .messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 span:nth-child(2) {
 	display:none;
+}
+
+/* Spacing correction */
+.group-spacing-16 .divider-3_HH5L.hasContent-1_DUdQ {
+	margin-top: 20px;
+	margin-bottom: 20px;
 }
 
 /* New message color */
