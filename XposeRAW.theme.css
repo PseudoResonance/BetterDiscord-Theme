@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.9.9"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.9.10"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "v2.9.9";
+	--version: "v2.9.10";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -478,7 +478,7 @@ code.inline {
 }
 
 /* Spacing between message bar and messages */
-.scroller-3sQKXg:after {
+.scrollerSpacer-1Rp0XE {
 	height:10px;
 }
 
