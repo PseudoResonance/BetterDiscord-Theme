@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.9.10"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.9.11"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "v2.9.10";
+	--version: "v2.9.11";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -379,8 +379,14 @@ code.inline {
 	background-color:rgba(45, 45, 45, 0.3) !important;
 }
 
+/* Emoji popup unicode shortcut background */
+.unicodeShortcut-15J8Ck {
+	backdrop-filter: blur(var(--blur-radius));
+	background-color: rgba(0, 0, 0, 0.4) !important;
+}
+
 /* Blur popups */
-.layerContainer-yqaFcK > div > div, .tooltipPointer-3ZfirK, .container-3ISnnM, .autocomplete-1vrmpx, .unread-1xRYoj, .popouts-2bnG9Z > div, .toolbar-2bjZV7 {
+.layerContainer-yqaFcK > div > div:not(.focusLock-Ns3yie), .tooltipPointer-3ZfirK, .container-3ISnnM, .autocomplete-1vrmpx, .unread-1xRYoj, .popouts-2bnG9Z > div, .toolbar-2bjZV7, #emoji-picker-tab-panel {
 	backdrop-filter: blur(var(--blur-radius));
 	box-shadow:none !important;
 	background-color: var(--background-floating) !important;
