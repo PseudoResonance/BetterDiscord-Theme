@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.9.11"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.9.12"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "v2.9.11";
+	--version: "v2.9.12";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -65,6 +65,11 @@ body {
 	--background-mentioned: transparent;
 	--background-mentioned-hover: transparent;
 	--border-color: rgba(255, 255, 255, 0.06);
+}
+
+/* BetterDiscord Color */
+.theme-dark #bd-settings-sidebar .ui-tab-bar-item.selected {
+	background-color:var(--background-modifier-selected);
 }
 
 /* Table */
@@ -163,7 +168,7 @@ body {
 }
 
 /* Shrink guilds inside expanded folder */
-.expandedFolderBackground-2sPsd- ~ div[role=group] > .listItem-2P_4kh > div > .wrapper-25eVIn, .expandedFolderBackground-2sPsd- ~ div[role=group] > .listItem-2P_4kh > div > .wrapper-25eVIn > svg {
+.expandedFolderBackground-2sPsd- ~ div[role=group] > .listItem-2P_4kh > div > .wrapper-25eVIn, .expandedFolderBackground-2sPsd- ~ div[role=group] > .listItem-2P_4kh > div > .wrapper-25eVIn > svg, .expandedFolderBackground-2sPsd- ~ div[role=group] > .listItem-2P_4kh > .pill-31IEus {
 	width: 38px;
 	height: 38px;
 }
@@ -228,6 +233,10 @@ code.inline {
 
 .unread-1xRYoj:hover, .unread-1xRYoj:active {
 	background-color:var(--background-floating-hover) !important;
+}
+
+.colorDefault-2K3EoJ.focused-3afm-j {
+	background-color:var(--background-floating-hover);
 }
 
 /* Transparent New Messages / Jump to Bottom */
@@ -386,10 +395,15 @@ code.inline {
 }
 
 /* Blur popups */
-.layerContainer-yqaFcK > div > div:not(.focusLock-Ns3yie), .tooltipPointer-3ZfirK, .container-3ISnnM, .autocomplete-1vrmpx, .unread-1xRYoj, .popouts-2bnG9Z > div, .toolbar-2bjZV7, #emoji-picker-tab-panel {
+.layerContainer-yqaFcK > div > div:not(.focusLock-Ns3yie):not(.menu-3sdvDG), .tooltipPointer-3ZfirK, .container-3ISnnM, .autocomplete-1vrmpx, .unread-1xRYoj, .popouts-2bnG9Z > div, .toolbar-2bjZV7, #emoji-picker-tab-panel {
 	backdrop-filter: blur(var(--blur-radius));
 	box-shadow:none !important;
 	background-color: var(--background-floating) !important;
+}
+
+/* Temporary popup menu fix */
+.menu-3sdvDG, .submenu-2-ysNh {
+	background-color:rgba(24, 25, 28, 0.9) !important;
 }
 
 .tooltipPointer-3ZfirK, .toolbar-2bjZV7::before {
