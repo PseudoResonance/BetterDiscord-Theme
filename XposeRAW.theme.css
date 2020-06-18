@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.9.12"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.9.13"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "v2.9.12";
+	--version: "v2.9.13";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -122,41 +122,30 @@ body {
 }
 
 /* Scrollbar */
-.scroller-wrap::-webkit-scrollbar-thumb {
-	background-color: rgba(53, 57, 62, 0.46);
-	border-color: rgba(120, 62, 89, 0);
-}
-
-.scroller-2FKFPG::-webkit-scrollbar {
+.scroller-2FKFPG::-webkit-scrollbar, .scrollerBase-289Jih::-webkit-scrollbar {
 	width:8px;
 }
 
-.scroller-2FKFPG::-webkit-scrollbar-track-piece, .scroller-2FKFPG::-webkit-scrollbar-track {
+.scroller-2FKFPG::-webkit-scrollbar-track-piece, .scroller-2FKFPG::-webkit-scrollbar-track, .scrollerBase-289Jih::-webkit-scrollbar-track-piece, .scrollerBase-289Jih::-webkit-scrollbar-track {
 	background: transparent !important;
 	border: none !important;
 }
 
-.scroller-2FKFPG::-webkit-scrollbar-thumb {
+.scroller-2FKFPG::-webkit-scrollbar-thumb, .scrollerBase-289Jih::-webkit-scrollbar-thumb {
 	background: rgba(255,255,255,0)!important;
 	border: none !important;
 	border-radius:0!important;
-}
-
-.scroller-2FKFPG:hover::-webkit-scrollbar-thumb {
-	background: rgba(255,255,255,.15)!important;
-	border-radius:0!important;
-}
-
-.scroller-2FKFPG::-webkit-scrollbar-thumb {
 	width:4px;
-	border:none;
-	border-radius:0;
-	background:rgba(255,255,255,.08);
 	border-left:6px solid var(--lvl3)!important;
 	display:var(--settings-scrollbar);
 }
 
-.scroller-2FKFPG::-webkit-scrollbar-thumb:active {
+.scroller-2FKFPG:hover::-webkit-scrollbar-thumb, .scrollerBase-289Jih:hover::-webkit-scrollbar-thumb {
+	background: rgba(255,255,255,.15)!important;
+	border-radius:0!important;
+}
+
+.scroller-2FKFPG::-webkit-scrollbar-thumb:active, .scrollerBase-289Jih::-webkit-scrollbar-thumb:active {
 	background:rgba(255,255,255,.12);
 }
 
