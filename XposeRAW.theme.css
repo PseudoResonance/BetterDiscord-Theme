@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.9.15"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.9.16"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "v2.9.15";
+	--version: "v2.9.16";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -69,7 +69,7 @@ body {
 
 /* BetterDiscord Color */
 .theme-dark #bd-settings-sidebar .ui-tab-bar-item.selected {
-	background-color:var(--background-modifier-selected);
+	background-color:var(--background-modifier-hover);
 }
 
 /* Table */
@@ -263,7 +263,7 @@ code.inline {
 	display:none !important;
 }
 
-.option-96V44q.selected-rZcOL- {
+.option-96V44q.selected-rZcOL-, .focused-2bY0OD {
 	background: var(--background-modifier-hover) !important;
 }
 
@@ -393,6 +393,13 @@ code.inline {
 .layerContainer-yqaFcK > div > div:not(.focusLock-Ns3yie):not(.menu-3sdvDG), .tooltipPointer-3ZfirK, .container-3ISnnM, .autocomplete-1vrmpx, .unread-1xRYoj, .popouts-2bnG9Z > div, .toolbar-2bjZV7, #emoji-picker-tab-panel {
 	backdrop-filter: blur(var(--blur-radius));
 	box-shadow:none !important;
+	background-color: var(--background-floating) !important;
+}
+
+/* Blur background of popup notifications */
+.backdrop-1wrmKB, .uploadArea-3QgLtW.uploadModalIn-1z07Bv {
+	backdrop-filter: blur(var(--blur-radius));
+	opacity:1 !important;
 	background-color: var(--background-floating) !important;
 }
 
