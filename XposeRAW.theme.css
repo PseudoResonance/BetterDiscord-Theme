@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.9.18"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.10.0"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "v2.9.18";
+	--version: "v2.10.0";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -73,8 +73,12 @@ body {
 }
 
 /* Hover color */
-.theme-dark .memberListItem-2ZX2pl:not(.popoutDisabled-xucru2):hover {
+.theme-dark .memberListItem-2ZX2pl:not(.popoutDisabled-xucru2):hover, .theme-dark .card-FDVird:before, .theme-dark .gameNameInput-385LoS:focus, .theme-dark .gameNameInput-385LoS:hover {
 	background-color:var(--background-modifier-hover);
+}
+
+.theme-dark .card-FDVird:before {
+	border:none;
 }
 
 /* BetterDiscord Color */
@@ -362,6 +366,14 @@ code.inline {
 	background: transparent !important;
 }
 
+.popouts-2bnG9Z > div > div {
+	background: rgba(45, 45, 45, 0.4) !important;
+}
+
+.css-n57xjs-menu {
+	background-color:rgba(24, 25, 28, 0.9) !important;
+}
+
 /* Border underneath user popout header */
 .header-QKLPzZ {
 	border-bottom:thin solid var(--border-color);
@@ -399,7 +411,7 @@ code.inline {
 }
 
 /* Blur popups */
-.layerContainer-yqaFcK > div > div:not(.focusLock-Ns3yie):not(.menu-3sdvDG):not(.animatorTop-2Y7x2r), .popoutWrapper-eJpzc1, .tooltipPointer-3ZfirK, .container-3ISnnM, .autocomplete-1vrmpx, .unread-1xRYoj, .popouts-2bnG9Z > div, .toolbar-2bjZV7, #emoji-picker-tab-panel {
+.layerContainer-yqaFcK > div > div:not(.focusLock-Ns3yie):not(.menu-3sdvDG):not(.animatorTop-2Y7x2r), .popoutWrapper-eJpzc1, .tooltipPointer-3ZfirK, .container-3ISnnM:not(#gif-picker-tab-panel), .autocomplete-1vrmpx, .unread-1xRYoj, .popouts-2bnG9Z > div, .toolbar-2bjZV7, .contentWrapper-SvZHNd {
 	backdrop-filter: blur(var(--blur-radius));
 	box-shadow:none !important;
 	background-color: var(--background-floating) !important;
