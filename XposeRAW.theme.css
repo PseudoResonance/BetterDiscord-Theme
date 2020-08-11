@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.10.1"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.10.2"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "v2.10.1";
+	--version: "v2.10.2";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -411,7 +411,7 @@ code.inline {
 }
 
 /* Blur popups */
-.layerContainer-yqaFcK > div > div:not(.focusLock-Ns3yie):not(.menu-3sdvDG):not(.animatorTop-2Y7x2r):not(.animatorRight-3i_YPs), .popoutWrapper-eJpzc1, .tooltipPointer-3ZfirK, .container-3ISnnM:not(#gif-picker-tab-panel), .autocomplete-1vrmpx, .unread-1xRYoj, .popouts-2bnG9Z > div, .toolbar-2bjZV7, .contentWrapper-SvZHNd, .noiseCancellationPopout-iRK2A0, .streamPreview-2-WUWT, .container-VSDcQc {
+.layerContainer-yqaFcK > div > div:not(.focusLock-Ns3yie):not(.menu-3sdvDG):not(.animatorRight-3i_YPs), .layerContainer-yqaFcK > div > .animatorRight-3i_YPs > div:not(.streamPreviewWrapper-2DSWOK), .popoutWrapper-eJpzc1, .tooltipPointer-3ZfirK, .container-3ISnnM:not(#gif-picker-tab-panel), .autocomplete-1vrmpx, .unread-1xRYoj, .popouts-2bnG9Z > div, .toolbar-2bjZV7, .contentWrapper-SvZHNd, .streamPreview-2-WUWT {
 	backdrop-filter: blur(var(--blur-radius));
 	box-shadow:none !important;
 	background-color: var(--background-floating) !important;
