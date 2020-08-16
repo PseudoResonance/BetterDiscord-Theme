@@ -1,4 +1,4 @@
-//META{"name":"OldMessages","description":"Restores old messages style","author":"PseudoResonance","version":"1.1.10"}*//
+//META{"name":"OldMessages","description":"Restores old messages style","author":"PseudoResonance","version":"1.2.0"}*//
 
 :root {
 	--message-spacing:1.0625rem;
@@ -6,26 +6,26 @@
 }
 
 body {
-	--version: "v1.1.10";
+	--version: "v1.2.0";
 }
 
 /* Disable message hover */
-.messages-3amgkR .message-2qnXI6:not(.mentioned-xhSam7):hover, .messages-3amgkR .message-2qnXI6:not(.mentioned-xhSam7):active, .messages-3amgkR .message-2qnXI6.selected-2P5D_Z:not(.mentioned-xhSam7) {
+.scrollerInner-2YIMLh .message-2qnXI6:not(.mentioned-xhSam7):hover, .scrollerInner-2YIMLh .message-2qnXI6:not(.mentioned-xhSam7):active, .scrollerInner-2YIMLh .message-2qnXI6.selected-2P5D_Z:not(.mentioned-xhSam7) {
 	background-color:transparent !important;
 }
 
-.messages-3amgkR .message-2qnXI6.mentioned-xhSam7, .messages-3amgkR .message-2qnXI6.mentioned-xhSam7:hover, .messages-3amgkR .message-2qnXI6.mentioned-xhSam7:active, .messages-3amgkR .message-2qnXI6.selected-2P5D_Z.mentioned-xhSam7 {
+.scrollerInner-2YIMLh .message-2qnXI6.mentioned-xhSam7, .scrollerInner-2YIMLh .message-2qnXI6.mentioned-xhSam7:hover, .scrollerInner-2YIMLh .message-2qnXI6.mentioned-xhSam7:active, .scrollerInner-2YIMLh .message-2qnXI6.selected-2P5D_Z.mentioned-xhSam7 {
 	background-color:transparent !important;
 	//background-color:var(--background-mentioned) !important; /* Replace transparent background with background-mentioned if you want to keep the new mention highlighting */
 }
 
 /* Hide yellow bar to left of new mention highlighting */
-.messages-3amgkR .message-2qnXI6.mentioned-xhSam7::before {
+.scrollerInner-2YIMLh .message-2qnXI6.mentioned-xhSam7::before {
 	background-color:transparent !important;
 }
 
 /* Mentions - Comment these two sections out if you want to keep the new mention highlighting */
-.messages-3amgkR .message-2qnXI6.mentioned-xhSam7 > .contents-2mQqc9 > .markup-2BOw-j {
+.scrollerInner-2YIMLh .message-2qnXI6.mentioned-xhSam7 > .contents-2mQqc9 > .markup-2BOw-j {
 	background-color:var(--background-mentioned) !important;
 	margin-left:-8px;
 	padding-left:4px;
@@ -34,7 +34,7 @@ body {
 	border-radius:3px 0 0 3px;
 }
 
-.messages-3amgkR .message-2qnXI6.mentioned-xhSam7 > .contents-2mQqc9 > .markup-2BOw-j::before {
+.scrollerInner-2YIMLh .message-2qnXI6.mentioned-xhSam7 > .contents-2mQqc9 > .markup-2BOw-j::before {
 	content:"";
 	display:block;
 	position:absolute;
@@ -80,11 +80,11 @@ body {
 	padding-right:0.875rem;
 }
 
-.messages-3amgkR .message-2qnXI6.mentioned-xhSam7 .buttonContainer-DHceWr .buttons-cl5qTG div, .buttonContainer-DHceWr, .buttonContainer-DHceWr .buttons-cl5qTG div {
+.scrollerInner-2YIMLh .message-2qnXI6.mentioned-xhSam7 .buttonContainer-DHceWr .buttons-cl5qTG div, .buttonContainer-DHceWr, .buttonContainer-DHceWr .buttons-cl5qTG div {
 	background-color:transparent !important;
 }
 
-.messages-3amgkR .groupStart-23k01U .buttonContainer-DHceWr {
+.scrollerInner-2YIMLh .groupStart-23k01U .buttonContainer-DHceWr {
 	top:calc(var(--header-height) + 2px);
 }
 
@@ -93,12 +93,12 @@ body {
 }
 
 /* Move avatar */
-.messages-3amgkR .message-2qnXI6 .container-2LR0t2 .header-23xsNx img {
+.scrollerInner-2YIMLh .message-2qnXI6 .container-2LR0t2 .header-23xsNx img {
 	margin-left:0.875rem;
 }
 
 /* Margin on text to accomodate buttons */
-.messages-3amgkR .message-2qnXI6 .markup-2BOw-j::before {
+.scrollerInner-2YIMLh .message-2qnXI6 .markup-2BOw-j::before {
 	content:'';
 	width:3rem;
 	height:16px;
@@ -107,7 +107,7 @@ body {
 }
 
 /* Make text area wider */
-.messages-3amgkR .message-2qnXI6 {
+.scrollerInner-2YIMLh .message-2qnXI6 {
 	padding-right:0.875rem;
 }
 
@@ -121,7 +121,7 @@ body {
 }
 
 /* Spacer between message groups */
-.messages-3amgkR .groupStart-23k01U::after {
+.scrollerInner-2YIMLh .groupStart-23k01U::after {
 	content:'';
 	border-top:thin solid var(--background-modifier-accent);
 	top:calc(0px - var(--message-spacing));
@@ -131,33 +131,33 @@ body {
 	position:absolute;
 }
 
-.messages-3amgkR .groupStart-23k01U {
+.scrollerInner-2YIMLh .groupStart-23k01U {
 	margin-top:calc(var(--message-spacing) * 2);
 }
 
-.messages-3amgkR .divider-3_HH5L + .groupStart-23k01U::after {
+.scrollerInner-2YIMLh .divider-3_HH5L + .groupStart-23k01U::after {
 	display:none;
 }
 
-.messages-3amgkR .divider-3_HH5L + .groupStart-23k01U {
+.scrollerInner-2YIMLh .divider-3_HH5L + .groupStart-23k01U {
 	margin-top:calc(var(--message-spacing) * 0.5);
 }
 
 /* Spacing between messages within a group */
-.messages-3amgkR .message-2qnXI6:not(.groupStart-23k01U), .messages-3amgkR .message-2qnXI6 .container-2LR0t2 {
+.scrollerInner-2YIMLh .message-2qnXI6:not(.groupStart-23k01U), .scrollerInner-2YIMLh .message-2qnXI6 .container-2LR0t2 {
 	padding-top:0px;
 	padding-bottom:0px;
 }
 
 /* Message divider */
-.messages-3amgkR .divider-3_HH5L {
+.scrollerInner-2YIMLh .divider-3_HH5L {
 	width:100%;
 	margin-left:0;
 	border:none;
 	height:calc(var(--message-spacing) * 1.5);
 }
 
-.messages-3amgkR .divider-3_HH5L span {
+.scrollerInner-2YIMLh .divider-3_HH5L span {
 	background-color:transparent;
 	padding:0;
     display:flex;
@@ -171,20 +171,20 @@ body {
 	position:absolute;
 }
 
-.messages-3amgkR .divider-3_HH5L span::before {
+.scrollerInner-2YIMLh .divider-3_HH5L span::before {
 	margin-right:8px;
 }
 
-.messages-3amgkR .divider-3_HH5L span::after {
+.scrollerInner-2YIMLh .divider-3_HH5L span::after {
 	margin-left:8px;
 }
 
-.messages-3amgkR .divider-3_HH5L span::before, .messages-3amgkR .divider-3_HH5L span::after {
+.scrollerInner-2YIMLh .divider-3_HH5L span::before, .scrollerInner-2YIMLh .divider-3_HH5L span::after {
 	content:'';
 	flex:1;
 }
 
-.messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 span:nth-child(2) {
+.scrollerInner-2YIMLh .divider-3_HH5L.isUnread-3Ef-o9 span:nth-child(2) {
 	display:none;
 }
 
@@ -195,20 +195,20 @@ body {
 }
 
 /* New message color */
-.messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 span {
+.scrollerInner-2YIMLh .divider-3_HH5L.isUnread-3Ef-o9 span {
 	color:#f04747;
 }
 
-.messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 span::before, .messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 span::after {
+.scrollerInner-2YIMLh .divider-3_HH5L.isUnread-3Ef-o9 span::before, .scrollerInner-2YIMLh .divider-3_HH5L.isUnread-3Ef-o9 span::after {
 	border-bottom:thin solid #f04747;
 }
 
-.messages-3amgkR .divider-3_HH5L.isUnread-3Ef-o9 span svg {
+.scrollerInner-2YIMLh .divider-3_HH5L.isUnread-3Ef-o9 span svg {
 	display:none;
 }
 
 /* Timestamp divider color */
-.messages-3amgkR .divider-3_HH5L:not(.isUnread-3Ef-o9) span::before, .messages-3amgkR .divider-3_HH5L:not(.isUnread-3Ef-o9) span::after {
+.scrollerInner-2YIMLh .divider-3_HH5L:not(.isUnread-3Ef-o9) span::before, .scrollerInner-2YIMLh .divider-3_HH5L:not(.isUnread-3Ef-o9) span::after {
 	border-bottom:thin solid var(--text-muted);
 }
 
