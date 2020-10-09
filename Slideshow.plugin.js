@@ -20,7 +20,7 @@ module.exports = (() =>
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "4.0.1",
+			version: "4.0.0",
 			description: "Turns a transparent Discord background into a slideshow.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/Slideshow.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/Slideshow.plugin.js"
@@ -31,13 +31,6 @@ module.exports = (() =>
 				type: "added",
 				items: [
 					"Update to use Plugin Library"
-				]
-			},
-			{
-				title: "Auto Update Test",
-				type: "added",
-				items: [
-					"Testing auto updater"
 				]
 			}
 		],
