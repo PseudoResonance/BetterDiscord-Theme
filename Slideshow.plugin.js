@@ -170,7 +170,7 @@ module.exports = (() =>
 				{
 					this.stopInterval();
 					$('#pseudoslideshow-background').remove();
-					PluginUtilities.removeStyle('Slideshow-CSS')
+					PluginUtilities.removeStyle('Slideshow-CSS');
 				}
 				
 				getData(key, defaultValue) {
