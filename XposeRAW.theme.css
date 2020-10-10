@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.10.11"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.10.12"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "v2.10.11";
+	--version: "v2.10.12";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -257,6 +257,30 @@ code.inline {
 	border-top:thin solid var(--text-muted);
 }
 
+.calendarPicker-2yf6Ci, .react-datepicker, .react-datepicker__header {
+	background:transparent !important;
+}
+
+.react-datepicker__day--outside-month {
+	background:var(--background-floating-hover) !important;
+}
+
+.react-datepicker__day:hover {
+	background:var(--background-modifier-hover) !important;
+}
+
+.react-datepicker__day--outside-month:hover {
+	background:var(--background-floating) !important;
+}
+
+.react-datepicker__day--disabled, .react-datepicker__day--disabled:hover {
+	background:var(--background-floating-hover) !important;
+}
+
+.react-datepicker__navigation {
+	border-color:transparent !important;
+}
+
 /* Transparent background for friends page */
 .container-1D34oG, .body-1ld4H7 {
 	background: transparent !important;
@@ -442,6 +466,10 @@ code.inline {
 
 .autocompleteScroller-iInVqR {
 	overflow-y: auto;
+}
+
+.theme-dark .selected-1Tbx07 {
+	background-color:var(--background-modifier-selected);
 }
 
 /* Hide line under gif insert header */
