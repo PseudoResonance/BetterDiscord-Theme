@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.10.13"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.10.14"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "v2.10.13";
+	--version: "v2.10.14";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -681,12 +681,37 @@ code.inline {
 	margin: 0 !important;
 	background-position: 50% !important;
 	position: fixed !important;
-    height: 75vh !important;
     width: 80vw !important;
 	left: 10vw !important;
 	top: 40px !important;
 	background-size: contain !important;
 	background-color: transparent !important;
+}
+
+@media only screen and (max-height: 500px) {
+	.uploadModal-2ifh8j div .file-34mY5K .icon-kyxXVr {
+		height: 50vh !important;
+	}
+	
+	.uploadModal-2ifh8j div .comment-4IWttf .channelTextArea-2VhZ6z, .uploadModal-2ifh8j div .comment-4IWttf .channelTextArea-2VhZ6z .scrollableContainer-2NUZem {
+		max-height:calc(100vh - (50vh + 22px + 50px));
+	}
+}
+
+@media only screen and (min-height: 501px) {
+	.uploadModal-2ifh8j div .file-34mY5K .icon-kyxXVr {
+		height: 75vh !important;
+	}
+	
+	.uploadModal-2ifh8j div .comment-4IWttf .channelTextArea-2VhZ6z, .uploadModal-2ifh8j div .comment-4IWttf .channelTextArea-2VhZ6z .scrollableContainer-2NUZem {
+		max-height:calc(100vh - (75vh + 22px + 40px));
+	}
+}
+
+@media only screen and (min-height: 700px) {
+	.uploadModal-2ifh8j div .comment-4IWttf .channelTextArea-2VhZ6z, .uploadModal-2ifh8j div .comment-4IWttf .channelTextArea-2VhZ6z .scrollableContainer-2NUZem {
+		max-height:calc(100vh - (75vh + 22px + 10px));
+	}
 }
 
 .uploadModal-2ifh8j div .file-34mY5K .description-2ug5H_ {
