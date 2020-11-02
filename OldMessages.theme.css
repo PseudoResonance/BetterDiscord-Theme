@@ -1,4 +1,4 @@
-//META{"name":"OldMessages","description":"Restores old messages style","author":"PseudoResonance","version":"1.2.0"}*//
+//META{"name":"OldMessages","description":"Restores old messages style","author":"PseudoResonance","version":"1.2.1"}*//
 
 :root {
 	--message-spacing:1.0625rem;
@@ -6,7 +6,7 @@
 }
 
 body {
-	--version: "v1.2.0";
+	--version: "v1.2.1";
 }
 
 /* Disable message hover */
@@ -112,7 +112,7 @@ body {
 }
 
 /* Rotate settings button */
-.buttonContainer-DHceWr .buttons-cl5qTG div .button-1ZiXG9:last-child {
+.buttonContainer-DHceWr .buttons-cl5qTG div .button-1ZiXG9:last-child:not(.dangerous-2r8KxV) {
 	transform:rotate(90deg);
 	padding-right:0px;
 	padding-left:0px;
