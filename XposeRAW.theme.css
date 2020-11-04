@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.10.16"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.10.17"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "v2.10.16";
+	--version: "v2.10.17";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -771,6 +771,11 @@ code.inline {
 	margin-bottom: 5px !important;
 	align-items: flex-end !important;
 	z-index: -1;
+}
+
+/* Fix server list getting outlined when clicking */
+ul[data-list-id=guildsnav] {
+	outline: none !important;
 }
 
 /* Background image */
