@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.10.18"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.10.19"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "v2.10.18";
+	--version: "v2.10.19";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -385,10 +385,32 @@ code.inline {
 	background-color:rgba(45, 45, 45, 0.3) !important;
 }
 
-/* Emoji popup unicode shortcut background */
+/* Emoji popup unicode shortcut */
+#emoji-picker-tab-panel .categoryList-2Kzf65 {
+	display: flex;
+	flex-direction: column;
+	flex-wrap: nowrap;
+	align-items: stretch;
+}
+
+#emoji-picker-tab-panel .categoryList-2Kzf65 .scroller-3gAZLs {
+	height:auto !important;
+	flex-grow: 1;
+	align-self: flex-start;
+	position:relative !important;
+	width:100%;
+}
+
 .unicodeShortcut-15J8Ck {
-	backdrop-filter: blur(var(--blur-radius));
-	background-color: rgba(0, 0, 0, 0.4) !important;
+	flex-shrink:0;
+	flex-grow:0;
+	align-self: flex-end;
+	position:relative !important;
+	width:100%;
+}
+
+.unicodeShortcut-15J8Ck.unicodeShortcutInvisible-2TqXrS {
+	display:none;
 }
 
 /* No internet background */
@@ -398,10 +420,16 @@ code.inline {
 }
 
 /* Blur popups */
-.layerContainer-yqaFcK > div > div:not(.focusLock-Ns3yie):not(.menu-3sdvDG):not(.animatorRight-3i_YPs):not(.translate-2dAEQ6), .layerContainer-yqaFcK > div > .animatorRight-3i_YPs > div:not(.streamPreviewWrapper-2DSWOK), .popoutWrapper-eJpzc1, .tooltipPointer-3ZfirK, .container-3ISnnM:not(#gif-picker-tab-panel), .autocomplete-1vrmpx, .unread-1xRYoj, .popouts-2bnG9Z > div, .toolbar-2bjZV7, .contentWrapper-SvZHNd, .streamPreview-2-WUWT, .userPopout-3XzG_A, .container-VSDcQc, .noiseCancellationPopout-iRK2A0, .contentWrapper-SvZHNd, div[id^="popout"] > div > div > .emojiPicker-3PwZFl {
+.layerContainer-yqaFcK > div > div:not(.focusLock-Ns3yie):not(.menu-3sdvDG):not(.animatorRight-3i_YPs):not(.translate-2dAEQ6), .layerContainer-yqaFcK > div > .animatorRight-3i_YPs > div:not(.streamPreviewWrapper-2DSWOK), .popoutWrapper-eJpzc1, .tooltipPointer-3ZfirK, .container-3ISnnM:not(#gif-picker-tab-panel), .autocomplete-1vrmpx, .unread-1xRYoj, .popouts-2bnG9Z > div, .toolbar-2bjZV7, .contentWrapper-SvZHNd, .streamPreview-2-WUWT, .userPopout-3XzG_A, .container-VSDcQc, .noiseCancellationPopout-iRK2A0, .contentWrapper-SvZHNd, div[id^="popout"] > div > div > .emojiPicker-3PwZFl, [role="listbox"], .container-3XJ8ns {
 	backdrop-filter: blur(var(--blur-radius));
 	box-shadow:none !important;
 	background-color: var(--background-floating) !important;
+}
+
+/* Dropdown box */
+.lookFilled-22uAsw.select-2fjwPw {
+	background-color: var(--deprecated-text-input-bg) !important;
+	border-color: var(--deprecated-text-input-border) !important;
 }
 
 /* Blur background of popup notifications */
