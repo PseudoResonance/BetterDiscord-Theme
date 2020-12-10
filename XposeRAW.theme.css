@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.11.1"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.11.2"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "v2.11.1";
+	--version: "v2.11.2";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -420,7 +420,7 @@ code.inline {
 }
 
 /* Blur popups */
-.layerContainer-yqaFcK > div > div:not(.focusLock-Ns3yie):not(.menu-3sdvDG):not(.animatorRight-3i_YPs):not(.translate-2dAEQ6), .layerContainer-yqaFcK > div > .animatorRight-3i_YPs > div:not(.streamPreviewWrapper-2DSWOK):not(.userPopout-3XzG_A), .popoutWrapper-eJpzc1, .tooltipPointer-3ZfirK, .container-3ISnnM:not(#gif-picker-tab-panel), .autocomplete-1vrmpx, .unread-1xRYoj:not([aria-hidden="true"]), .toolbar-2bjZV7, .contentWrapper-SvZHNd, .streamPreview-2-WUWT, .container-VSDcQc, .noiseCancellationPopout-iRK2A0, .contentWrapper-SvZHNd, div[id^="popout"] > div > div > .emojiPicker-3PwZFl, [role="listbox"], .container-3XJ8ns, .root-3JVdIJ, .root-1gCeng, .css-3vaxre-menu, .radioBar-bMNUI-, .css-gvi9bl-control, .css-6fzn47-control, .css-17e1tep-control, .inputWrapper-31_8H8 > .input-cIJ7To, .container-1nZlH6 , .copyInputDefault-21sXtF, .colorPickerCustom-2CWBn2 {
+.layerContainer-yqaFcK > div > div:not(.focusLock-Ns3yie):not(.menu-3sdvDG):not(.animatorRight-3i_YPs):not(.translate-2dAEQ6), .layerContainer-yqaFcK > div > .animatorRight-3i_YPs > div:not(.streamPreviewWrapper-2DSWOK):not(.userPopout-3XzG_A), .popoutWrapper-eJpzc1, .tooltipPointer-3ZfirK, .container-3ISnnM:not(#gif-picker-tab-panel), .autocomplete-1vrmpx, .unread-1xRYoj:not([aria-hidden="true"]), .toolbar-2bjZV7, .contentWrapper-SvZHNd, .streamPreview-2-WUWT, .container-VSDcQc, .noiseCancellationPopout-iRK2A0, .contentWrapper-SvZHNd, div[id^="popout"] > div > div > .emojiPicker-3PwZFl, [role="listbox"], .container-3XJ8ns, .root-3JVdIJ, .root-1gCeng:not(.detailsAdded-fHiJlm), .css-3vaxre-menu, .radioBar-bMNUI-, .css-gvi9bl-control, .css-6fzn47-control, .css-17e1tep-control, .inputWrapper-31_8H8 > .input-cIJ7To, .container-1nZlH6 , .copyInputDefault-21sXtF, .colorPickerCustom-2CWBn2 {
 	backdrop-filter: blur(var(--blur-radius));
 	box-shadow:none !important;
 	background-color: var(--background-floating) !important;
