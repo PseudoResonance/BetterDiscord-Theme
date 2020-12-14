@@ -1,4 +1,4 @@
-	//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.11.4"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.11.5"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "v2.11.4";
+	--version: "v2.11.5";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -854,6 +854,10 @@ code.inline {
 	z-index: -1;
 }
 
+.uploadModal-2ifh8j .footer-3mqk7D  .checkboxWrapper-SkhIWG {
+	flex-grow:0;
+}
+
 /* Fix server list getting outlined when clicking */
 ul[data-list-id=guildsnav] {
 	outline: none !important;
@@ -883,4 +887,34 @@ ul[data-list-id=guildsnav] {
 .bda-slist > li[data-name="XposeLoader"] > .bda-header > .bda-header-title::after {
 	content: "Theme Version: " var(--version);
 	padding-left:1em;
+}
+
+/* EditUploads Plugin */
+#EditUploadsEditButton {
+	top:calc(100vh - 1em - 25px) !important;
+	position:fixed !important;
+	z-index:10000 !important;
+}
+
+#EditUploadsModal {
+	border-radius:0;
+	box-shadow:none !important;
+	background:none !important;
+	border:none !important;
+}
+
+#EditUploadsCanvasWrapper, #EditUploadsToolbar {
+	box-shadow:none !important;
+	background:none !important;
+	border:none !important;
+}
+
+#EditUploadsModal:before {
+	content:'';
+	position:fixed;
+	left:0;
+	top:0;
+	right:0;
+	bottom:0;
+	backdrop-filter:blur(var(--blur-radius));
 }
