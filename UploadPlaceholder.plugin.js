@@ -1,5 +1,5 @@
 /**
- * @name UploadPlaceholder
+ * @name XposeCompanion
  * @authorLink https://github.com/PseudoResonance
  * @donate https://bit.ly/3hAnec5
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/UploadPlaceholder.plugin.js
@@ -11,7 +11,7 @@ module.exports = (() =>
 	{
 		info:
 		{
-			name: "UploadPlaceholder",
+			name: "XposeCompanion",
 			authors:
 			[
 				{
@@ -20,17 +20,24 @@ module.exports = (() =>
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "2.0.0",
-			description: "Adds placeholder text to the upload file message box.",
+			version: "2.1.0",
+			description: "Companion plugin for Xpose theme.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/UploadPlaceholder.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/UploadPlaceholder.plugin.js"
 		},
 		changelog: [
 			{
-				title: "Auto Updating",
+				title: "Xpose Theme Options",
 				type: "added",
 				items: [
-					"Update to use Plugin Library"
+					"Various options to configure on the companion Xpose theme"
+				]
+			},
+			{
+				title: "Performance",
+				type: "fixed",
+				items: [
+					"Performance fixes"
 				]
 			}
 		],
@@ -68,9 +75,34 @@ module.exports = (() =>
 		{
 			const { DiscordAPI, PluginUpdater, PluginUtilities } = Api;
 			
-			var interval = 0;
+			const callback = function(mutationsList, observer) {
+				if ($('.uploadModal-2ifh8j').length) {
+					var text = "";
+					$('.uploadModal-2ifh8j .inner-3nWsbo .comment-4IWttf .label-3aiqT2').children('span').each(function(){
+						text += $(this).text() + " ";
+					});
+					text = text.substring(0, text.length - 1).replace(/\n/g, " ");
+					if (text.length > 0) {
+						var input = $('.uploadModal-2ifh8j .inner-3nWsbo .comment-4IWttf .channelTextArea-2VhZ6z .scrollableContainer-2NUZem .inner-MADQqc .textArea-12jD-V .slateTextArea-1Mkdgw');
+						var samplePlaceholder = $('.form-2fGMdU .channelTextArea-2VhZ6z .scrollableContainer-2NUZem .inner-MADQqc .textArea-12jD-V .placeholder-37qJjk');
+						if (input.text().trim() != "") text = ""
+						input.attr('placeholder', text);
+						var classes = "placeholder-37qJjk";
+						if (samplePlaceholder.length !== 0)
+							if (samplePlaceholder.attr('class').length > 0)
+								classes = samplePlaceholder.attr('class');
+						if ($('#pseudo-uploadModalPlaceholder').length === 0) {
+							input.before($("<div class='" + classes + "' id='pseudo-uploadModalPlaceholder'>" + text + "</div>"));
+						} else {
+							if ($('#pseudo-uploadModalPlaceholder').html() != text)
+								$('#pseudo-uploadModalPlaceholder').html(text);
+						}
+					}
+				}
+			}
+			const observer = new MutationObserver(callback);
 
-			return class UploadPlaceholder extends Plugin
+			return class XposeCompanion extends Plugin
 			{
 				constructor()
 				{
@@ -80,42 +112,20 @@ module.exports = (() =>
 				onStart()
 				{
 					PluginUtilities.addStyle(
-						'UploadPlaceholder-CSS',
+						'XposeCompanion-CSS',
 						`
 						#pseudo-uploadModalPlaceholder {
 							padding-left:16px;
 						}
 						`
 					);
-					interval = window.setInterval(function(){
-						var text = "";
-						$('.uploadModal-2ifh8j .inner-3nWsbo .comment-4IWttf .label-3aiqT2').children('span').each(function(){
-							text += $(this).text() + " ";
-						});
-						text = text.substring(0, text.length - 1).replace(/\n/g, " ");
-						if (text.length > 0) {
-							var input = $('.uploadModal-2ifh8j .inner-3nWsbo .comment-4IWttf .channelTextArea-2VhZ6z .scrollableContainer-2NUZem .inner-MADQqc .textArea-12jD-V .slateTextArea-1Mkdgw');
-							var samplePlaceholder = $('.form-2fGMdU .channelTextArea-2VhZ6z .scrollableContainer-2NUZem .inner-MADQqc .textArea-12jD-V .placeholder-37qJjk');
-							if (input.text().trim() != "") text = ""
-							input.attr('placeholder', text);
-							var classes = "placeholder-37qJjk";
-							if (samplePlaceholder.length !== 0)
-								if (samplePlaceholder.attr('class').length > 0)
-									classes = samplePlaceholder.attr('class');
-							if ($('#pseudo-uploadModalPlaceholder').length === 0) {
-								input.before($("<div class='" + classes + "' id='pseudo-uploadModalPlaceholder'>" + text + "</div>"));
-							} else {
-								if ($('#pseudo-uploadModalPlaceholder').html() != text)
-									$('#pseudo-uploadModalPlaceholder').html(text);
-							}
-						}
-        			}, 1);
+					observer.observe(document.getElementById('app-mount'), {childList: true});
 				}
 	
 				onStop()
 				{
-					window.clearInterval(interval);
-					PluginUtilities.removeStyle('UploadPlaceholder-CSS');
+					PluginUtilities.removeStyle('XposeCompanion-CSS');
+					observer.disconnect();
 				}
 				
 			}
