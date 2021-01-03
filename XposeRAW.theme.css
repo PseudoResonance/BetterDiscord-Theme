@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.11.7"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.11.8"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "v2.11.7";
+	--version: "v2.11.8";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -146,6 +146,10 @@ div.wrapper-21YSNc, [role="group"][id|="folder-items"] {
 	height:100%;
 }
 
+.expandedFolderBackground-2sPsd-.collapsed-1GMuSb {
+	background-color:transparent !important;
+}
+
 .expandedFolderBackground-2sPsd-:not(.collapsed-1GMuSb) + div:nth-child(2) .wrapper-25eVIn svg foreignObject div, .wrapper-1-Fsb8.header-ywPcAE {
 	background: transparent !important;
 }
@@ -247,7 +251,7 @@ code.inline {
 	background: var(--background-modifier-hover) !important;
 }
 
-.searchResultsWrap-2DKFzt, .channelName-1QajIf, .footer-2gL1pp {
+.searchResultsWrap-2DKFzt, .channelName-1QajIf {
 	background: transparent !important;
 }
 
@@ -424,10 +428,22 @@ code.inline {
 }
 
 /* Blur popups */
-.layerContainer-yqaFcK > div > div:not(.focusLock-Ns3yie):not(.menu-3sdvDG):not(.animatorRight-3i_YPs):not(.translate-2dAEQ6), .layerContainer-yqaFcK > div > .animatorRight-3i_YPs > div:not(.streamPreviewWrapper-2DSWOK):not(.userPopout-3XzG_A), .popoutWrapper-eJpzc1, .tooltipPointer-3ZfirK, .container-3ISnnM:not(#gif-picker-tab-panel), .autocomplete-1vrmpx, .unread-1xRYoj:not([aria-hidden="true"]), .toolbar-2bjZV7, .contentWrapper-SvZHNd, .streamPreview-2-WUWT, .container-VSDcQc, .noiseCancellationPopout-iRK2A0, .contentWrapper-SvZHNd, div[id^="popout"] > div > div > .emojiPicker-3PwZFl, [role="listbox"], .container-3XJ8ns, .root-3JVdIJ, .small-3iVZYw.root-1gCeng, .medium-2RE1hE.root-1gCeng, .large-3lXhLH.root-1gCeng, .css-3vaxre-menu, .radioBar-bMNUI-, .css-gvi9bl-control, .css-6fzn47-control, .css-17e1tep-control, .inputWrapper-31_8H8 > .input-cIJ7To, .container-1nZlH6 , .copyInputDefault-21sXtF, .colorPickerCustom-2CWBn2, .quickswitcher-3JagVE, .quickswitcher-3JagVE > .input-2VB9rf, .modal-yWgWj- {
+.layerContainer-yqaFcK > div > div:not(.focusLock-Ns3yie):not(.menu-3sdvDG):not(.animatorRight-3i_YPs):not(.translate-2dAEQ6), .layerContainer-yqaFcK > div > .animatorRight-3i_YPs > div:not(.streamPreviewWrapper-2DSWOK):not(.userPopout-3XzG_A), .popoutWrapper-eJpzc1, .tooltipPointer-3ZfirK, .container-3ISnnM:not(#gif-picker-tab-panel), .autocomplete-1vrmpx, .unread-1xRYoj:not([aria-hidden="true"]), .toolbar-2bjZV7, .contentWrapper-SvZHNd, .streamPreview-2-WUWT, .container-VSDcQc, .noiseCancellationPopout-iRK2A0, .contentWrapper-SvZHNd, div[id^="popout"] > div > div > .emojiPicker-3PwZFl, [role="listbox"], .container-3XJ8ns, .root-3JVdIJ, .small-3iVZYw.root-1gCeng, .medium-2RE1hE.root-1gCeng, .large-3lXhLH.root-1gCeng, .css-3vaxre-menu, .radioBar-bMNUI-, .css-gvi9bl-control, .css-6fzn47-control, .css-17e1tep-control, .inputWrapper-31_8H8 > .input-cIJ7To, .container-1nZlH6 , .copyInputDefault-21sXtF, .colorPickerCustom-2CWBn2, .quickswitcher-3JagVE, .quickswitcher-3JagVE > .input-2VB9rf, .modal-yWgWj-, .bd-modal-inner {
 	backdrop-filter: blur(var(--blur-radius));
 	box-shadow:none !important;
 	background-color: var(--background-floating) !important;
+}
+
+.footer-2gL1pp, .bd-modal-inner .header, .bd-modal-inner .bd-modal-body, .bd-modal-inner .tab-bar-container {
+	background:transparent !important;
+}
+
+.bd-modal-inner .tab-bar-container {
+	box-shadow:none;
+}
+
+.bd-modal-inner {
+	border:none !important;
 }
 
 .userPopout-3XzG_A .inputWrapper-31_8H8 > .input-cIJ7To {
@@ -591,8 +607,8 @@ code.inline {
 	background: rgba(0, 0, 0, 0.4) !important;
 }
 
-/* Remove Nitro present icon */
-.channelTextArea-rNsIhG .scrollableContainer-2NUZem .inner-MADQqc .buttons-3JBrkn > button:first-child {
+/* Remove Nitro gift icon */
+.channelTextArea-rNsIhG  .buttons-3JBrkn > button:first-child {
 	display:none;
 }
 
@@ -654,9 +670,9 @@ code.inline {
 }
 
 /* Margin on text to accomodate buttons */
-.scrollerInner-2YIMLh .message-2qnXI6 .markup-2BOw-j::before {
+.scrollerInner-2YIMLh .message-2qnXI6 .markup-2BOw-j:not([contenteditable="true"])::before {
 	content:'';
-	width:3rem;
+	width:5rem;
 	height:16px;
 	display:inline-flex;
 	float:right;
