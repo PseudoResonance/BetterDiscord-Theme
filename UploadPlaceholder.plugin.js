@@ -1,5 +1,5 @@
 /**
- * @name XposeCompanion
+ * @name UploadPlaceholder
  * @authorLink https://github.com/PseudoResonance
  * @donate https://bit.ly/3hAnec5
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/UploadPlaceholder.plugin.js
@@ -11,7 +11,7 @@ module.exports = (() =>
 	{
 		info:
 		{
-			name: "XposeCompanion",
+			name: "UploadPlaceholder",
 			authors:
 			[
 				{
@@ -20,27 +20,21 @@ module.exports = (() =>
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "2.1.0",
+			version: "2.1.1",
 			description: "Companion plugin for Xpose theme.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/UploadPlaceholder.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/UploadPlaceholder.plugin.js"
 		},
 		changelog: [
 			{
-				title: "Xpose Theme Options",
-				type: "added",
-				items: [
-					"Various options to configure on the companion Xpose theme"
-				]
-			},
-			{
-				title: "Performance",
+				title: "Plugin renamed to XposeCompanion",
 				type: "fixed",
 				items: [
-					"Performance fixes"
+					"UploadPlaceholder renamed to XposeCompanion",
+					"Please delete the UploadPlaceholder plugin if XposeCompanion is working!"
 				]
 			}
-		],
+		]
 	};
 
 	return !global.ZeresPluginLibrary ? class
@@ -74,35 +68,8 @@ module.exports = (() =>
 		const plugin = (Plugin, Api) =>
 		{
 			const { DiscordAPI, PluginUpdater, PluginUtilities } = Api;
-			
-			const callback = function(mutationsList, observer) {
-				if ($('.uploadModal-2ifh8j').length) {
-					var text = "";
-					$('.uploadModal-2ifh8j .inner-3nWsbo .comment-4IWttf .label-3aiqT2').children('span').each(function(){
-						text += $(this).text() + " ";
-					});
-					text = text.substring(0, text.length - 1).replace(/\n/g, " ");
-					if (text.length > 0) {
-						var input = $('.uploadModal-2ifh8j .inner-3nWsbo .comment-4IWttf .channelTextArea-2VhZ6z .scrollableContainer-2NUZem .inner-MADQqc .textArea-12jD-V .slateTextArea-1Mkdgw');
-						var samplePlaceholder = $('.form-2fGMdU .channelTextArea-2VhZ6z .scrollableContainer-2NUZem .inner-MADQqc .textArea-12jD-V .placeholder-37qJjk');
-						if (input.text().trim() != "") text = ""
-						input.attr('placeholder', text);
-						var classes = "placeholder-37qJjk";
-						if (samplePlaceholder.length !== 0)
-							if (samplePlaceholder.attr('class').length > 0)
-								classes = samplePlaceholder.attr('class');
-						if ($('#pseudo-uploadModalPlaceholder').length === 0) {
-							input.before($("<div class='" + classes + "' id='pseudo-uploadModalPlaceholder'>" + text + "</div>"));
-						} else {
-							if ($('#pseudo-uploadModalPlaceholder').html() != text)
-								$('#pseudo-uploadModalPlaceholder').html(text);
-						}
-					}
-				}
-			}
-			const observer = new MutationObserver(callback);
 
-			return class XposeCompanion extends Plugin
+			return class UploadPlaceholder extends Plugin
 			{
 				constructor()
 				{
@@ -111,23 +78,13 @@ module.exports = (() =>
 	
 				onStart()
 				{
-					PluginUtilities.addStyle(
-						'XposeCompanion-CSS',
-						`
-						#pseudo-uploadModalPlaceholder {
-							padding-left:16px;
-						}
-						`
-					);
-					observer.observe(document.getElementById('app-mount'), {childList: true});
+					require("request").get("https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/XposeCompanion.plugin.js", async (err, res, body) =>
+					{
+						if (err) return require("electron").shell.openExternal("https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/XposeCompanion.plugin.js");
+						await new Promise(r => require("fs").writeFile(require("path").join(BdApi.Plugins.folder, "XposeCompanion.plugin.js"), body, { flag: 'wx' }, r));
+					});
 				}
-	
-				onStop()
-				{
-					PluginUtilities.removeStyle('XposeCompanion-CSS');
-					observer.disconnect();
-				}
-				
+
 			}
 			
 		};
