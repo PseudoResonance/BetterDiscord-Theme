@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.11.8"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.11.9"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "v2.11.8";
+	--version: "v2.11.9";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -160,7 +160,7 @@ div.wrapper-21YSNc, [role="group"][id|="folder-items"] {
 }
 
 /* Transparent background for main content */
-.embedWrapper-lXpS3L, .attachment-33OFj0 {
+.embedWrapper-lXpS3L.embedFull-2tM8--, .attachment-33OFj0 {
 	background: rgba(47, 49, 54, 0.2) !important;
 	backdrop-filter: blur(var(--blur-radius));
 	border-right: 1px solid rgba(20, 20, 20, 0.2) !important;
@@ -189,7 +189,7 @@ code.inline {
 	backdrop-filter: blur(var(--blur-radius));
 }
 
-.expandedFolderBackground-2sPsd-.collapsed-1GMuSb + div .folderIconWrapper-226oVY {
+.closedFolderIconWrapper-15K9MK {
 	backdrop-filter: blur(var(--blur-radius));
 }
 
@@ -463,7 +463,7 @@ code.inline {
 	z-index:1000;
 }
 
-.root-1gCeng .footer-2gL1pp {
+.root-1gCeng .footer-2gL1pp, .message-2qRu38 {
 	background:transparent !important;
 	box-shadow:none !important;
 }
@@ -949,5 +949,10 @@ ul[data-list-id=guildsnav] {
 	top:0;
 	right:0;
 	bottom:0;
+	backdrop-filter:blur(var(--blur-radius));
+}
+
+/* ImageUtilities Plugin */
+.lensBackdrop-yEm7Om {
 	backdrop-filter:blur(var(--blur-radius));
 }
