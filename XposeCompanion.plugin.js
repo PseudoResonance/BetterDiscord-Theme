@@ -20,17 +20,17 @@ module.exports = (() =>
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "2.1.1",
+			version: "2.1.2",
 			description: "Companion plugin for Xpose theme.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeCompanion.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/XposeCompanion.plugin.js"
 		},
 		changelog: [
 			{
-				title: "Xpose Theme Options",
-				type: "added",
+				title: "Bugfix",
+				type: "fixed",
 				items: [
-					"Option to change folder color to to match when expanded"
+					"Expanded folder color stays after being reordered"
 				]
 			}
 		],
@@ -132,6 +132,14 @@ module.exports = (() =>
 									backgroundColor = backgroundColor.substring(0, backgroundColor.length - 1) + ", 0.4";
 								}
 								entry.css('background-color', backgroundColor);
+							} else if (node.classList.contains("expandedFolderBackground-2sPsd-")) {
+								var icon = node.next().find('.folderIconWrapper-226oVY');
+								var backgroundColor = icon.css('background-color');
+								if (backgroundColor == "rgba(0, 0, 0, 0)") {
+									backgroundColor = $(icon.find('.expandedFolderIconWrapper-1xLaU- > svg')).css('color');
+									backgroundColor = "rgba" + backgroundColor.substring(3, backgroundColor.length - 1) + ", 0.4)";
+								}
+								node.css('background-color', backgroundColor);
 							}
 						}
 					} else if (mutation.type === 'attributes') {
