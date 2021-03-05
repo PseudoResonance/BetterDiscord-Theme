@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.11.12"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.11.13"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "v2.11.12";
+	--version: "v2.11.13";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -821,29 +821,43 @@ code.inline {
 	background-color: transparent !important;
 }
 
-@media only screen and (max-height: 500px) {
+@media only screen and (max-height: 300px) {
 	.uploadModal-2ifh8j div .file-34mY5K .icon-kyxXVr {
 		height: 50vh !important;
 	}
 	
-	.uploadModal-2ifh8j div .comment-4IWttf .channelTextArea-2VhZ6z, .uploadModal-2ifh8j div .comment-4IWttf .channelTextArea-2VhZ6z .scrollableContainer-2NUZem {
-		max-height:calc(100vh - (50vh + 22px + 50px));
+	.uploadModal-2ifh8j div .comment-4IWttf .channelTextArea-2VhZ6z, .uploadModal-2ifh8j div .comment-4IWttf .channelTextArea-2VhZ6z .scrollableContainer-2NUZem, .uploadModal-2ifh8j div .comment-4IWttf .channelTextArea-2VhZ6z .inner-MADQqc, .uploadModal-2ifh8j div .comment-4IWttf .channelTextArea-2VhZ6z .inner-MADQqc .textArea-12jD-V {
+		max-height:calc(100vh - (50vh + 22px + 10px));
 	}
 }
 
-@media only screen and (min-height: 501px) {
+@media only screen and (min-height: 301px) {
 	.uploadModal-2ifh8j div .file-34mY5K .icon-kyxXVr {
-		height: 75vh !important;
+		height: 50vh !important;
 	}
 	
-	.uploadModal-2ifh8j div .comment-4IWttf .channelTextArea-2VhZ6z, .uploadModal-2ifh8j div .comment-4IWttf .channelTextArea-2VhZ6z .scrollableContainer-2NUZem {
-		max-height:calc(100vh - (75vh + 22px + 40px));
+	.uploadModal-2ifh8j div .comment-4IWttf .channelTextArea-2VhZ6z, .uploadModal-2ifh8j div .comment-4IWttf .channelTextArea-2VhZ6z .scrollableContainer-2NUZem, .uploadModal-2ifh8j div .comment-4IWttf .channelTextArea-2VhZ6z .inner-MADQqc, .uploadModal-2ifh8j div .comment-4IWttf .channelTextArea-2VhZ6z .inner-MADQqc .textArea-12jD-V {
+		max-height:calc(100vh - (50vh + 22px + 95px));
+	}
+}
+
+@media only screen and (min-height: 500px) {
+	.uploadModal-2ifh8j div .file-34mY5K .icon-kyxXVr {
+		height: 65vh !important;
+	}
+	
+	.uploadModal-2ifh8j div .comment-4IWttf .channelTextArea-2VhZ6z, .uploadModal-2ifh8j div .comment-4IWttf .channelTextArea-2VhZ6z .scrollableContainer-2NUZem, .uploadModal-2ifh8j div .comment-4IWttf .channelTextArea-2VhZ6z .inner-MADQqc, .uploadModal-2ifh8j div .comment-4IWttf .channelTextArea-2VhZ6z .inner-MADQqc .textArea-12jD-V {
+		max-height:calc(100vh - (65vh + 22px + 95px));
 	}
 }
 
 @media only screen and (min-height: 700px) {
-	.uploadModal-2ifh8j div .comment-4IWttf .channelTextArea-2VhZ6z, .uploadModal-2ifh8j div .comment-4IWttf .channelTextArea-2VhZ6z .scrollableContainer-2NUZem {
-		max-height:calc(100vh - (75vh + 22px + 10px));
+	.uploadModal-2ifh8j div .file-34mY5K .icon-kyxXVr {
+		height: 75vh !important;
+	}
+	
+	.uploadModal-2ifh8j div .comment-4IWttf .channelTextArea-2VhZ6z, .uploadModal-2ifh8j div .comment-4IWttf .channelTextArea-2VhZ6z .scrollableContainer-2NUZem, .uploadModal-2ifh8j div .comment-4IWttf .channelTextArea-2VhZ6z .inner-MADQqc, .uploadModal-2ifh8j div .comment-4IWttf .channelTextArea-2VhZ6z .inner-MADQqc .textArea-12jD-V {
+		max-height:calc(100vh - (75vh + 22px + 95px));
 	}
 }
 
