@@ -20,17 +20,17 @@ module.exports = (() =>
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "2.1.2",
+			version: "2.1.3",
 			description: "Companion plugin for Xpose theme.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeCompanion.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/XposeCompanion.plugin.js"
 		},
 		changelog: [
 			{
-				title: "Bugfix",
+				title: "Update",
 				type: "fixed",
 				items: [
-					"Expanded folder color stays after being reordered"
+					"Expanded folder colors"
 				]
 			}
 		],
@@ -52,6 +52,8 @@ module.exports = (() =>
 			}
 		]
 	};
+	
+	var _XposeCompanion = null;
 
 	return !global.ZeresPluginLibrary ? class
 	{
@@ -123,36 +125,38 @@ module.exports = (() =>
 				for (const mutation of mutationsList) {
 					if (mutation.type === 'childList') {
 						for (const node of mutation.addedNodes) {
-							if (node.classList.contains("wrapper-21YSNc")) {
-								const entry = $(node).find('.expandedFolderBackground-2sPsd-');
-								var icon = entry.next().find('.folderIconWrapper-226oVY');
-								var backgroundColor = icon.css('background-color');
-								if (backgroundColor == "rgba(0, 0, 0, 0)") {
-									backgroundColor = $(icon.find('.expandedFolderIconWrapper-1xLaU- > svg')).css('color');
-									backgroundColor = backgroundColor.substring(0, backgroundColor.length - 1) + ", 0.4";
+							if (_XposeCompanion.listStartsWith(node.classList, "wrapper-")) {
+								const entry = $(node).find('[class^="expandedFolderBackground-"]');
+								if (entry.length > 0) {
+									var icon = $(entry).next().find('[class^="folderIconWrapper-"]');
+									var backgroundColor = icon.css('background-color');
+									if (backgroundColor == "rgba(0, 0, 0, 0)") {
+										backgroundColor = $(icon.find('[class^="expandedFolderIconWrapper-"] > svg')).css('color');
+										backgroundColor = backgroundColor.substring(0, backgroundColor.length - 1) + ", 0.4";
+									}
+									$(entry).css('background-color', backgroundColor);
 								}
-								entry.css('background-color', backgroundColor);
-							} else if (node.classList.contains("expandedFolderBackground-2sPsd-")) {
-								var icon = node.next().find('.folderIconWrapper-226oVY');
+							} else if (_XposeCompanion.listStartsWith(node.classList, "expandedFolderBackground-")) {
+								var icon = $(node).next().find('[class^="folderIconWrapper-"]');
 								var backgroundColor = icon.css('background-color');
 								if (backgroundColor == "rgba(0, 0, 0, 0)") {
-									backgroundColor = $(icon.find('.expandedFolderIconWrapper-1xLaU- > svg')).css('color');
+									backgroundColor = $(icon.find('[class^="expandedFolderIconWrapper-"] > svg')).css('color');
 									backgroundColor = "rgba" + backgroundColor.substring(3, backgroundColor.length - 1) + ", 0.4)";
 								}
-								node.css('background-color', backgroundColor);
+								$(node).css('background-color', backgroundColor);
 							}
 						}
 					} else if (mutation.type === 'attributes') {
-						if (mutation.target.classList.contains("folderIconWrapper-226oVY")) {
+						if (_XposeCompanion.listStartsWith(mutation.target.classList, "folderIconWrapper-")) {
 							const target = $(mutation.target);
 							const backgroundColor = target.css('background-color');
 							if (backgroundColor != "rgba(0, 0, 0, 0)")
-								target.closest('.listItem-2P_4kh').prev().css('background-color', backgroundColor);
-						} else if (mutation.target.nodeName == 'svg' && mutation.target.parentElement.classList.contains("expandedFolderIconWrapper-1xLaU-")) {
+								target.closest('[class^="listItem-"]').prev().css('background-color', backgroundColor);
+						} else if (mutation.target.nodeName == 'svg' && _XposeCompanion.listStartsWith(mutation.target.parentElement.classList, "expandedFolderIconWrapper-")) {
 							const target = $(mutation.target);
 							var backgroundColor = target.css('color');
 							backgroundColor = "rgba" + backgroundColor.substring(3, backgroundColor.length - 1) + ", 0.4)";
-							target.closest('.listItem-2P_4kh').prev().css('background-color', backgroundColor);
+							target.closest('[class^="listItem-"]').prev().css('background-color', backgroundColor);
 						}
 					}
 				}
@@ -178,6 +182,7 @@ module.exports = (() =>
 				constructor()
 				{
 					super();
+					_XposeCompanion = this;
 				}
 	
 				onStart()
@@ -204,19 +209,19 @@ module.exports = (() =>
 				
 				updateFolderBackgrounds() {
 					if (LibrarySettings['appearance']['guild-folder-color']) {
-						guildListObserver.observe($('ul[data-list-id="guildsnav"]').get(0), {subtree: true, childList: true, attributeFilter: ["style"]});
-						$('.expandedFolderBackground-2sPsd-').each(function(index) {
-							var icon = this.next().find('.folderIconWrapper-226oVY');
+						guildListObserver.observe($('[data-list-id="guildsnav"]').get(0), {subtree: true, childList: true, attributeFilter: ["style"]});
+						$('[class^="expandedFolderBackground-"]').each(function(index) {
+							var icon = $(this).next().find('[class^="folderIconWrapper-"]');
 							var backgroundColor = icon.css('background-color');
 							if (backgroundColor == "rgba(0, 0, 0, 0)") {
-								backgroundColor = $(icon.find('.expandedFolderIconWrapper-1xLaU- > svg')).css('color');
+								backgroundColor = $(icon.find('[class^="expandedFolderIconWrapper-"] > svg')).css('color');
 								backgroundColor = "rgba" + backgroundColor.substring(3, backgroundColor.length - 1) + ", 0.4)";
 							}
-							this.css('background-color', backgroundColor);
+							$(this).css('background-color', backgroundColor);
 						});
 					} else {
 						guildListObserver.disconnect();
-						$('.expandedFolderBackground-2sPsd-').each(function(index) {
+						$('[class^="expandedFolderBackground-"]').each(function(index) {
 							this.css('background-color', "");
 						});
 					}
@@ -239,6 +244,15 @@ module.exports = (() =>
 							this.updateFolderBackgrounds();
 						}
 					}
+				}
+				
+				listStartsWith(list, str) {
+					for (let value of list.entries()) {
+						if (value[1].startsWith(str)) {
+							return true;
+						}
+					}
+					return false;
 				}
 
 			}
