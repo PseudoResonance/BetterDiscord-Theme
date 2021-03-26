@@ -20,7 +20,7 @@ module.exports = (() =>
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "2.1.3",
+			version: "2.1.4",
 			description: "Companion plugin for Xpose theme.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeCompanion.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/XposeCompanion.plugin.js"
@@ -247,9 +247,11 @@ module.exports = (() =>
 				}
 				
 				listStartsWith(list, str) {
-					for (let value of list.entries()) {
-						if (value[1].startsWith(str)) {
-							return true;
+					if (list != null) {
+						for (let value of list.entries()) {
+							if (value[1].startsWith(str)) {
+								return true;
+							}
 						}
 					}
 					return false;
