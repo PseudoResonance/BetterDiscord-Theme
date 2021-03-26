@@ -1,4 +1,4 @@
-//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.11.13"}*//
+//META{"name":"XposeRAW","description":"Custom theme","author":"PseudoResonance","version":"2.11.14"}*//
 
 :root {
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
@@ -7,7 +7,7 @@
 }
 
 body {
-	--version: "v2.11.13";
+	--version: "v2.11.14";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -140,23 +140,23 @@ div.wrapper-21YSNc, [role="group"][id|="folder-items"] {
 	height: auto !important;
 }
 
-.expandedFolderBackground-2sPsd- {
+[class^="expandedFolderBackground-"] {
 	bottom:auto;
 	top:auto;
 	height:100%;
 }
 
-.expandedFolderBackground-2sPsd-.collapsed-1GMuSb {
+[class^="expandedFolderBackground-"].collapsed-2ZrjoL {
 	background-color:transparent !important;
 }
 
-.expandedFolderBackground-2sPsd-:not(.collapsed-1GMuSb) + div:nth-child(2) .wrapper-25eVIn svg foreignObject div, .wrapper-1-Fsb8.header-ywPcAE {
+[class^="expandedFolderBackground-"]:not(.collapsed-2ZrjoL) + div:nth-child(2) .wrapper-25eVIn svg foreignObject div, .wrapper-1-Fsb8.header-ywPcAE {
 	background: transparent !important;
 }
 
 /* Transparent guilds with no image */
-.childWrapper-anI2G9, .circleIconButton-jET_ig {
-	background-color:rgba(54,57,63,0.85) !important;
+.childWrapper-anI2G9, .circleIconButton-jET_ig, .circleIconButton-1QV--U {
+	background-color:rgba(54,57,63,0.85);
 }
 
 /* Transparent background for main content */
@@ -184,12 +184,12 @@ code.inline {
 	border-radius:0 !important;
 }
 
-.expandedFolderBackground-2sPsd-:not(.collapsed-1GMuSb) {
+[class^="expandedFolderBackground-"]:not(.collapsed-2ZrjoL) {
 	background: rgba(47, 49, 54, 0.4);
 	backdrop-filter: blur(var(--blur-radius));
 }
 
-.closedFolderIconWrapper-15K9MK {
+[class^="expandedFolderBackground-"] {
 	backdrop-filter: blur(var(--blur-radius));
 }
 
