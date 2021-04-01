@@ -1,8 +1,11 @@
-//META{"name":"XposeLoader","description":"Custom theme loader","author":"PseudoResonance","version":"1.0"}*//
+//META{"name":"XposeLoader","description":"Custom theme loader","author":"PseudoResonance","version":"1.1"}*//
+
+body {
+}
 
 @import url("https://pseudoresonance.github.io/BetterDiscord-Theme/XposeRAW.theme.css");
 
-:root {
+:root, .theme-dark, .theme-light {
 	--background-screen-cover: 0, 0, 0 !important; /* Color of screen over background */
 	--background-screen-opacity: 0.55 !important; /* Value from 0-1 - 0 being least opaque, 1 being most opaque */
 	--background-url: url("https://i.imgur.com/MoKvTtu.jpg") !important; /* URL for background */
