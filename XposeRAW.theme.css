@@ -1,7 +1,7 @@
 /**
  * @name XposeRAW
  * @author PseudoResonance
- * @version 2.12.2
+ * @version 2.12.3
  * @description Custom theme.
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeRAW.theme.css
  */
@@ -10,7 +10,7 @@
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
 	--background-screen-opacity: 0.45; /* Value from 0-1 - 0 being least opaque, 1 being most opaque */
 	--background-url: url("https://i.imgur.com/avzaqfC.jpg"); /* URL for background */
-	--version: "v2.12.2";
+	--version: "v2.12.3";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -94,16 +94,17 @@
 }
 
 /* Scrollbar */
-.scroller-2FKFPG::-webkit-scrollbar, .scrollerBase-289Jih::-webkit-scrollbar {
+.scroller-2FKFPG::-webkit-scrollbar, .scrollerBase-289Jih::-webkit-scrollbar, .textContainer-C0szpm::-webkit-scrollbar {
 	width:8px;
+	height:8px;
 }
 
-.scroller-2FKFPG::-webkit-scrollbar-track-piece, .scroller-2FKFPG::-webkit-scrollbar-track, .scrollerBase-289Jih::-webkit-scrollbar-track-piece, .scrollerBase-289Jih::-webkit-scrollbar-track {
+.scroller-2FKFPG::-webkit-scrollbar-track-piece, .scroller-2FKFPG::-webkit-scrollbar-track, .scrollerBase-289Jih::-webkit-scrollbar-track-piece, .scrollerBase-289Jih::-webkit-scrollbar-track, .textContainer-C0szpm::-webkit-scrollbar-track-piece, .textContainer-C0szpm::-webkit-scrollbar-track {
 	background: transparent !important;
 	border: none !important;
 }
 
-.scroller-2FKFPG::-webkit-scrollbar-thumb, .scrollerBase-289Jih::-webkit-scrollbar-thumb {
+.scroller-2FKFPG::-webkit-scrollbar-thumb, .scrollerBase-289Jih::-webkit-scrollbar-thumb, .textContainer-C0szpm::-webkit-scrollbar-thumb {
 	background: rgba(255,255,255,0)!important;
 	border: none !important;
 	border-radius:0!important;
@@ -112,12 +113,12 @@
 	display:var(--settings-scrollbar);
 }
 
-.scroller-2FKFPG:hover::-webkit-scrollbar-thumb, .scrollerBase-289Jih:hover::-webkit-scrollbar-thumb {
+.scroller-2FKFPG:hover::-webkit-scrollbar-thumb, .scrollerBase-289Jih:hover::-webkit-scrollbar-thumb, .textContainer-C0szpm:hover::-webkit-scrollbar-thumb {
 	background: rgba(255,255,255,.15)!important;
 	border-radius:0!important;
 }
 
-.scroller-2FKFPG::-webkit-scrollbar-thumb:active, .scrollerBase-289Jih::-webkit-scrollbar-thumb:active {
+.scroller-2FKFPG::-webkit-scrollbar-thumb:active, .scrollerBase-289Jih::-webkit-scrollbar-thumb:active, .textContainer-C0szpm::-webkit-scrollbar-thumb:active {
 	background:rgba(255,255,255,.12);
 }
 
@@ -182,13 +183,17 @@ div.wrapper-21YSNc, [role="group"][id|="folder-items"] {
 	border-radius:0 !important;
 }
 
-.textContainer-C0szpm > pre > code {
-	border-bottom: 1px solid rgba(20, 20, 20, 0.8) !important;
+.textContainer-C0szpm > pre > code, .modalTextContainer-ITvzbi > pre > code {
+	overflow:visible !important;
 }
 
 code.inline {
 	background: rgba(0, 0, 0, 0.5) !important;
 	border-radius:0 !important;
+}
+
+.modalTextContainer-ITvzbi, .textContainer-C0szpm {
+	overflow:scroll visible !important;
 }
 
 [class^="expandedFolderBackground-"]:not(.collapsed-2ZrjoL) {
