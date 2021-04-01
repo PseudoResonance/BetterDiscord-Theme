@@ -20,21 +20,23 @@ module.exports = (() =>
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "4.0.1",
+			version: "4.1.0",
 			description: "Turns a transparent Discord background into a slideshow.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/Slideshow.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/Slideshow.plugin.js"
 		},
 		changelog: [
 			{
-				title: "Incrimental Update",
+				title: "jQuery-less Rewrite",
 				type: "fixed",
 				items: [
-					"Updated deprecated code"
+					"Removed jQuery"
 				]
 			}
 		],
 	};
+	
+	_PseudoSlideshow = null;
 
 	return !global.ZeresPluginLibrary ? class
 	{
@@ -90,16 +92,26 @@ module.exports = (() =>
 			
 			var interval = 0;
 			var backgroundIndex = 0;
+			
+			var backgroundNode = null;
+			var radioCircleTemplate = null;
 
 			return class Slideshow extends Plugin
 			{
 				constructor()
 				{
 					super();
+					_PseudoSlideshow = this;
 					backgroundIndex = this.getData("index", 0);
 					delay = this.getData("delay", defaultDelay);
 					speed = this.getData("speed", defaultSpeed);
 					backgrounds = JSON.parse(this.getData("backgrounds", JSON.stringify(defaultBackgrounds)));
+					radioCircleTemplate = document.createElementNS("http://www.w3.org/2000/svg", "circle")
+					radioCircleTemplate.setAttribute("cx", "12");
+					radioCircleTemplate.setAttribute("cy", "12");
+					radioCircleTemplate.setAttribute("r", "5");
+					radioCircleTemplate.setAttribute("fill", "currentColor");
+					radioCircleTemplate.classList.add("radioIconForeground-XwlXQN");
 				}
 	
 				onStart()
@@ -107,11 +119,35 @@ module.exports = (() =>
 					PluginUtilities.addStyle(
 						'Slideshow-CSS',
 						`
+						.pseudoslideshow-image {
+							opacity:0;
+							display:block;
+							width:100%;
+							height:100%;
+							top:0px;
+							left:0px;
+							position:absolute;
+							background-size:cover;
+						}
+						
+						.pseudoslideshow-image.pseudoslideshow-image-visible {
+							opacity:1;
+						}
+						
+						.pseudoslideshow-settings {
+							color:var(--header-primary);
+						}
+						
 						.pseudoslideshow-table {
 							width:100%;
 						}
 						
-						.pseudoslideshow-table, .pseudoslideshow-table-header, .pseudoslideshow-table-row, .pseudoslideshow-table-header-obj, .pseudoslideshow-table-row-obj {
+						.pseudoslideshow-table, .pseudoslideshow-table-header, .pseudoslideshow-table-row {
+							border-right: thin solid #72767d;
+							border-collapse: collapse;
+						}
+						
+						.pseudoslideshow-table-header-obj, .pseudoslideshow-table-row-obj {
 							border: thin solid #72767d;
 							border-collapse: collapse;
 						}
@@ -137,11 +173,17 @@ module.exports = (() =>
 							width:100%;
 							color:#f6f6f7;
 							font-size:100%;
+							box-sizing:border-box;
+							-webkit-box-sizing:border-box;
+							-moz-box-sizing:border-box;
 						}
 						
 						.pseudoslideshow-table-checkbox {
 							width:24px;
 							vertical-align:middle;
+							border-top:none;
+							border-left:none;
+							border-bottom:none;
 						}
 						
 						.pseudoslideshow-table-image {
@@ -169,7 +211,10 @@ module.exports = (() =>
 				onStop()
 				{
 					this.stopInterval();
-					$('#pseudoslideshow-background').remove();
+					backgroundNode = document.getElementById('pseudoslideshow-background');
+					if (backgroundNode != null) {
+						backgroundNode.remove();
+					}
 					PluginUtilities.removeStyle('Slideshow-CSS');
 				}
 				
@@ -181,46 +226,73 @@ module.exports = (() =>
 				}
 				
 				initializeBackgrounds() {
-					$('#pseudoslideshow-background').remove();
-					$('<div id="pseudoslideshow-background" style="width:100%;height:100%;left:0px;top:0px;position:absolute;"></div>').insertBefore('#app-mount');
-					for (var i = 0; i < backgrounds.length; i++) {
-						$('#pseudoslideshow-background').append('<div style="display:none;width:100%;height:100%;left:0px;top:0px;position:absolute;background-size:cover;z-index:-3;background-image:' + this.genBackgroundImage(i) + '"></div>');
+					backgroundNode = document.getElementById('pseudoslideshow-background');
+					if (backgroundNode != null) {
+						backgroundNode.remove();
 					}
-					$('#pseudoslideshow-background div:nth-child(1)').show();
+					var appMount = document.getElementById('app-mount');
+					backgroundNode = document.createElement("div");
+					backgroundNode.id = "pseudoslideshow-background";
+					backgroundNode.style.width = "100%";
+					backgroundNode.style.height = "100%";
+					backgroundNode.style.left = "0px";
+					backgroundNode.style.top = "0px";
+					backgroundNode.style.position = "absolute";
+					appMount.parentElement.insertBefore(backgroundNode, appMount);
+					for (var i = 0; i < backgrounds.length; i++) {
+						var imageNode = document.createElement("div");
+						imageNode.style.zIndex = "-3";
+						imageNode.style.backgroundImage = this.genBackgroundImage(i);
+						imageNode.classList.add("pseudoslideshow-image");
+						backgroundNode.appendChild(imageNode);
+					}
+					if (backgroundNode.children.length > 0) {
+						backgroundNode.children[0].style.display = "block";
+						backgroundNode.children[0].classList.add("pseudoslideshow-image-visible");
+					}
 				}
 	
 				startInterval() {
-					interval = window.setInterval(function(){
-						backgroundIndex++;
-						BdApi.setData("Slideshow", "index", backgroundIndex);
-						if (backgroundIndex >= backgrounds.length) {
-							$('#pseudoslideshow-background div:nth-child(1)').css("z-index", "-1").fadeIn(speed);
-							BdApi.Plugins.get("Slideshow").updateChecks(backgroundIndex);
-							setTimeout(function() {
-								$('#pseudoslideshow-background div:nth-child(' + backgroundIndex + ')').hide();
-								backgroundIndex = 0;
+					if (backgroundNode != null) {
+						if (backgroundNode.children.length > 1) {
+							interval = window.setInterval(function(){
+								var lastIndex = backgroundIndex++;
 								BdApi.setData("Slideshow", "index", backgroundIndex);
-								$('#pseudoslideshow-background div:nth-child(1)').css("z-index", "-3");
-							}, speed + 1);
-						} else {
-							$('#pseudoslideshow-background div:nth-child(' + (backgroundIndex + 1) + ')').css("z-index", "-1").fadeIn(speed);
-							BdApi.Plugins.get("Slideshow").updateChecks(backgroundIndex);
-							setTimeout(function() {
-								$('#pseudoslideshow-background div:nth-child(' + backgroundIndex + ')').hide();
-								$('#pseudoslideshow-background div:nth-child(' + (backgroundIndex + 1) + ')').css("z-index", "-3");
-							}, speed + 1);
+								if (backgroundIndex >= backgroundNode.children.length) {
+									backgroundIndex = 0;
+								}
+								backgroundNode.children[backgroundIndex].style.zIndex = "-1";
+								backgroundNode.children[backgroundIndex].style.transition = "opacity " + speed + "ms";
+								backgroundNode.children[backgroundIndex].classList.add("pseudoslideshow-image-visible");
+								_PseudoSlideshow.updateChecks();
+								BdApi.setData("Slideshow", "index", backgroundIndex);
+								setTimeout(function() {
+									backgroundNode.children[lastIndex].style.transition = "opacity 0s";
+									backgroundNode.children[lastIndex].classList.remove("pseudoslideshow-image-visible");
+									backgroundNode.children[backgroundIndex].style.zIndex = "-3";
+								}, speed + 1);
+							}, delay * 1000);
 						}
-					}, delay * 1000);
+					}
 				}
 	
 				resetImage() {
-					if (backgroundIndex >= backgrounds.length)
-						backgroundIndex = 0;
-					BdApi.setData("Slideshow", "index", backgroundIndex);
-					for (var i = 1; i <= backgrounds.length; i++) {
-						$('#pseudoslideshow-background div:nth-child(' + i + ')').hide();
+					if (backgroundNode != null) {
+						if (backgroundIndex >= backgroundNode.children.length)
+							backgroundIndex = 0;
+						if (backgroundIndex < 0)
+							backgroundIndex = 0;
+						BdApi.setData("Slideshow", "index", backgroundIndex);
+						for (var i = 0; i < backgrounds.length; i++) {
+							if (i != backgroundIndex) {
+								backgroundNode.children[i].style.transition = "opacity 0s";
+								backgroundNode.children[i].classList.remove("pseudoslideshow-image-visible");
+							} else {
+								backgroundNode.children[i].style.transition = "opacity 0s";
+								backgroundNode.children[i].classList.add("pseudoslideshow-image-visible");
+							}
+						}
 					}
-					$('#pseudoslideshow-background div:nth-child(' +  (backgroundIndex + 1) + ')').show();
 				}
 				
 				stopInterval() {
@@ -228,108 +300,118 @@ module.exports = (() =>
 				}
 				
     			getSettingsPanel() {
-					var backgroundList = "";
-					for (var i = 0; i < backgrounds.length; i++) {
-						backgroundList += `<tr class='pseudoslideshow-table-row'><td class='pseudoslideshow-table-row-obj pseudoslideshow-table-checkbox'>`;
-						if (backgroundIndex == i)
-							backgroundList += `<label class='checkboxWrapper-SkhIWG da-checkboxWrapper alignTop-1ntJ4-'><input class='inputDefault-3JxKJ2 input-3ITkQf da-inputDefault da-input' type='checkbox' style='width: 24px; height: 24px;' onclick='BdApi.Plugins.get("Slideshow").check(this);' checked><div class='checkbox-1ix_J3 flexCenter-3_1bcw flex-1O1GKY justifyCenter-3D2jYp alignCenter-1dQNNs da-checkbox da-flexCenter da-flex da-justifyCenter da-alignCenter box-mmYMsp checked-3_4uQ9 da-checked' style='width: 24px; height: 24px; border-color: rgb(114, 137, 218);'><svg name='Checkmark' aria-hidden='true' width='18' height='18' viewBox='0 0 18 18' xmlns='http://www.w3.org/2000/svg'><g fill='none' fill-rule='evenodd'><polyline stroke='#7289da' stroke-width='2' points='3.5 9.5 7 13 15 5'></polyline></g></svg></div></label>`;
-						else
-							backgroundList += `<label class='checkboxWrapper-SkhIWG da-checkboxWrapper alignTop-1ntJ4-'><input class='inputDefault-3JxKJ2 input-3ITkQf da-inputDefault da-input' type='checkbox' style='width: 24px; height: 24px;' onclick='BdApi.Plugins.get("Slideshow").check(this);'><div class='checkbox-1ix_J3 flexCenter-3_1bcw flex-1O1GKY justifyCenter-3D2jYp alignCenter-1dQNNs da-checkbox da-flexCenter da-flex da-justifyCenter da-alignCenter box-mmYMsp' style='width: 24px; height: 24px;'><svg name='Checkmark' aria-hidden='true' width='18' height='18' viewBox='0 0 18 18' xmlns='http://www.w3.org/2000/svg'><g fill='none' fill-rule='evenodd'><polyline stroke='transparent' stroke-width='2' points='3.5 9.5 7 13 15 5'></polyline></g></svg></div></label>`;
-						backgroundList += `</td><td class='pseudoslideshow-table-row-obj pseudoslideshow-table-image'><input class='pseudoslideshow-table-input' onkeydown='BdApi.Plugins.get("Slideshow").backgroundInput(this)' value='` + backgrounds[i].link + `'></input></td><td class='pseudoslideshow-table-row-obj pseudoslideshow-table-opacity'><input class='pseudoslideshow-table-input' onkeydown='BdApi.Plugins.get("Slideshow").backgroundInput(this)' value='` + backgrounds[i].opacity + `'></input></td><td class='pseudoslideshow-table-row-obj pseudoslideshow-table-color'><input class='pseudoslideshow-table-input' onkeydown='BdApi.Plugins.get("Slideshow").backgroundInput(this)' value='` + backgrounds[i].color + `'></input></td></tr>`;
-					}
-					backgroundList += `<tr class='pseudoslideshow-table-row'><td class='pseudoslideshow-table-row-obj pseudoslideshow-table-checkbox'><label class='checkboxWrapper-SkhIWG da-checkboxWrapper alignTop-1ntJ4-'><input class='inputDefault-3JxKJ2 input-3ITkQf da-inputDefault da-input' type='checkbox' style='width: 24px; height: 24px;' onclick='BdApi.Plugins.get("Slideshow").check(this);'><div class='checkbox-1ix_J3 flexCenter-3_1bcw flex-1O1GKY justifyCenter-3D2jYp alignCenter-1dQNNs da-checkbox da-flexCenter da-flex da-justifyCenter da-alignCenter box-mmYMsp' style='width: 24px; height: 24px;'><svg name='Checkmark' aria-hidden='true' width='18' height='18' viewBox='0 0 18 18' xmlns='http://www.w3.org/2000/svg'><g fill='none' fill-rule='evenodd'><polyline stroke='transparent' stroke-width='2' points='3.5 9.5 7 13 15 5'></polyline></g></svg></div></label></td><td class='pseudoslideshow-table-row-obj pseudoslideshow-table-image'><input class='pseudoslideshow-table-input' onkeydown='BdApi.Plugins.get("Slideshow").backgroundInput(this)' value=''></input></td><td class='pseudoslideshow-table-row-obj pseudoslideshow-table-opacity'><input class='pseudoslideshow-table-input' onkeydown='BdApi.Plugins.get("Slideshow").backgroundInput(this)' value=''></input></td><td class='pseudoslideshow-table-row-obj pseudoslideshow-table-color'><input class='pseudoslideshow-table-input' onkeydown='BdApi.Plugins.get("Slideshow").backgroundInput(this)' value=''></input></td></tr>`;
-					var ret = `<p>PseudoSlideshow Settings - Press enter after editing value to take effect!</p>
+					var ret = `<div class='pseudoslideshow-settings'><p>PseudoSlideshow Settings - Press enter after editing value to take effect!</p>
 					<p style='clear:none; display:inline-block'>Reset all settings to their defaults: </p>
-					<button style='display:inline-block' class='bd-pfbtn' onclick='BdApi.Plugins.get("Slideshow").resetSettings();'>Reset Settings</button>
+					<button style='display:inline-block' class='button-38aScr lookFilled-1Gx00P colorBrand-3pXr91 sizeMedium-1AC_Sl grow-q77ONN' type='button' onclick='_PseudoSlideshow.resetSettings();'>Reset Settings</button>
 					<br />
 					<p>Delay Between Picture Changes (In Seconds) (Default: 600):&emsp;</p>
-					<input id='pseudoslideshow-delay' class='inputDefault-_djjkz input-cIJ7To da-inputDefault da-input noBorder-CTIBpT da-noBorder' onkeydown='BdApi.Plugins.get("Slideshow").delayInput(this)' value='` + delay + `'></input>
+					<input id='pseudoslideshow-delay' class='inputDefault-_djjkz input-cIJ7To da-inputDefault da-input noBorder-CTIBpT da-noBorder' onkeydown='_PseudoSlideshow.delayInput(this)' value='` + delay + `'></input>
 					<br />
 					<p>Transition Speed (In Milliseconds) (Default: 1500):&emsp;</p>
-					<input id='pseudoslideshow-speed' class='inputDefault-_djjkz input-cIJ7To da-inputDefault da-input noBorder-CTIBpT da-noBorder' onkeydown='BdApi.Plugins.get("Slideshow").speedInput(this)' value='` + speed + `'></input>
+					<input id='pseudoslideshow-speed' class='inputDefault-_djjkz input-cIJ7To da-inputDefault da-input noBorder-CTIBpT da-noBorder' onkeydown='_PseudoSlideshow.speedInput(this)' value='` + speed + `'></input>
 					<br />
 					<p>Insert Backgrounds:</p>
 					<table id='pseudoslideshow-backgrounds' class='pseudoslideshow-table'>
-					<tr id='pseudoslideshow-backgrounds-header' class='pseudoslideshow-table-header'><th class='pseudoslideshow-table-row-obj pseudoslideshow-table-checkbox'></th><th class='pseudoslideshow-table-header-obj pseudoslideshow-table-image'>Image <span class='pseudoslideshow-table-hint'>(URL)</span></th><th class='pseudoslideshow-table-header-obj pseudoslideshow-table-opacity'>Opacity <span class='pseudoslideshow-table-hint'>(0.0-1.0)</span></th><th class='pseudoslideshow-table-header-obj pseudoslideshow-table-color'>Screen Color <span class='pseudoslideshow-table-hint'>(r, g, b)</span></th></tr>` + backgroundList + `</table>`;
+					<tr id='pseudoslideshow-backgrounds-header' class='pseudoslideshow-table-header'><th class='pseudoslideshow-table-row-obj pseudoslideshow-table-checkbox'></th><th class='pseudoslideshow-table-header-obj pseudoslideshow-table-image'>Image <span class='pseudoslideshow-table-hint'>(URL)</span></th><th class='pseudoslideshow-table-header-obj pseudoslideshow-table-opacity'>Opacity <span class='pseudoslideshow-table-hint'>(0.0-1.0)</span></th><th class='pseudoslideshow-table-header-obj pseudoslideshow-table-color'>Screen Color <span class='pseudoslideshow-table-hint'>(r, g, b)</span></th></tr>` + this.generateBackgroundTable() + `</table></div>`;
 					return ret;
 				}
 				
+				generateBackgroundTable() {
+					var backgroundList = "";
+					for (var i = 0; i < backgrounds.length; i++) {
+						backgroundList += `<tr class='pseudoslideshow-table-row'><td class='pseudoslideshow-table-row-obj pseudoslideshow-table-checkbox' onclick='_PseudoSlideshow.check(this);'>`;
+						if (backgroundIndex == i)
+							backgroundList += `<svg aria-hidden="false" width="24" height="24" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20ZM12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" fill="currentColor"></path><circle cx="12" cy="12" r="5" class="radioIconForeground-XwlXQN" fill="currentColor"></circle></svg>`;
+						else
+							backgroundList += `<svg aria-hidden="false" width="24" height="24" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20ZM12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" fill="currentColor"></path></svg>`;
+						backgroundList += `</td><td class='pseudoslideshow-table-row-obj pseudoslideshow-table-image'><input class='pseudoslideshow-table-input' onkeydown='_PseudoSlideshow.backgroundInput(this)' value='` + backgrounds[i].link + `'></input></td><td class='pseudoslideshow-table-row-obj pseudoslideshow-table-opacity'><input class='pseudoslideshow-table-input' onkeydown='_PseudoSlideshow.backgroundInput(this)' value='` + backgrounds[i].opacity + `'></input></td><td class='pseudoslideshow-table-row-obj pseudoslideshow-table-color'><input class='pseudoslideshow-table-input' onkeydown='_PseudoSlideshow.backgroundInput(this)' value='` + backgrounds[i].color + `'></input></td></tr>`;
+					}
+					backgroundList += this.getEmptyBackgroundTableRow();
+					return backgroundList;
+				}
+				
+				getEmptyBackgroundTableRow() {
+					return `<tr class='pseudoslideshow-table-row'><td class='pseudoslideshow-table-row-obj pseudoslideshow-table-checkbox' onclick='_PseudoSlideshow.check(this);'><svg aria-hidden="false" width="24" height="24" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20ZM12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" fill="currentColor"></path></svg></td><td class='pseudoslideshow-table-row-obj pseudoslideshow-table-image'><input class='pseudoslideshow-table-input' onkeydown='_PseudoSlideshow.backgroundInput(this)' value=''></input></td><td class='pseudoslideshow-table-row-obj pseudoslideshow-table-opacity'><input class='pseudoslideshow-table-input' onkeydown='_PseudoSlideshow.backgroundInput(this)' value=''></input></td><td class='pseudoslideshow-table-row-obj pseudoslideshow-table-color'><input class='pseudoslideshow-table-input' onkeydown='_PseudoSlideshow.backgroundInput(this)' value=''></input></td></tr>`;
+				}
+				
 				toggleCheck(ele, status) {
-					var jElem = $(ele.nextSibling);
-					var check = jElem.children().eq(0).children().eq(0).children().eq(0);
 					if (status) {
-						ele.checked = true;
-						jElem.css('border-color', 'rgb(114, 137, 218)');
-						jElem.addClass('checked-3_4uQ9 da-checked');
-						check.attr('stroke', '#7289da');
+						ele.appendChild(radioCircleTemplate.cloneNode());
 					} else {
-						ele.checked = false;
-						jElem.css('border-color', '');
-						jElem.removeClass('checked-3_4uQ9 da-checked');
-						check.attr('stroke', 'transparent');
+						if (ele.children.length > 1) {
+							ele.children[1].remove();
+						}
 					}
 				}
 				
-				updateChecks(id) {
+				updateChecks() {
 					var rowParent = document.getElementById("pseudoslideshow-backgrounds");
 					if (rowParent != null) {
 						var rows = rowParent.children[0].children;
 						for (var i = 0; i < backgrounds.length; i++) {
-							if (i != id)
-								this.toggleCheck(rows[i + 1].children[0].children[0].children[0], false);
+							if (i != backgroundIndex)
+								this.toggleCheck(rows[i + 1].children[0].children[0], false);
 							else
-								this.toggleCheck(rows[i + 1].children[0].children[0].children[0], true);
+								this.toggleCheck(rows[i + 1].children[0].children[0], true);
 						}
 					}
 				}
 				
 				check(ele) {
-					if (ele.checked) {
-						var eleId = parseInt(ele.parentElement.parentElement.parentElement.index() - 1);
-						if (eleId < backgrounds.length) {
-							this.toggleCheck(ele, true);
-							var rows = ele.parentElement.parentElement.parentElement.parentElement.children;
-							for (var i = 0; i < backgrounds.length; i++) {
-								if (i != eleId)
-									this.toggleCheck(rows[i + 1].children[0].children[0].children[0], false);
-							}
-							backgroundIndex = eleId;
-							this.stopInterval();
-							this.resetImage();
-							this.startInterval();
-						} else
-							ele.checked = false;
-					} else
-						ele.checked = true;
+					var svg = ele.children[0];
+					var row = ele.parentElement;
+					var eleId = parseInt(Array.prototype.indexOf.call(row.parentElement.children, row) - 1);
+					if (eleId < backgrounds.length) {
+						this.toggleCheck(svg, true);
+						var rows = ele.parentElement.parentElement.children;
+						for (var i = 0; i < backgrounds.length; i++) {
+							if (i != eleId)
+								this.toggleCheck(rows[i + 1].children[0].children[0], false);
+						}
+						backgroundIndex = eleId;
+						this.stopInterval();
+						this.resetImage();
+						this.startInterval();
+					}
 				}
 				
 				backgroundInput(ele) {
 					if(event.key === 'Enter') {
-						var eleId = parseInt(ele.parentElement.parentElement.index() - 1);
-						var row = $(ele.parentElement.parentElement);
-						var eleImage = row.children().eq(1).children().eq(0);
-						var eleOpacity = row.children().eq(2).children().eq(0);
-						var eleColor = row.children().eq(3).children().eq(0);
-						var newImage = eleImage.val();
-						var newOpacity = eleOpacity.val();
-						var newColor = eleColor.val();
+						var row = ele.parentElement.parentElement;
+						var eleId = parseInt(Array.prototype.indexOf.call(row.parentElement.children, row) - 1);
+						var eleImage = row.children[1].children[0];
+						var eleOpacity = row.children[2].children[0];
+						var eleColor = row.children[3].children[0];
+						var newImage = eleImage.value;
+						var newOpacity = eleOpacity.value;
+						var newColor = eleColor.value;
 						if (eleId >= backgrounds.length) {
 							if (newImage.length != 0 && newOpacity.length != 0 && newColor.length != 0 && this.isOpacityValid(newOpacity, eleOpacity) && this.isColorValid(newColor, eleColor) && this.isImageValid(newImage, eleImage)) {
 								backgrounds.push({link:newImage, opacity:parseFloat(newOpacity), color:newColor});
-								$('#pseudoslideshow-background').append('<div style="display:none;width:100%;height:100%;left:0px;top:0px;position:absolute;background-size:cover;z-index:-3;background-image:' + this.genBackgroundImage(eleId) + '"></div>');
+								var imageNode = document.createElement("div");
+								imageNode.style.zIndex = "-3";
+								imageNode.style.backgroundImage = this.genBackgroundImage(eleId);
+								imageNode.classList.add("pseudoslideshow-image");
+								backgroundNode.appendChild(imageNode);
 								this.stopInterval();
 								this.startInterval();
-								$('#pseudoslideshow-backgrounds').append(`<tr class='pseudoslideshow-table-row'><td class='pseudoslideshow-table-row-obj pseudoslideshow-table-checkbox'><label class='checkboxWrapper-SkhIWG da-checkboxWrapper alignTop-1ntJ4-'><input class='inputDefault-3JxKJ2 input-3ITkQf da-inputDefault da-input' type='checkbox' style='width: 24px; height: 24px;' onclick='BdApi.Plugins.get("Slideshow").check(this);'><div class='checkbox-1ix_J3 flexCenter-3_1bcw flex-1O1GKY justifyCenter-3D2jYp alignCenter-1dQNNs da-checkbox da-flexCenter da-flex da-justifyCenter da-alignCenter box-mmYMsp' style='width: 24px; height: 24px;'><svg name='Checkmark' aria-hidden='true' width='18' height='18' viewBox='0 0 18 18' xmlns='http://www.w3.org/2000/svg'><g fill='none' fill-rule='evenodd'><polyline stroke='transparent' stroke-width='2' points='3.5 9.5 7 13 15 5'></polyline></g></svg></div></label></td><td class='pseudoslideshow-table-row-obj pseudoslideshow-table-image'><input class='pseudoslideshow-table-input' onkeydown='BdApi.Plugins.get("Slideshow").backgroundInput(this)' value=''></input></td><td class='pseudoslideshow-table-row-obj pseudoslideshow-table-opacity'><input class='pseudoslideshow-table-input' onkeydown='BdApi.Plugins.get("Slideshow").backgroundInput(this)' value=''></input></td><td class='pseudoslideshow-table-row-obj pseudoslideshow-table-color'><input class='pseudoslideshow-table-input' onkeydown='BdApi.Plugins.get("Slideshow").backgroundInput(this)' value=''></input></td></tr>`);
+								var template = document.createElement("template");
+								template.innerHTML = this.getEmptyBackgroundTableRow();
+								row.parentElement.appendChild(template.content.firstChild);
 								this.saveBackgrounds();
 							}
 						} else {
-							var bgEle = $('#pseudoslideshow-background div:nth-child(' + (eleId + 1) + ')');
+							var bgEle = backgroundNode.children[eleId];
 							if (newImage.length == 0 && newOpacity.length == 0 && newColor.length == 0) {
+								if (eleId <= backgroundIndex) {
+									backgroundIndex--;
+								}
 								backgrounds.splice(eleId, 1);
 								bgEle.remove();
 								ele.parentElement.parentElement.remove();
 								this.stopInterval();
 								this.resetImage();
+								this.updateChecks();
 								this.startInterval();
 								this.saveBackgrounds();
 							} else {
@@ -337,7 +419,7 @@ module.exports = (() =>
 									backgrounds[eleId].link = newImage;
 									backgrounds[eleId].opacity = parseFloat(newOpacity);
 									backgrounds[eleId].color = newColor;
-									bgEle.css("background-image", this.genBackgroundImage(eleId));
+									bgEle.style.backgroundImage = this.genBackgroundImage(eleId);
 									this.saveBackgrounds();
 								}
 							}
@@ -347,10 +429,10 @@ module.exports = (() =>
 				
 				isImageValid(inputUrl, elem) {
 					if(/^(http|https|ftp):\/\/[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$/i.test(inputUrl)) {
-						elem.parent().removeClass('pseudoslideshow-table-invalid');
+						elem.parentElement.classList.remove("pseudoslideshow-table-invalid");
 						return true;
 					} else {
-						elem.parent().addClass('pseudoslideshow-table-invalid');
+						elem.parentElement.classList.add("pseudoslideshow-table-invalid");
 						return false;
 					}
 				}
@@ -358,10 +440,10 @@ module.exports = (() =>
 				isOpacityValid(inputOpacity, elem) {
 					var op = parseFloat(inputOpacity);
 					if (!isNaN(op) && op >= 0 && op <= 1) {
-						elem.parent().removeClass('pseudoslideshow-table-invalid');
+						elem.parentElement.classList.remove("pseudoslideshow-table-invalid");
 						return true;
 					} else {
-						elem.parent().addClass('pseudoslideshow-table-invalid');
+						elem.parentElement.classList.add("pseudoslideshow-table-invalid");
 						return false;
 					}
 				}
@@ -369,10 +451,10 @@ module.exports = (() =>
 				isColorValid(inputColor, elem) {
 					var split = inputColor.trim().split(",");
 					if (split.length == 3 && this.checkRGBVal(split[0]) && this.checkRGBVal(split[1]) && this.checkRGBVal(split[2])) {
-						elem.parent().removeClass('pseudoslideshow-table-invalid');
+						elem.parentElement.classList.remove("pseudoslideshow-table-invalid");
 						return true;
 					} else {
-						elem.parent().addClass('pseudoslideshow-table-invalid');
+						elem.parentElement.classList.add("pseudoslideshow-table-invalid");
 						return false;
 					}
 				}
@@ -396,8 +478,12 @@ module.exports = (() =>
 				setDelay(val, setInput = false) {
 					BdApi.setData("Slideshow", "delay", val);
 					delay = val;
-					if (setInput)
-						$('#pseudoslideshow-delay').val(val);
+					if (setInput) {
+						var delayElem = document.getElementById("pseudoslideshow-delay");
+						if (delayElem != null) {
+							delayElem.value = val;
+						}
+					}
 					this.stopInterval();
 					this.startInterval();
 				}
@@ -405,8 +491,12 @@ module.exports = (() =>
 				setSpeed(val, setInput = false) {
 					BdApi.setData("Slideshow", "speed", val);
 					speed = val;
-					if (setInput)
-						$('#pseudoslideshow-speed').val(val);
+					if (setInput) {
+						var delayElem = document.getElementById("pseudoslideshow-speed");
+						if (delayElem != null) {
+							delayElem.value = val;
+						}
+					}
 				}
 				
 				delayInput(ele) {
@@ -428,6 +518,25 @@ module.exports = (() =>
 				resetSettings() {
 					this.setDelay(defaultDelay, true);
 					this.setSpeed(defaultSpeed, true);
+					backgrounds = JSON.parse(JSON.stringify(defaultBackgrounds));
+					this.initializeBackgrounds();
+					backgroundIndex = 0;
+					this.saveBackgrounds();
+					var table = document.getElementById("pseudoslideshow-backgrounds");
+					if (table != null) {
+						var tbody = table.children[0];
+						for (var i = tbody.children.length - 1; i > 0; i--) {
+							tbody.children[i].remove();
+						}
+						var template = document.createElement("template");
+						template.innerHTML = this.generateBackgroundTable();
+						var newNodes = template.content.childNodes;
+						while (newNodes.length > 0) {
+							tbody.appendChild(newNodes[0]);
+						}
+					}
+					this.resetImage();
+					this.startInterval();
 				}
 				
 			}
