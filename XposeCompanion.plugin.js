@@ -20,17 +20,17 @@ module.exports = (() =>
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "2.1.4",
+			version: "2.2.0",
 			description: "Companion plugin for Xpose theme.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeCompanion.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/XposeCompanion.plugin.js"
 		},
 		changelog: [
 			{
-				title: "Update",
+				title: "jQuery-less Rewrite",
 				type: "fixed",
 				items: [
-					"Expanded folder colors"
+					"Removed jQuery"
 				]
 			}
 		],
@@ -88,37 +88,61 @@ module.exports = (() =>
 			const { DiscordAPI, PluginUpdater, PluginUtilities } = Api;
 			
 			const uploadPlaceholderObserver = new MutationObserver(function(mutationsList, observer) {
-				if ($('.uploadModal-2ifh8j').length) {
-					var text = "";
-					$('.uploadModal-2ifh8j .inner-3nWsbo .comment-4IWttf .label-3aiqT2').children('span').each(function(){
-						text += $(this).text() + " ";
-					});
-					text = text.substring(0, text.length - 1).replace(/\n/g, " ");
-					if (text.length > 0) {
-						var input = $('.uploadModal-2ifh8j .textArea-12jD-V .slateTextArea-1Mkdgw');
-						var samplePlaceholder = $('.channelTextArea-2VhZ6z .textArea-12jD-V .placeholder-37qJjk');
-						if (input.text().trim() != "") text = ""
-						var classes = "placeholder-37qJjk";
-						if (samplePlaceholder.length !== 0) {
-							if (samplePlaceholder.attr('class').length > 0) {
-								classes = samplePlaceholder.attr('class');
+				if (document.getElementsByClassName("uploadModal-2ifh8j").length) {
+					var labels = document.querySelectorAll(".uploadModal-2ifh8j .inner-3nWsbo .comment-4IWttf .label-3aiqT2");
+					var labelsText = [];
+					for (var i = 0; i < labels.length; i++) {
+						labelsText[i] = "";
+						for (var j = 0; j < labels[i].children.length; j++) {
+							labelsText[i] += labels[i].children[j].textContent + " ";
+						}
+						labelsText[i] = labelsText[i].substring(0, labelsText[i].length - 1).replace(/\n/g, " ");
+					}
+					if (labelsText.length > 0) {
+						var input = document.querySelector(".uploadModal-2ifh8j .textArea-12jD-V .slateTextArea-1Mkdgw");
+						var inputName = document.querySelector(".uploadModal-2ifh8j .inputWrapper-31_8H8 .input-cIJ7To");
+						var fileDescription = document.querySelector(".uploadModal-2ifh8j .description-2ug5H_ .filename-ovv3c5");
+						var samplePlaceholder = document.querySelector(".channelTextArea-2VhZ6z .textArea-12jD-V .placeholder-37qJjk");
+						if (input.textContent.trim() != "") labelsText[labelsText.length - 1] = ""
+						var classes = ["placeholder-37qJjk"];
+						if (samplePlaceholder != null) {
+							if (samplePlaceholder.classList.length > 0) {
+								classes = samplePlaceholder.classList;
+							}
+						} else {
+							for (var i = 0; i < input.classList.length; i++) {
+								if (input.classList[i].startsWith("fontSize")) {
+									classes.push(input.classList[i]);
+									break;
+								}
 							}
 						}
-						if ($('#pseudo-uploadModalPlaceholder').length === 0) {
-							input.before($("<div class='" + classes + "' id='pseudo-uploadModalPlaceholder'>" + text + "</div>"));
-							uploadPlaceholderTextObserver.observe(input.get(0), {subtree: true, childList: true, characterData: true});
-						} else if ($('#pseudo-uploadModalPlaceholder').html() != text) {
-							$('#pseudo-uploadModalPlaceholder').html(text);
+						var uploadModalPlaceholder = document.getElementById("pseudo-uploadModalPlaceholder");
+						if (uploadModalPlaceholder == null) {
+							var placeholderNode = document.createElement("div");
+							placeholderNode.id = "pseudo-uploadModalPlaceholder";
+							placeholderNode.textContent = labelsText[labelsText.length - 1];
+							for (var i = 0; i < classes.length; i++) {
+								placeholderNode.classList.add(classes[i]);
+							}
+							input.parentElement.insertBefore(placeholderNode, input);
+							uploadPlaceholderTextObserver.observe(input, {subtree: true, childList: true, characterData: true});
+						} else if (uploadModalPlaceholder.textContent != labelsText[labelsText.length - 1]) {
+							uploadModalPlaceholder.textContent = labelsText[labelsText.length - 1];
+						}
+						if (labelsText.length > 1) {
+							fileDescription.textContent = "";
+							inputName.placeholder = labelsText[0];
 						}
 					}
 				}
 			});
 			const uploadPlaceholderTextObserver = new MutationObserver(function(mutationsList, observer) {
-				var input = $('.uploadModal-2ifh8j .textArea-12jD-V .slateTextArea-1Mkdgw');
-				if (input.text().trim() === "")
-					$('#pseudo-uploadModalPlaceholder').show();
+				var input = document.querySelector(".uploadModal-2ifh8j .textArea-12jD-V .slateTextArea-1Mkdgw");
+				if (input.textContent.trim() === "")
+					document.getElementById("pseudo-uploadModalPlaceholder").style.display = "block";
 				else
-					$('#pseudo-uploadModalPlaceholder').hide();
+					document.getElementById("pseudo-uploadModalPlaceholder").style.display = "none";
 			});
 			
 			const guildListObserver = new MutationObserver(function(mutationsList, observer) {
@@ -126,37 +150,35 @@ module.exports = (() =>
 					if (mutation.type === 'childList') {
 						for (const node of mutation.addedNodes) {
 							if (_XposeCompanion.listStartsWith(node.classList, "wrapper-")) {
-								const entry = $(node).find('[class^="expandedFolderBackground-"]');
-								if (entry.length > 0) {
-									var icon = $(entry).next().find('[class^="folderIconWrapper-"]');
-									var backgroundColor = icon.css('background-color');
-									if (backgroundColor == "rgba(0, 0, 0, 0)") {
-										backgroundColor = $(icon.find('[class^="expandedFolderIconWrapper-"] > svg')).css('color');
+								const entry = ZeresPluginLibrary.DOMTools.query('[class^="expandedFolderBackground-"]', node);
+								if (entry != null) {
+									var icon = ZeresPluginLibrary.DOMTools.query('[class^="folderIconWrapper-"]', entry.nextSibling);
+									var backgroundColor = icon.style.backgroundColor;
+									if (backgroundColor == "") {
+										backgroundColor = ZeresPluginLibrary.DOMTools.query('[class^="expandedFolderIconWrapper-"] > svg', icon).style.color;
 										backgroundColor = backgroundColor.substring(0, backgroundColor.length - 1) + ", 0.4";
 									}
-									$(entry).css('background-color', backgroundColor);
+									entry.style.backgroundColor = backgroundColor;
 								}
 							} else if (_XposeCompanion.listStartsWith(node.classList, "expandedFolderBackground-")) {
-								var icon = $(node).next().find('[class^="folderIconWrapper-"]');
-								var backgroundColor = icon.css('background-color');
-								if (backgroundColor == "rgba(0, 0, 0, 0)") {
-									backgroundColor = $(icon.find('[class^="expandedFolderIconWrapper-"] > svg')).css('color');
+								var icon = ZeresPluginLibrary.DOMTools.query('[class^="folderIconWrapper-"]', node.nextSibling);
+								var backgroundColor = icon.style.backgroundColor;
+								if (backgroundColor == "") {
+									backgroundColor = ZeresPluginLibrary.DOMTools.query('[class^="expandedFolderIconWrapper-"] > svg', icon).style.color;
 									backgroundColor = "rgba" + backgroundColor.substring(3, backgroundColor.length - 1) + ", 0.4)";
 								}
-								$(node).css('background-color', backgroundColor);
+								node.style.backgroundColor = backgroundColor;
 							}
 						}
 					} else if (mutation.type === 'attributes') {
 						if (_XposeCompanion.listStartsWith(mutation.target.classList, "folderIconWrapper-")) {
-							const target = $(mutation.target);
-							const backgroundColor = target.css('background-color');
-							if (backgroundColor != "rgba(0, 0, 0, 0)")
-								target.closest('[class^="listItem-"]').prev().css('background-color', backgroundColor);
+							const backgroundColor = mutation.target.style.backgroundColor;
+							if (backgroundColor != "")
+								ZeresPluginLibrary.DOMTools.parents(mutation.target, '[class^="listItem-"]')[0].previousSibling.style.backgroundColor = backgroundColor;
 						} else if (mutation.target.nodeName == 'svg' && _XposeCompanion.listStartsWith(mutation.target.parentElement.classList, "expandedFolderIconWrapper-")) {
-							const target = $(mutation.target);
-							var backgroundColor = target.css('color');
+							var backgroundColor = mutation.target.style.color;
 							backgroundColor = "rgba" + backgroundColor.substring(3, backgroundColor.length - 1) + ", 0.4)";
-							target.closest('[class^="listItem-"]').prev().css('background-color', backgroundColor);
+							ZeresPluginLibrary.DOMTools.parents(mutation.target, '[class^="listItem-"]')[0].previousSibling.style.backgroundColor = backgroundColor;
 						}
 					}
 				}
@@ -195,7 +217,7 @@ module.exports = (() =>
 						}
 						`
 					);
-					uploadPlaceholderObserver.observe($(".popouts-2bnG9Z + div").get(0), {subtree: true, childList: true});
+					uploadPlaceholderObserver.observe(document.querySelector(".popouts-2bnG9Z + div"), {subtree: true, childList: true});
 					this.updateFolderBackgrounds();
 				}
 	
@@ -209,21 +231,23 @@ module.exports = (() =>
 				
 				updateFolderBackgrounds() {
 					if (LibrarySettings['appearance']['guild-folder-color']) {
-						guildListObserver.observe($('[data-list-id="guildsnav"]').get(0), {subtree: true, childList: true, attributeFilter: ["style"]});
-						$('[class^="expandedFolderBackground-"]').each(function(index) {
-							var icon = $(this).next().find('[class^="folderIconWrapper-"]');
-							var backgroundColor = icon.css('background-color');
-							if (backgroundColor == "rgba(0, 0, 0, 0)") {
-								backgroundColor = $(icon.find('[class^="expandedFolderIconWrapper-"] > svg')).css('color');
+						guildListObserver.observe(document.querySelector('[data-list-id="guildsnav"]'), {subtree: true, childList: true, attributeFilter: ["style"]});
+						var folderBackgrounds = document.querySelectorAll('[class^="expandedFolderBackground-"]');
+						for (var i = 0; i < folderBackgrounds.length; i++) {
+							var icon = ZeresPluginLibrary.DOMTools.query('[class^="folderIconWrapper-"]', folderBackgrounds[i].nextSibling);
+							var backgroundColor = icon.style.backgroundColor;
+							if (backgroundColor == "") {
+								backgroundColor = ZeresPluginLibrary.DOMTools.query('[class^="expandedFolderIconWrapper-"] > svg', icon).style.color;
 								backgroundColor = "rgba" + backgroundColor.substring(3, backgroundColor.length - 1) + ", 0.4)";
 							}
-							$(this).css('background-color', backgroundColor);
-						});
+							folderBackgrounds[i].style.backgroundColor = backgroundColor;
+						}
 					} else {
 						guildListObserver.disconnect();
-						$('[class^="expandedFolderBackground-"]').each(function(index) {
-							this.css('background-color', "");
-						});
+						var folderBackgrounds = document.querySelectorAll('[class^="expandedFolderBackground-"]');
+						for (var i = 0; i < folderBackgrounds.length; i++) {
+							folderBackgrounds[i].style.backgroundColor = null;
+						}
 					}
 				}
 				
