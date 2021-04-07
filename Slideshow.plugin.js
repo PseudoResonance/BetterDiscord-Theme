@@ -20,17 +20,17 @@ module.exports = (() =>
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "4.1.0",
+			version: "4.2.0",
 			description: "Turns a transparent Discord background into a slideshow.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/Slideshow.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/Slideshow.plugin.js"
 		},
 		changelog: [
 			{
-				title: "jQuery-less Rewrite",
-				type: "fixed",
+				title: "Support for Local Images",
+				type: "added",
 				items: [
-					"Removed jQuery"
+					"Images stored on your computer can now be used as backgrounds"
 				]
 			}
 		],
@@ -71,20 +71,23 @@ module.exports = (() =>
 			const { DiscordAPI, PluginUpdater, PluginUtilities } = Api;
 			// List of all pictures to use as backgrounds with opacity and color of transparent screen
 			const defaultBackgrounds = [
-			{link:"https://i.imgur.com/xjmfk81.jpg", opacity:0.55, color:"0, 0, 0"},
-			{link:"https://i.imgur.com/XDzFDVJ.jpg", opacity:0.65, color:"0, 0, 0"},
-			{link:"https://i.imgur.com/Ey80Lpp.jpg", opacity:0.72, color:"0, 0, 0"},
-			{link:"https://i.imgur.com/t0v923r.jpg", opacity:0.6, color:"0, 0, 0"},
-			{link:"https://i.imgur.com/JTtvGOw.jpg", opacity:0.75, color:"0, 0, 0"},
-			{link:"https://i.imgur.com/avzaqfC.jpg", opacity:0.6, color:"0, 0, 0"},
-			{link:"https://i.imgur.com/MPXZh2E.jpg", opacity:0.65, color:"0, 0, 0"},
-			{link:"https://i.imgur.com/x6oKs2B.jpg", opacity:0.65, color:"0, 0, 0"},
-			{link:"https://i.imgur.com/0xTS9zY.jpg", opacity:0.5, color:"0, 0, 0"},
-			{link:"https://i.imgur.com/fEZUUxQ.jpg", opacity:0.65, color:"0, 0, 0"},
-			{link:"https://i.imgur.com/OBIAgWl.jpg", opacity:0.7, color:"0, 0, 0"}
+			{link:"https://i.imgur.com/xjmfk81.jpg", opacity:0.55, color:"0, 0, 0", local: false},
+			{link:"https://i.imgur.com/XDzFDVJ.jpg", opacity:0.65, color:"0, 0, 0", local: false},
+			{link:"https://i.imgur.com/Ey80Lpp.jpg", opacity:0.72, color:"0, 0, 0", local: false},
+			{link:"https://i.imgur.com/t0v923r.jpg", opacity:0.6, color:"0, 0, 0", local: false},
+			{link:"https://i.imgur.com/JTtvGOw.jpg", opacity:0.75, color:"0, 0, 0", local: false},
+			{link:"https://i.imgur.com/avzaqfC.jpg", opacity:0.6, color:"0, 0, 0", local: false},
+			{link:"https://i.imgur.com/MPXZh2E.jpg", opacity:0.65, color:"0, 0, 0", local: false},
+			{link:"https://i.imgur.com/x6oKs2B.jpg", opacity:0.65, color:"0, 0, 0", local: false},
+			{link:"https://i.imgur.com/0xTS9zY.jpg", opacity:0.5, color:"0, 0, 0", local: false},
+			{link:"https://i.imgur.com/fEZUUxQ.jpg", opacity:0.65, color:"0, 0, 0", local: false},
+			{link:"https://i.imgur.com/OBIAgWl.jpg", opacity:0.7, color:"0, 0, 0", local: false}
 			];
 			const defaultDelay = 600;
 			const defaultSpeed = 1500;
+			
+			var fs = require('fs');
+			var mime = require('mime-types');
 			
 			var backgrounds = [];
 			var delay = 0;
@@ -106,6 +109,12 @@ module.exports = (() =>
 					delay = this.getData("delay", defaultDelay);
 					speed = this.getData("speed", defaultSpeed);
 					backgrounds = JSON.parse(this.getData("backgrounds", JSON.stringify(defaultBackgrounds)));
+					for (var i = 0; i < backgrounds.length; i++) {
+						if (backgrounds[i].local === undefined) {
+							backgrounds[i].local = false;
+						}
+					}
+					this.saveBackgrounds();
 					radioCircleTemplate = document.createElementNS("http://www.w3.org/2000/svg", "circle")
 					radioCircleTemplate.setAttribute("cx", "12");
 					radioCircleTemplate.setAttribute("cy", "12");
@@ -312,7 +321,7 @@ module.exports = (() =>
 					<br />
 					<p>Insert Backgrounds:</p>
 					<table id='pseudoslideshow-backgrounds' class='pseudoslideshow-table'>
-					<tr id='pseudoslideshow-backgrounds-header' class='pseudoslideshow-table-header'><th class='pseudoslideshow-table-row-obj pseudoslideshow-table-checkbox'></th><th class='pseudoslideshow-table-header-obj pseudoslideshow-table-image'>Image <span class='pseudoslideshow-table-hint'>(URL)</span></th><th class='pseudoslideshow-table-header-obj pseudoslideshow-table-opacity'>Opacity <span class='pseudoslideshow-table-hint'>(0.0-1.0)</span></th><th class='pseudoslideshow-table-header-obj pseudoslideshow-table-color'>Screen Color <span class='pseudoslideshow-table-hint'>(r, g, b)</span></th></tr>` + this.generateBackgroundTable() + `</table></div>`;
+					<tr id='pseudoslideshow-backgrounds-header' class='pseudoslideshow-table-header'><th class='pseudoslideshow-table-row-obj pseudoslideshow-table-checkbox'></th><th class='pseudoslideshow-table-header-obj pseudoslideshow-table-image'>Image <span class='pseudoslideshow-table-hint'>(URL/File Path)</span></th><th class='pseudoslideshow-table-header-obj pseudoslideshow-table-opacity'>Opacity <span class='pseudoslideshow-table-hint'>(0.0-1.0)</span></th><th class='pseudoslideshow-table-header-obj pseudoslideshow-table-color'>Screen Color <span class='pseudoslideshow-table-hint'>(r, g, b)</span></th></tr>` + this.generateBackgroundTable() + `</table></div>`;
 					return ret;
 				}
 				
@@ -387,7 +396,11 @@ module.exports = (() =>
 						var newColor = eleColor.value;
 						if (eleId >= backgrounds.length) {
 							if (newImage.length != 0 && newOpacity.length != 0 && newColor.length != 0 && this.isOpacityValid(newOpacity, eleOpacity) && this.isColorValid(newColor, eleColor) && this.isImageValid(newImage, eleImage)) {
-								backgrounds.push({link:newImage, opacity:parseFloat(newOpacity), color:newColor});
+								if (this.isValidFile(newImage)) {
+									backgrounds.push({link:newImage, opacity:parseFloat(newOpacity), color:newColor, local:true});
+								} else {
+									backgrounds.push({link:newImage, opacity:parseFloat(newOpacity), color:newColor, local:false});
+								}
 								var imageNode = document.createElement("div");
 								imageNode.style.zIndex = "-3";
 								imageNode.style.backgroundImage = this.genBackgroundImage(eleId);
@@ -419,6 +432,11 @@ module.exports = (() =>
 									backgrounds[eleId].link = newImage;
 									backgrounds[eleId].opacity = parseFloat(newOpacity);
 									backgrounds[eleId].color = newColor;
+									if (this.isValidFile(newImage)) {
+										backgrounds[eleId].local = true;
+									} else {
+										backgrounds[eleId].local = false;
+									}
 									bgEle.style.backgroundImage = this.genBackgroundImage(eleId);
 									this.saveBackgrounds();
 								}
@@ -428,11 +446,24 @@ module.exports = (() =>
 				}
 				
 				isImageValid(inputUrl, elem) {
-					if(/^(http|https|ftp):\/\/[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$/i.test(inputUrl)) {
+					if(this.isValidUrl(inputUrl) || this.isValidFile(inputUrl)) {
 						elem.parentElement.classList.remove("pseudoslideshow-table-invalid");
 						return true;
 					} else {
 						elem.parentElement.classList.add("pseudoslideshow-table-invalid");
+						return false;
+					}
+				}
+				
+				isValidUrl(url) {
+					return /^(http|https|ftp):\/\/[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$/i.test(url);
+				}
+				
+				isValidFile(path) {
+					try {
+						fs.accessSync(path);
+						return true;
+					} catch (err) {
 						return false;
 					}
 				}
@@ -467,7 +498,13 @@ module.exports = (() =>
 				}
 				
 				genBackgroundImage(i) {
-					return 'linear-gradient(to right,rgba(' + backgrounds[i].color + ', ' + backgrounds[i].opacity + ') 0%,rgba(' + backgrounds[i].color + ', ' + backgrounds[i].opacity + ') 100%),url(' + backgrounds[i].link + ')';
+					if (backgrounds[i].local) {
+						var base64 = fs.readFileSync(backgrounds[i].link, {encoding:'base64'});
+						var mimeType = mime.lookup(backgrounds[i].link);
+						return 'linear-gradient(to right,rgba(' + backgrounds[i].color + ', ' + backgrounds[i].opacity + ') 0%,rgba(' + backgrounds[i].color + ', ' + backgrounds[i].opacity + ') 100%),url("data:' + mimeType + ';base64,' + base64 + '")';
+					} else {
+						return 'linear-gradient(to right,rgba(' + backgrounds[i].color + ', ' + backgrounds[i].opacity + ') 0%,rgba(' + backgrounds[i].color + ', ' + backgrounds[i].opacity + ') 100%),url("' + backgrounds[i].link + '")';
+					}
 				}
 				
 				saveBackgrounds() {
