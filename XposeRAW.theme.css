@@ -1,7 +1,7 @@
 /**
  * @name XposeRAW
  * @author PseudoResonance
- * @version 2.12.3
+ * @version 2.12.4
  * @description Custom theme.
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeRAW.theme.css
  */
@@ -10,7 +10,7 @@
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
 	--background-screen-opacity: 0.45; /* Value from 0-1 - 0 being least opaque, 1 being most opaque */
 	--background-url: url("https://i.imgur.com/avzaqfC.jpg"); /* URL for background */
-	--version: "v2.12.3";
+	--version: "v2.12.4";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -135,7 +135,7 @@
 }
 
 /* Shrink guilds inside expanded folder */
-[role="group"][id|="folder-items"] .wrapper-25eVIn, [role=group][id|=folder-items] .wrapper-25eVIn > svg, [role=group][id|=folder-items] .pill-31IEus {
+[role="group"][id|="folder-items"] .wrapper-25eVIn, [role="group"][id|="folder-items"] .wrapper-25eVIn > svg, [role="group"][id|="folder-items"] [class|="pill"] {
 	width: 38px;
 	height: 38px;
 }
@@ -144,17 +144,17 @@ div.wrapper-21YSNc, [role="group"][id|="folder-items"] {
 	height: auto !important;
 }
 
-[class^="expandedFolderBackground-"] {
+[class|="expandedFolderBackground"] {
 	bottom:auto;
 	top:auto;
-	height:100%;
+	height:calc(100% + 5px);
 }
 
-[class^="expandedFolderBackground-"].collapsed-2ZrjoL {
+[class|="expandedFolderBackground"].collapsed-2ZrjoL {
 	background-color:transparent !important;
 }
 
-[class^="expandedFolderBackground-"]:not(.collapsed-2ZrjoL) + div:nth-child(2) .wrapper-25eVIn svg foreignObject div, .wrapper-1-Fsb8.header-ywPcAE {
+[class|="expandedFolderBackground"]:not(.collapsed-2ZrjoL) + div:nth-child(2) .wrapper-25eVIn svg foreignObject div, .wrapper-1-Fsb8.header-ywPcAE {
 	background: transparent !important;
 }
 
@@ -196,12 +196,12 @@ code.inline {
 	overflow:scroll visible !important;
 }
 
-[class^="expandedFolderBackground-"]:not(.collapsed-2ZrjoL) {
+[class|="expandedFolderBackground"]:not(.collapsed-2ZrjoL) {
 	background: rgba(47, 49, 54, 0.4);
 	backdrop-filter: blur(var(--blur-radius));
 }
 
-[class^="expandedFolderBackground-"] {
+[class|="expandedFolderBackground"] {
 	backdrop-filter: blur(var(--blur-radius));
 }
 
