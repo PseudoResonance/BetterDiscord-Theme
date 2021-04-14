@@ -20,17 +20,17 @@ module.exports = (() =>
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "2.2.0",
+			version: "2.2.1",
 			description: "Companion plugin for Xpose theme.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeCompanion.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/XposeCompanion.plugin.js"
 		},
 		changelog: [
 			{
-				title: "jQuery-less Rewrite",
+				title: "Removed XenoLib",
 				type: "fixed",
 				items: [
-					"Removed jQuery"
+					"You can delete the XenoLib plugin if not in use"
 				]
 			}
 		],
@@ -44,7 +44,7 @@ module.exports = (() =>
 				settings: [
 					{
 						name: 'Expanded server folder has color',
-						id: 'guild-folder-color',
+						id: 'guildFolderColor',
 						type: 'switch',
 						value: 'true'
 					}
@@ -85,7 +85,7 @@ module.exports = (() =>
 
 		const plugin = (Plugin, Api) =>
 		{
-			const { DiscordAPI, PluginUpdater, PluginUtilities } = Api;
+			const { DOMTools, PluginUtilities } = Api;
 			
 			const uploadPlaceholderObserver = new MutationObserver(function(mutationsList, observer) {
 				if (document.getElementsByClassName("uploadModal-2ifh8j").length) {
@@ -137,6 +137,7 @@ module.exports = (() =>
 					}
 				}
 			});
+			
 			const uploadPlaceholderTextObserver = new MutationObserver(function(mutationsList, observer) {
 				var input = document.querySelector(".uploadModal-2ifh8j .textArea-12jD-V .slateTextArea-1Mkdgw");
 				if (input.textContent.trim() === "")
@@ -150,21 +151,21 @@ module.exports = (() =>
 					if (mutation.type === 'childList') {
 						for (const node of mutation.addedNodes) {
 							if (_XposeCompanion.listStartsWith(node.classList, "wrapper-")) {
-								const entry = ZeresPluginLibrary.DOMTools.query('[class^="expandedFolderBackground-"]', node);
+								const entry = DOMTools.query('[class^="expandedFolderBackground-"]', node);
 								if (entry != null) {
-									var icon = ZeresPluginLibrary.DOMTools.query('[class^="folderIconWrapper-"]', entry.nextSibling);
+									var icon = DOMTools.query('[class^="folderIconWrapper-"]', entry.nextSibling);
 									var backgroundColor = icon.style.backgroundColor;
 									if (backgroundColor == "") {
-										backgroundColor = ZeresPluginLibrary.DOMTools.query('[class^="expandedFolderIconWrapper-"] > svg', icon).style.color;
+										backgroundColor = DOMTools.query('[class^="expandedFolderIconWrapper-"] > svg', icon).style.color;
 										backgroundColor = backgroundColor.substring(0, backgroundColor.length - 1) + ", 0.4";
 									}
 									entry.style.backgroundColor = backgroundColor;
 								}
 							} else if (_XposeCompanion.listStartsWith(node.classList, "expandedFolderBackground-")) {
-								var icon = ZeresPluginLibrary.DOMTools.query('[class^="folderIconWrapper-"]', node.nextSibling);
+								var icon = DOMTools.query('[class^="folderIconWrapper-"]', node.nextSibling);
 								var backgroundColor = icon.style.backgroundColor;
 								if (backgroundColor == "") {
-									backgroundColor = ZeresPluginLibrary.DOMTools.query('[class^="expandedFolderIconWrapper-"] > svg', icon).style.color;
+									backgroundColor = DOMTools.query('[class^="expandedFolderIconWrapper-"] > svg', icon).style.color;
 									backgroundColor = "rgba" + backgroundColor.substring(3, backgroundColor.length - 1) + ", 0.4)";
 								}
 								node.style.backgroundColor = backgroundColor;
@@ -174,30 +175,15 @@ module.exports = (() =>
 						if (_XposeCompanion.listStartsWith(mutation.target.classList, "folderIconWrapper-")) {
 							const backgroundColor = mutation.target.style.backgroundColor;
 							if (backgroundColor != "")
-								ZeresPluginLibrary.DOMTools.parents(mutation.target, '[class^="listItem-"]')[0].previousSibling.style.backgroundColor = backgroundColor;
+								DOMTools.parents(mutation.target, '[class^="listItem-"]')[0].previousSibling.style.backgroundColor = backgroundColor;
 						} else if (mutation.target.nodeName == 'svg' && _XposeCompanion.listStartsWith(mutation.target.parentElement.classList, "expandedFolderIconWrapper-")) {
 							var backgroundColor = mutation.target.style.color;
 							backgroundColor = "rgba" + backgroundColor.substring(3, backgroundColor.length - 1) + ", 0.4)";
-							ZeresPluginLibrary.DOMTools.parents(mutation.target, '[class^="listItem-"]')[0].previousSibling.style.backgroundColor = backgroundColor;
+							DOMTools.parents(mutation.target, '[class^="listItem-"]')[0].previousSibling.style.backgroundColor = backgroundColor;
 						}
 					}
 				}
 			});
-			
-			const DefaultLibrarySettings = {};
-			for (let s = 0; s < config.defaultConfig.length; s++) {
-				const current = config.defaultConfig[s];
-				if (current.type != 'category') {
-					DefaultLibrarySettings[current.id] = current.value;
-				} else {
-					DefaultLibrarySettings[current.id] = {};
-					for (let s = 0; s < current.settings.length; s++) {
-						const subCurrent = current.settings[s];
-						DefaultLibrarySettings[current.id][subCurrent.id] = subCurrent.value;
-					}
-				}
-			}
-			const LibrarySettings = XenoLib.loadData(config.info.name, 'settings', DefaultLibrarySettings);
 
 			return class XposeCompanion extends Plugin
 			{
@@ -230,14 +216,14 @@ module.exports = (() =>
 				}
 				
 				updateFolderBackgrounds() {
-					if (LibrarySettings['appearance']['guild-folder-color']) {
+					if (this.settings.appearance.guildFolderColor) {
 						guildListObserver.observe(document.querySelector('[data-list-id="guildsnav"]'), {subtree: true, childList: true, attributeFilter: ["style"]});
 						var folderBackgrounds = document.querySelectorAll('[class^="expandedFolderBackground-"]');
 						for (var i = 0; i < folderBackgrounds.length; i++) {
-							var icon = ZeresPluginLibrary.DOMTools.query('[class^="folderIconWrapper-"]', folderBackgrounds[i].nextSibling);
+							var icon = DOMTools.query('[class^="folderIconWrapper-"]', folderBackgrounds[i].nextSibling);
 							var backgroundColor = icon.style.backgroundColor;
 							if (backgroundColor == "") {
-								backgroundColor = ZeresPluginLibrary.DOMTools.query('[class^="expandedFolderIconWrapper-"] > svg', icon).style.color;
+								backgroundColor = DOMTools.query('[class^="expandedFolderIconWrapper-"] > svg', icon).style.color;
 								backgroundColor = "rgba" + backgroundColor.substring(3, backgroundColor.length - 1) + ", 0.4)";
 							}
 							folderBackgrounds[i].style.backgroundColor = backgroundColor;
@@ -251,20 +237,16 @@ module.exports = (() =>
 					}
 				}
 				
-				buildSetting(data) {
-					return XenoLib.buildSetting(data);
-				}
-				
 				getSettingsPanel() {
-					return this.buildSettingsPanel().append(new XenoLib.Settings.PluginFooter(() => this.showChangelog())).getElement();
+					const panel = this.buildSettingsPanel();
+					return panel.getElement();
 				}
 				
 				saveSettings(category, setting, value) {
 					this.settings[category][setting] = value;
-					LibrarySettings[category][setting] = value;
-					PluginUtilities.saveSettings(config.info.name, LibrarySettings);
+					PluginUtilities.saveSettings(config.info.name, this.settings);
 					if (category === 'appearance') {
-						if (setting === 'guild-folder-color') {
+						if (setting === 'guildFolderColor') {
 							this.updateFolderBackgrounds();
 						}
 					}
