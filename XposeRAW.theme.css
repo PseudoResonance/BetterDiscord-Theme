@@ -1,7 +1,7 @@
 /**
  * @name XposeRAW
  * @author PseudoResonance
- * @version 2.12.4
+ * @version 2.12.5
  * @description Custom theme.
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeRAW.theme.css
  */
@@ -10,7 +10,7 @@
 	--background-screen-cover: 0, 0, 0; /* Color of screen over background */
 	--background-screen-opacity: 0.45; /* Value from 0-1 - 0 being least opaque, 1 being most opaque */
 	--background-url: url("https://i.imgur.com/avzaqfC.jpg"); /* URL for background */
-	--version: "v2.12.4";
+	--version: "v2.12.5";
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
 }
@@ -1014,6 +1014,16 @@ ul[data-list-id=guildsnav] {
 	right:0;
 	bottom:0;
 	backdrop-filter:blur(var(--blur-radius));
+}
+
+/* BetterDiscord Plugin Settings */
+.plugin-inputs {
+	transition:all 300ms cubic-bezier(0.47, 0, 0.745, 0.715) !important;
+	transform:scaleY(1) !important;
+}
+
+.plugin-inputs.collapsed {
+	transform:scaleY(0) !important;
 }
 
 /* ImageUtilities Plugin */
