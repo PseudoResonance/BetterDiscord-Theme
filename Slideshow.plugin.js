@@ -11,7 +11,7 @@ module.exports = (() => {
 	{
 		Cover: "cover",
 		Contain: "contain",
-		Full: "full",
+		Full: "auto",
 		Stretch: "100% 100%"
 	};
 	
@@ -28,7 +28,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "4.3.0",
+			version: "4.3.1",
 			description: "Turns a transparent Discord background into a slideshow.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/Slideshow.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/Slideshow.plugin.js"
