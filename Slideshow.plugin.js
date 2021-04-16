@@ -5,9 +5,6 @@
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/Slideshow.plugin.js
  */
 
-//TODO Allow for dragging rows around or some sort of reordering rows - SortableJS
-//https://github.com/SortableJS/Sortable
-
 module.exports = (() => {
 	
 	const BackgroundFill =
