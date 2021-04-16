@@ -28,7 +28,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "4.3.1",
+			version: "4.3.2",
 			description: "Turns a transparent Discord background into a slideshow.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/Slideshow.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/Slideshow.plugin.js"
@@ -42,7 +42,8 @@ module.exports = (() => {
 				[
 					"Background images can be dragged and dropped to reorder",
 					"Option to shuffle images",
-					"Different image fill options"
+					"Different image fill options",
+					"Updated settings descriptions"
 				]
 			},
 			{
@@ -558,7 +559,7 @@ module.exports = (() => {
     			getSettingsPanelExtra() {
 					var group = new Settings.SettingGroup("Backgrounds", {collapsible: true, shown: false});
 					group.id = "backgrounds";
-					var table = `<table id='pseudoslideshow-backgrounds' class='pseudoslideshow-table colorStandard-2KCXvj'>
+					var table = `<div class='colorStandard-2KCXvj'><p>Drag radio button to reorder images</p><table id='pseudoslideshow-backgrounds' class='pseudoslideshow-table'>
 					<tr id='pseudoslideshow-backgrounds-header' class='pseudoslideshow-table-header'><th class='pseudoslideshow-table-row-obj pseudoslideshow-table-checkbox'></th><th class='pseudoslideshow-table-header-obj pseudoslideshow-table-image'>Image <span class='pseudoslideshow-table-hint'>(URL/File Path)</span></th><th class='pseudoslideshow-table-header-obj pseudoslideshow-table-opacity'>Opacity <span class='pseudoslideshow-table-hint'>(0.0-1.0)</span></th><th class='pseudoslideshow-table-header-obj pseudoslideshow-table-color'>Screen Color <span class='pseudoslideshow-table-hint'>(r, g, b)</span></th></tr>` + this.generateBackgroundTable() + `</table></div>`;
 					group.append(DOMTools.parseHTML(table));
 					return group;
