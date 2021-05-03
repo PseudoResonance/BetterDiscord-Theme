@@ -1,7 +1,7 @@
 /**
  * @name XposeRAW
  * @author PseudoResonance
- * @version 3.0.0
+ * @version 3.0.1
  * @description Custom theme.
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeRAW.theme.css
  */
@@ -19,7 +19,7 @@
  */
 
 :root, .theme-dark, .theme-light {
-	--version:"v3.0.0";
+	--version:"3.0.1";
 	--blur-radius:10px;
 }
 
@@ -532,11 +532,11 @@ code.inline {
 }
 
 /* Popouts */
-.backdrop-1wrmKB, .container-16j22k  {
+.backdrop-1wrmKB, .container-16j22k, [class*="uploadArea-"][class*="droppable-"]  {
 	background-color:transparent !important;
 }
 
-.container-16j22k {
+.container-16j22k, [class*="uploadArea-"][class*="droppable-"] {
 	backdrop-filter:blur(var(--blur-radius));
 }
 
@@ -1188,13 +1188,13 @@ div:not([class*="translate-"]) > .layerContainer-yqaFcK [role="dialog"]:not(#emo
 
 /* Display Version Info */
 [class*="sidebar-"] [role="tabbar"] [class*="info-"]::after {
-	content:"Xpose Theme Version: " var(--version);
+	content:"Xpose Theme Version: v" var(--version);
 	color:var(--text-muted);
 	font-size:12px;
 	line-height:16px;
 }
 
 .bd-addon-list [id*="XposeLoader"] .bd-addon-header .bd-title .bd-meta::after {
-	content:"Theme Version: " var(--version);
+	content:"Theme Version: v" var(--version);
 	padding-left:1em;
 }
