@@ -1,7 +1,7 @@
 /**
  * @name XposeRAW
  * @author PseudoResonance
- * @version 3.0.2
+ * @version 3.0.3
  * @description Custom theme.
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeRAW.theme.css
  */
@@ -19,7 +19,7 @@
  */
 
 :root, .theme-dark, .theme-light {
-	--version:"3.0.2";
+	--version:"3.0.3";
 	--blur-radius:10px;
 }
 
@@ -70,7 +70,7 @@
 	--radio-group-dot-foreground:#8ea1e1;
 	--guild-header-text-shadow:0 1px 1px rgba(0, 0, 0, 0.4);
 	--channeltextarea-background:transparent;
-	--activity-card-background:#202225;
+	--activity-card-background:var(--background-attachment);
 	--textbox-markdown-syntax:#8e9297;
 	--deprecated-card-bg:rgba(32, 34, 37, 0.6);
 	--deprecated-card-editable-bg:rgba(32, 34, 37, 0.3);
@@ -144,7 +144,7 @@
 	--radio-group-dot-foreground:#4e5d94;
 	--guild-header-text-shadow:0 1px 1px hsla(0, 0%, 100%, 0.4);
 	--channeltextarea-background:transparent;
-	--activity-card-background:#fff;
+	--activity-card-background:var(--background-attachment);
 	--textbox-markdown-syntax:#6a7480;
 	--deprecated-card-bg:#f8f9f9;
 	--deprecated-card-editable-bg:rgba(246, 246, 247, 0.6);
