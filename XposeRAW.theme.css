@@ -1,7 +1,7 @@
 /**
  * @name XposeRAW
  * @author PseudoResonance
- * @version 3.0.6
+ * @version 3.0.7
  * @description Custom theme.
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeRAW.theme.css
  */
@@ -19,7 +19,7 @@
  */
 
 :root, .theme-dark, .theme-light {
-	--version:"3.0.6";
+	--version:"3.0.7";
 	--blur-radius:10px;
 }
 
@@ -982,6 +982,10 @@ div:not([class*="translate-"]) > .layerContainer-yqaFcK [role="dialog"]:not(#emo
 	font-style:normal !important;
 	line-height:20px !important;
 	vertical-align:baseline !important;
+}
+
+[class*="uploadModal-"] [class*="channelTextAreaUpload-"][class*="inputWrapper-"] input:hover, [class*="uploadModal-"] [class*="channelTextAreaUpload-"][class*="inputWrapper-"] input:active {
+	background-color:transparent !important;
 }
 
 [class*="uploadModal-"] [class*="footer-"] {
