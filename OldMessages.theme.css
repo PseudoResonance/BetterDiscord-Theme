@@ -1,7 +1,7 @@
 /**
  * @name OldMessages
  * @author PseudoResonance
- * @version 1.3.0
+ * @version 1.3.1
  * @description Restores old messages style
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/OldMessages.theme.css
  */
@@ -9,35 +9,73 @@
 :root, .theme-dark, .theme-light {
 	--message-spacing:1.0625rem;
 	--header-height:1.375rem;
-	--version: "v1.3.0";
+	--new-message-color:#f04747;
+	--background-mentioned-hover:transparent;
+	--background-message-hover:transparent;
+	--oldMessagesVersion:"1.3.1";
 }
 
-/* Disable message hover */
-.scrollerInner-2YIMLh .message-2qnXI6:not(.mentioned-xhSam7):hover, .scrollerInner-2YIMLh .message-2qnXI6:not(.mentioned-xhSam7):active, .scrollerInner-2YIMLh .message-2qnXI6.selected-2P5D_Z:not(.mentioned-xhSam7) {
+/* Restore Reactions */
+[class*="reaction-"] {
+	background:var(--background-modifier-accent);
+	border-radius:.25rem;
+	border:none;
+	margin:0 .125rem .125rem 0;
+	padding:0;
+	-webkit-transition:background-color .1s ease;
+	transition:background-color .1s ease;
+}
+
+[class*="reaction-"]:hover, [class*="reaction-"]:active {
+	background-color:rgba(252, 245, 255, 0.05);
+}
+
+[class*="reaction-"][class*="reactionMe-"] {
+	background-color:rgba(114,137,218,.3);
+}
+
+[class*="reaction-"] [class*="reactionInner-"] {
+	padding:0 .375rem;
+}
+
+[class*="reaction-"] [class*="reactionCount-"]:not(#foo) {
+	color:var(--text-muted);
+}
+
+[class*="reaction-"]:hover [class*="reactionCount-"]:not(#foo) {
+	color:var(--interactive-hover);
+}
+
+[class*="reaction-"][class*="reactionMe-"] [class*="reactionCount-"]:not(#foo), [class*="reaction-"][class*="reactionMe-"]:hover [class*="reactionCount-"]:not(#foo) {
+	color:#7289da;
+}
+
+/* Disable Message Hover */
+[class*="messagesWrapper-"] [class*="message-"]:not([class*="mentioned-"]):hover, [class*="messagesWrapper-"] [class*="message-"]:not([class*="mentioned-"]):active, [class*="messagesWrapper-"] [class*="message-"][class*="selected-"]:not([class*="mentioned-"]) {
 	background-color:transparent !important;
 }
 
-.scrollerInner-2YIMLh .message-2qnXI6.mentioned-xhSam7, .scrollerInner-2YIMLh .message-2qnXI6.mentioned-xhSam7:hover, .scrollerInner-2YIMLh .message-2qnXI6.mentioned-xhSam7:active, .scrollerInner-2YIMLh .message-2qnXI6.selected-2P5D_Z.mentioned-xhSam7 {
+[class*="messagesWrapper-"] [class*="message-"][class*="mentioned-"], [class*="messagesWrapper-"] [class*="message-"][class*="mentioned-"]:hover, [class*="messagesWrapper-"] [class*="message-"][class*="mentioned-"]:active, [class*="messagesWrapper-"] [class*="message-"][class*="selected-"][class*="mentioned-"] {
 	background-color:transparent !important;
 	//background-color:var(--background-mentioned) !important; /* Replace transparent background with background-mentioned if you want to keep the new mention highlighting */
 }
 
-/* Hide yellow bar to left of new mention highlighting */
-.scrollerInner-2YIMLh .message-2qnXI6.mentioned-xhSam7::before {
+/* Hide Yellow Bar to Left of New Mention Highlighting */
+[class*="messagesWrapper-"] [class*="message-"][class*="mentioned-"]::before {
 	background-color:transparent !important;
 }
 
 /* Mentions - Comment these two sections out if you want to keep the new mention highlighting */
-.scrollerInner-2YIMLh .message-2qnXI6.mentioned-xhSam7 > .contents-2mQqc9 > .markup-2BOw-j {
+[class*="messagesWrapper-"] [class*="message-"][class*="mentioned-"] > [class*="contents-"] > [class*="messageContent-"] {
 	background-color:var(--background-mentioned) !important;
 	margin-left:-8px;
 	padding-left:4px;
 	height:auto;
 	border-left:4px solid #faa61a;
-	border-radius:3px 0 0 3px;
+	border-radius:3px;
 }
 
-.scrollerInner-2YIMLh .message-2qnXI6.mentioned-xhSam7 > .contents-2mQqc9 > .markup-2BOw-j::before {
+[class*="messagesWrapper-"] [class*="message-"][class*="mentioned-"] > [class*="contents-"] > [class*="messageContent-"]::before {
 	content:"";
 	display:block;
 	position:absolute;
@@ -47,24 +85,44 @@
     width:2px;
 }
 
-/* Remove emoji suggestions */
-.buttonContainer-DHceWr .buttons-cl5qTG div {
-	box-shadow:none !important;
-	border:0px !important;
+/* Disable Mention Background */
+[class*="mention"] {
+	border-radius:0;
+	transition:background-color 50ms ease-out,color 50ms ease-out;
+	-webkit-transition:background-color 50ms ease-out,color 50ms ease-out;
 }
 
-/* Spacing between text input and messages */
-.channelTextArea-rNsIhG {
-	padding-top:15px;
+[class*="mention"][class*="interactive"], [class*="mention"][class*="roleMention"] {
+	background-color:rgba(114,137,218,.1);
+	color:#7289da;
+}
+
+[class*="mention"][class*="interactive"]:hover, [class*="mention"][class*="roleMention"]:hover {
+	background-color:rgba(114,137,218,.7);
+	color:#fff;
+}
+
+[class*="messagesWrapper-"] [class*="message-"][class*="mentioned-"] [class*="mention"][class*="interactive"]:hover {
+	color:#7289da;
+}
+
+/* Remove Spacer Between Messages and Text Input */
+[class*="messagesWrapper-"] [class*="scrollerSpacer-"] {
+	height:25px;
+}
+
+[class*="messagesWrapper-"] ~ form [class*="channelTextArea-"] {
+	padding-top:20px;
+	margin-top:0px;
+}
+
+[class*="messagesWrapper-"] ~ form [class*="channelTextArea-"] {
 	border-top:thin solid var(--background-modifier-accent);
+	border-radius:0;
 }
 
-.scroller-3sQKXg:after {
-	height:20px;
-}
-
-/* Resize/move message buttons */
-.buttonContainer-DHceWr .buttons-cl5qTG div .button-1ZiXG9 {
+/* Resize/Move Message Buttons */
+[class*="messagesWrapper-"] [class*="buttonContainer-"] [class*="buttons-"] [class*="button-"] {
 	height:16px;
 	width:16px;
 	min-height:16px;
@@ -72,50 +130,36 @@
 	color:rgba(185, 187, 190, 0.6);
 }
 
-.buttonContainer-DHceWr .buttons-cl5qTG div .button-1ZiXG9:hover, .buttonContainer-DHceWr .buttons-cl5qTG div .button-1ZiXG9:active, .buttonContainer-DHceWr .buttons-cl5qTG div .button-1ZiXG9.selected-2P5D_Z {
+[class*="messagesWrapper-"] [class*="buttonContainer-"] [class*="buttons-"] [class*="button-"]:hover, [class*="messagesWrapper-"] [class*="buttonContainer-"] [class*="buttons-"] [class*="button-"]:active, [class*="messagesWrapper-"] [class*="buttonContainer-"] [class*="buttons-"] [class*="button-"][class*="selected-"] {
 	color:rgba(155, 157, 160, 0.6) !important;
 	background-color:transparent !important;
 }
 
-.buttonContainer-DHceWr .buttons-cl5qTG {
-	top:-5px;
-	background-color:transparent !important;
+[class*="messagesWrapper-"] [class*="buttonContainer-"] [class*="buttons-"] {
+	top:-4px;
 	padding-right:0.875rem;
 }
 
-.scrollerInner-2YIMLh .message-2qnXI6.mentioned-xhSam7 .buttonContainer-DHceWr .buttons-cl5qTG div, .buttonContainer-DHceWr, .buttonContainer-DHceWr .buttons-cl5qTG div {
-	background-color:transparent !important;
+[class*="messagesWrapper-"] [class*="groupStart-"]:not([class*="compact-"]) [class*="buttonContainer-"] {
+	top:var(--header-height);
 }
 
-.scrollerInner-2YIMLh .groupStart-23k01U .buttonContainer-DHceWr {
-	top:calc(var(--header-height) + 2px);
-}
-
-.buttonContainer-DHceWr .buttons-cl5qTG div .button-1ZiXG9 {
+[class*="messagesWrapper-"] [class*="buttonContainer-"] [class*="buttons-"] [class*="button-"] {
 	padding:0px;
 }
 
-/* Move avatar */
-.scrollerInner-2YIMLh .message-2qnXI6 .container-2LR0t2 .header-23xsNx img {
-	margin-left:0.875rem;
+[class*="messagesWrapper-"] [class*="buttonContainer-"] [class*="buttons-"] div {
+	box-shadow:none !important;
+	border:0px !important;
 }
 
-/* Margin on text to accomodate buttons */
-.scrollerInner-2YIMLh .message-2qnXI6 .markup-2BOw-j::before {
-	content:'';
-	width:3rem;
-	height:16px;
-	display:inline-flex;
-	float:right;
+/* Disable Background on Message Buttons */
+[class*="messagesWrapper-"] [class*="message-"][class*="mentioned-"] > [class*="buttonContainer-"] [class*="buttons-"] [class*="wrapper-"] {
+	background-color:transparent !important;
 }
 
-/* Make text area wider */
-.scrollerInner-2YIMLh .message-2qnXI6 {
-	padding-right:0.875rem;
-}
-
-/* Rotate settings button */
-.buttonContainer-DHceWr .buttons-cl5qTG div .button-1ZiXG9:last-child:not(.dangerous-2r8KxV) {
+/* Rotate Settings Button */
+[class*="messagesWrapper-"] [class*="buttonContainer-"] [class*="buttons-"] [class*="button-"]:last-child:not([class*="dangerous-"]) {
 	transform:rotate(90deg);
 	padding-right:0px;
 	padding-left:0px;
@@ -123,8 +167,22 @@
 	margin-left:0px;
 }
 
-/* Spacer between message groups */
-.scrollerInner-2YIMLh .groupStart-23k01U::after {
+/* Margin on Text to Accomodate Buttons */
+[class*="messagesWrapper-"] [class*="message-"] [class*="markup-"]:not([contenteditable="true"])::before {
+	content:'';
+	width:6.75rem;
+	height:16px;
+	display:inline-flex;
+	float:right;
+}
+
+/* Make Text Area Wider */
+[class*="messagesWrapper-"] [class*="message-"] {
+	padding-right:0.875rem !important;
+}
+
+/* Spacer Between Message Groups */
+[class*="messagesWrapper-"] [class*="groupStart-"]::after {
 	content:'';
 	border-top:thin solid var(--background-modifier-accent);
 	top:calc(0px - var(--message-spacing));
@@ -134,33 +192,37 @@
 	position:absolute;
 }
 
-.scrollerInner-2YIMLh .groupStart-23k01U {
+[class*="messagesWrapper-"] [class*="groupStart-"]:not([class*="compact-"]) {
 	margin-top:calc(var(--message-spacing) * 2);
 }
 
-.scrollerInner-2YIMLh .divider-3_HH5L + .groupStart-23k01U::after {
+[class*="messagesWrapper-"] [class*="divider-"] + [class*="groupStart-"]::after {
 	display:none;
 }
 
-.scrollerInner-2YIMLh .divider-3_HH5L + .groupStart-23k01U {
+[class*="messagesWrapper-"] [class*="divider-"] + [class*="groupStart-"]:not([class*="compact-"]) {
 	margin-top:calc(var(--message-spacing) * 0.5);
 }
 
-/* Spacing between messages within a group */
-.scrollerInner-2YIMLh .message-2qnXI6:not(.groupStart-23k01U), .scrollerInner-2YIMLh .message-2qnXI6 .container-2LR0t2 {
+[class*="messagesWrapper-"] [class*="divider-"] + [class*="groupStart-"][class*="compact-"] {
+	margin-top:0;
+}
+
+/* Spacing Between Messages Within a Group */
+[class*="messagesWrapper-"] [class*="message-"] {
 	padding-top:0px;
 	padding-bottom:0px;
 }
 
-/* Message divider */
-.scrollerInner-2YIMLh .divider-3_HH5L {
+/* Message Divider */
+[class*="messagesWrapper-"] [class*="divider-"] {
 	width:100%;
 	margin-left:0;
 	border:none;
-	height:calc(var(--message-spacing) * 1.5);
+	height:calc(var(--message-spacing) * 1.5) !important;
 }
 
-.scrollerInner-2YIMLh .divider-3_HH5L span {
+[class*="messagesWrapper-"] [class*="divider-"] span {
 	background-color:transparent;
 	padding:0;
     display:flex;
@@ -168,61 +230,82 @@
 	text-align:center;
 	font-size:14px;
 	line-height:22px;
-	height:calc(var(--message-spacing) * 2);
+	height:calc(var(--message-spacing) * 2) !important;
 	left:1rem;
 	right:0.875rem;
 	position:absolute;
 }
 
-.scrollerInner-2YIMLh .divider-3_HH5L span::before {
+[class*="messagesWrapper-"] [class*="divider-"] span::before {
 	margin-right:8px;
 }
 
-.scrollerInner-2YIMLh .divider-3_HH5L span::after {
+[class*="messagesWrapper-"] [class*="divider-"] span::after {
 	margin-left:8px;
 }
 
-.scrollerInner-2YIMLh .divider-3_HH5L span::before, .scrollerInner-2YIMLh .divider-3_HH5L span::after {
+[class*="messagesWrapper-"] [class*="divider-"] span::before, [class*="messagesWrapper-"] [class*="divider-"] span::after {
 	content:'';
 	flex:1;
 }
 
-.scrollerInner-2YIMLh .divider-3_HH5L.isUnread-3Ef-o9 span:nth-child(2) {
+[class*="messagesWrapper-"] [class*="divider-"][class*="isUnread-"] span:nth-child(2) {
 	display:none;
 }
 
-/* Spacing correction */
-.group-spacing-16 .divider-3_HH5L.hasContent-1_DUdQ {
-	margin-top: 20px;
-	margin-bottom: 20px;
+/* Spacing Correction */
+.group-spacing-0 [class*="divider-"][class*="hasContent-"] {
+	margin-top:4px;
+	margin-bottom:4px;
 }
 
-/* New message color */
-.scrollerInner-2YIMLh .divider-3_HH5L.isUnread-3Ef-o9 span {
-	color:#f04747;
+.group-spacing-4 [class*="divider-"][class*="hasContent-"] {
+	margin-top:8px;
+	margin-bottom:8px;
 }
 
-.scrollerInner-2YIMLh .divider-3_HH5L.isUnread-3Ef-o9 span::before, .scrollerInner-2YIMLh .divider-3_HH5L.isUnread-3Ef-o9 span::after {
-	border-bottom:thin solid #f04747;
+.group-spacing-8 [class*="divider-"][class*="hasContent-"] {
+	margin-top:12px;
+	margin-bottom:12px;
 }
 
-.scrollerInner-2YIMLh .divider-3_HH5L.isUnread-3Ef-o9 span svg {
+.group-spacing-16 [class*="divider-"][class*="hasContent-"] {
+	margin-top:20px;
+	margin-bottom:20px;
+}
+
+.group-spacing-24 [class*="divider-"][class*="hasContent-"] {
+	margin-top:28px;
+	margin-bottom:28px;
+}
+
+/* New Message Color */
+[class*="messagesWrapper-"] [class*="divider-"][class*="isUnread-"] span {
+	color:var(--new-message-color);
+}
+
+[class*="messagesWrapper-"] [class*="divider-"][class*="isUnread-"] span::before, [class*="messagesWrapper-"] [class*="divider-"][class*="isUnread-"] span::after {
+	border-bottom:thin solid var(--new-message-color);
+}
+
+[class*="messagesWrapper-"] [class*="divider-"][class*="isUnread-"] span svg {
 	display:none;
 }
 
-/* Timestamp divider color */
-.scrollerInner-2YIMLh .divider-3_HH5L:not(.isUnread-3Ef-o9) span::before, .scrollerInner-2YIMLh .divider-3_HH5L:not(.isUnread-3Ef-o9) span::after {
-	border-bottom:thin solid var(--text-muted);
+/* Timestamp Divider Color */
+[class*="messagesWrapper-"] [class*="divider-"]:not([class*="isUnread-"]) span::before, [class*="messagesWrapper-"] [class*="divider-"]:not([class*="isUnread-"]) span::after {
+	border-bottom:thin solid var(--background-modifier-accent);
 }
 
-/* Display version info */.sidebar-CFHs9e .side-8zPYf6 .info-1VyQPT::after {
-	content: "Old Messages Version: " var(--version);
-	color: var(--text-muted);
-	font-size: 12px;
-	line-height: 16px;
+/* Display version info */
+[class*="sidebar-"] [role="tabbar"] [class*="info-"]::after {
+	content:"Old Messages Version: v" var(--oldMessagesVersion);
+	color:var(--text-muted);
+	font-size:12px;
+	line-height:16px;
 }
 
-.bda-slist > li[data-name="OldMessagesLoader"] > .bda-header > .bda-header-title::after {
-	content: "Theme Version: " var(--version);
+.bd-addon-list [id*="OldMessagesLoader"] .bd-addon-header .bd-title .bd-meta::after {
+	content:"Theme Version: v" var(--oldMessagesVersion);
 	padding-left:1em;
 }
