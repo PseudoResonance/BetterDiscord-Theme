@@ -1,7 +1,7 @@
 /**
  * @name XposeRAW
  * @author PseudoResonance
- * @version 3.0.3
+ * @version 3.0.4
  * @description Custom theme.
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeRAW.theme.css
  */
@@ -19,7 +19,7 @@
  */
 
 :root, .theme-dark, .theme-light {
-	--version:"3.0.3";
+	--version:"3.0.4";
 	--blur-radius:10px;
 }
 
@@ -370,9 +370,13 @@
 	border-bottom:thin solid var(--text-muted);
 }
 
-/* Mention Hover */
-[class*="messagesWrapper-"] [class*="message-"] [class*="mention"]:hover {
-	background-color:rgba(114,137,218,.1);
+/* Mention Background */
+[class*="mention"][class*="interactive"] {
+	background-color:rgba(114,137,218,.2);
+}
+
+[class*="mention"][class*="interactive"]:hover {
+	background-color:rgba(114,137,218,.3);
 }
 
 /* Transparent New Messages / Jump to Bottom */
@@ -784,8 +788,12 @@ div:not([class*="translate-"]) > .layerContainer-yqaFcK [role="dialog"]:not(#emo
 	background-color:transparent !important;
 }
 
-[class*="nowPlayingColumn-"] [class*="inset-"], [class*="peopleListItem-"] [class*="actions-"] [class*="actionButton-"], [class*="pageWrapper-"] [class*="guildListSection-"] [class*="guildList-"] [class*="loaded-"], [class*="pageWrapper-"] [class*="guildList-"] [class*="card-"] {
+[class*="nowPlayingColumn-"] [class*="itemCard-"], [class*="peopleListItem-"] [class*="actions-"] [class*="actionButton-"], [class*="pageWrapper-"] [class*="guildListSection-"] [class*="guildList-"] [class*="loaded-"], [class*="pageWrapper-"] [class*="guildList-"] [class*="card-"] {
 	backdrop-filter:blur(var(--blur-radius));
+	background-color:var(--activity-card-background);
+}
+
+[class*="nowPlayingColumn-"]  [class*="itemCard-"] [class*="inset-"] {
 	background-color:var(--background-attachment);
 }
 
