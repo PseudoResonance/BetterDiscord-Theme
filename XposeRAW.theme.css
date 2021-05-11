@@ -1,7 +1,7 @@
 /**
  * @name XposeRAW
  * @author PseudoResonance
- * @version 3.0.4
+ * @version 3.0.5
  * @description Custom theme.
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeRAW.theme.css
  */
@@ -19,7 +19,7 @@
  */
 
 :root, .theme-dark, .theme-light {
-	--version:"3.0.4";
+	--version:"3.0.5";
 	--blur-radius:10px;
 }
 
@@ -377,6 +377,13 @@
 
 [class*="mention"][class*="interactive"]:hover {
 	background-color:rgba(114,137,218,.3);
+}
+
+/* Reactions */
+[class*="messagesWrapper-"] [class*="message-"] [class*="reaction-"] {
+	border-color:transparent;
+	border-radius:3px;
+	backdrop-filter:blur(var(--blur-radius));
 }
 
 /* Transparent New Messages / Jump to Bottom */
