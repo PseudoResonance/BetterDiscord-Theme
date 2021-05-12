@@ -1,7 +1,7 @@
 /**
  * @name XposeRAW
  * @author PseudoResonance
- * @version 3.0.9
+ * @version 3.0.10
  * @description Custom theme.
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeRAW.theme.css
  */
@@ -19,7 +19,7 @@
  */
 
 :root, .theme-dark, .theme-light {
-	--version:"3.0.9";
+	--xposeVersion:"3.0.10";
 	--blur-radius:10px;
 }
 
@@ -573,7 +573,7 @@ code.inline {
 	-webkit-clip-path:polygon(0px 4px, 1px 2px, 2px 1px, 4px 0px, calc(100% - 12px) 0%, calc(100% - 10px) 1px, calc(100% - 9px) 2px, calc(100% - 8px) 4px, calc(100% - 8px) calc(50% - 5px), 100% 50%, calc(100% - 8px) calc(50% + 5px), calc(100% - 8px) calc(100% - 4px), calc(100% - 9px) calc(100% - 2px), calc(100% - 10px) calc(100% - 1px), calc(100% - 12px) 100%, 4px 100%, 2px calc(100% - 1px), 1px calc(100% - 2px), 0px calc(100% - 4px)) !important;
 }
 
-[class*="tooltipTop-"], #EditUploadsToolbar .toolIconWrapper:not(#foo):hover::after /* EditUploads Plugin Tooltips */ {
+[class*="tooltipTop-"], .layerContainer-yqaFcK .toolbar-2bjZV7, #EditUploadsToolbar .toolIconWrapper:not(#foo):hover::after /* EditUploads Plugin Tooltips */ {
 	backdrop-filter:blur(var(--blur-radius));
 	background-color:var(--background-floating);
 	border-radius:0;
@@ -582,7 +582,7 @@ code.inline {
 	-webkit-clip-path:polygon(0 4px, 1px 2px, 2px 1px, 4px 0px, calc(100% - 4px) 0px, calc(100% - 2px) 1px, calc(100% - 1px) 2px, 100% 4px, 100% calc(100% - 12px), calc(100% - 1px) calc(100% - 10px), calc(100% - 2px) calc(100% - 9px), calc(100% - 4px) calc(100% - 8px), calc(50% + 5px) calc(100% - 8px), 50% calc(100% - 3px), calc(50% - 5px) calc(100% - 8px), 4px calc(100% - 8px), 2px calc(100% - 9px), 1px calc(100% - 10px), 0 calc(100% - 12px)) !important;
 }
 
-[class*="tooltipPointer-"] {
+[class*="tooltipPointer-"], .layerContainer-yqaFcK .toolbar-2bjZV7::before {
 	display:none !important;
 }
 
@@ -1269,13 +1269,13 @@ div:not([class*="translate-"]) > .layerContainer-yqaFcK [role="dialog"]:not(#emo
 
 /* Display Version Info */
 [class*="sidebar-"] [role="tabbar"] [class*="info-"]::after {
-	content:"Xpose Theme Version: v" var(--version);
+	content:"Xpose Theme Version: v" var(--xposeVersion);
 	color:var(--text-muted);
 	font-size:12px;
 	line-height:16px;
 }
 
 .bd-addon-list [id*="XposeLoader"] .bd-addon-header .bd-title .bd-meta::after {
-	content:"Theme Version: v" var(--version);
+	content:"Theme Version: v" var(--xposeVersion);
 	padding-left:1em;
 }
