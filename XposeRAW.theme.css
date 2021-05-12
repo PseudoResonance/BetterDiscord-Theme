@@ -1,7 +1,7 @@
 /**
  * @name XposeRAW
  * @author PseudoResonance
- * @version 3.0.8
+ * @version 3.0.9
  * @description Custom theme.
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeRAW.theme.css
  */
@@ -19,7 +19,7 @@
  */
 
 :root, .theme-dark, .theme-light {
-	--version:"3.0.8";
+	--version:"3.0.9";
 	--blur-radius:10px;
 }
 
@@ -176,6 +176,11 @@
 /*
  * Discord Styling
  */
+
+/* Login Screen */
+[class*="splashBackground-"] canvas, [class*="splashBackground-"] [class*="rightSplit-"] {
+	display:none;
+}
 
 /* Chat */
 
@@ -514,7 +519,6 @@
 }
 
 code.inline {
-	backdrop-filter:blur(var(--blur-radius));
 	background:var(--background-code-inline) !important;
 	border-radius:0 !important;
 }
@@ -601,11 +605,11 @@ code.inline {
 	backdrop-filter:blur(var(--blur-radius));
 }
 
-div:not([class*="translate-"]) > .layerContainer-yqaFcK [role="dialog"]:not(#emoji-picker-tab-panel):not([class*="colorPickerCustom-"]) > div:not([role="combobox"]):not(.modal-qgFCbT), .layerContainer-yqaFcK > [role="listbox"], .layerContainer-yqaFcK > * > [role="listbox"], [class*="translate-"], .popouts-2bnG9Z [style*="translate"], .layerContainer-yqaFcK  [class*="drawerSizingWrapper-"] > [class*="contentWrapper-"], [class*="addGamePopout-"], [class*="quickswitcher-"], #app-mount [class*="app-"] .wrapper-3lJCnD {
+div:not([class*="translate-"]) > .layerContainer-yqaFcK [role="dialog"]:not(#emoji-picker-tab-panel):not([class*="colorPickerCustom-"]) > div:not([role="combobox"]):not(.modal-qgFCbT), .layerContainer-yqaFcK > [role="listbox"], .layerContainer-yqaFcK > * > [role="listbox"], [class*="translate-"], .popouts-2bnG9Z [style*="translate"], .layerContainer-yqaFcK  [class*="drawerSizingWrapper-"] > [class*="contentWrapper-"], [class*="addGamePopout-"], [class*="quickswitcher-"], #app-mount [class*="app-"] .wrapper-3lJCnD, [class*="splashBackground-"] [class*="authBox-"] {
 	backdrop-filter:blur(var(--blur-radius));
 }
 
-div:not([class*="translate-"]) > .layerContainer-yqaFcK [role="dialog"]:not(#emoji-picker-tab-panel):not([class*="colorPickerCustom-"]) > div:not([role="combobox"]):not(.modal-qgFCbT), .layerContainer-yqaFcK > [role="listbox"], .layerContainer-yqaFcK > * > [role="listbox"], .layerContainer-yqaFcK .container-3XJ8ns, .layerContainer-yqaFcK [class*="colorPickerCustom-"], [class*="userPopout-"] > [class*="body-"], [class*="userPopout-"] > [class*="footer-"], [class*="userPopout-"] > [class*="header-"], [role="dialog"] > [class*="body-"], [role="dialog"] [data-user-id] > [class*="body-"], .layerContainer-yqaFcK  [class*="drawerSizingWrapper-"] > [class*="contentWrapper-"], #emoji-picker-tab-panel:not([class*="emojiPickerInExpressionPicker-"]), [class*="addGamePopout-"], [class*="quickswitcher-"], [class*="streamPreview-"], #app-mount [class*="app-"] .wrapper-3lJCnD {
+div:not([class*="translate-"]) > .layerContainer-yqaFcK [role="dialog"]:not(#emoji-picker-tab-panel):not([class*="colorPickerCustom-"]) > div:not([role="combobox"]):not(.modal-qgFCbT), .layerContainer-yqaFcK > [role="listbox"], .layerContainer-yqaFcK > * > [role="listbox"], .layerContainer-yqaFcK .container-3XJ8ns, .layerContainer-yqaFcK [class*="colorPickerCustom-"], [class*="userPopout-"] > [class*="body-"], [class*="userPopout-"] > [class*="footer-"], [class*="userPopout-"] > [class*="header-"], [role="dialog"] > [class*="body-"], [role="dialog"] [data-user-id] > [class*="body-"], .layerContainer-yqaFcK  [class*="drawerSizingWrapper-"] > [class*="contentWrapper-"], #emoji-picker-tab-panel:not([class*="emojiPickerInExpressionPicker-"]), [class*="addGamePopout-"], [class*="quickswitcher-"], [class*="streamPreview-"], #app-mount [class*="app-"] .wrapper-3lJCnD, [class*="splashBackground-"] [class*="authBox-"] {
 	box-shadow:none !important;
 	background-color:var(--background-floating) !important;
 }
@@ -1243,6 +1247,24 @@ div:not([class*="translate-"]) > .layerContainer-yqaFcK [role="dialog"]:not(#emo
 /* ImageUtilities Plugin */
 [class*="lensBackdrop-"] {
 	backdrop-filter:blur(var(--blur-radius));
+}
+
+/* CharCounter Plugin */
+[class*="messagesWrapper-"] ~ form [class*="charCounter-"] {
+	bottom:-0.5em;
+}
+
+[class*="uploadModal-"] [class*="comment-"] [class*="charCounterAdded-"] {
+	position:static !important;
+}
+
+[class*="uploadModal-"] [class*="comment-"] [class*="charCounterAdded-"] [class*="charCounter-"] {
+	bottom:0;
+}
+
+/* GuildProfile Plugin */
+.guild-profile [class*="body-"] {
+	background-color:var(--background-floating) !important;
 }
 
 /* Display Version Info */
