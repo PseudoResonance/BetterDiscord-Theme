@@ -1,7 +1,7 @@
 /**
  * @name XposeRAW
  * @author PseudoResonance
- * @version 3.0.7
+ * @version 3.0.8
  * @description Custom theme.
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeRAW.theme.css
  */
@@ -19,7 +19,7 @@
  */
 
 :root, .theme-dark, .theme-light {
-	--version:"3.0.7";
+	--version:"3.0.8";
 	--blur-radius:10px;
 }
 
@@ -257,7 +257,7 @@
 /* Spacer Between Message Groups */
 [class*="messagesWrapper-"] [class*="groupStart-"]::after {
 	content:'';
-	border-top:thin solid var(--border-color);
+	border-top:thin solid var(--background-modifier-accent);
 	top:calc(0px - var(--message-spacing));
 	left:1rem;
 	right:0.875rem;
@@ -371,22 +371,59 @@
 }
 
 /* Mention Background */
-[class*="mention"][class*="interactive"] {
-	background-color:rgba(114,137,218,.2);
+[class*="mention"] {
+	border-radius:0;
+	transition:background-color 50ms ease-out,color 50ms ease-out;
+	-webkit-transition:background-color 50ms ease-out,color 50ms ease-out;
 }
 
-[class*="mention"][class*="interactive"]:hover {
-	background-color:rgba(114,137,218,.3);
+[class*="mention"][class*="interactive"], [class*="mention"][class*="roleMention"] {
+	background-color:rgba(114,137,218,.1);
+	color:#7289da;
+}
+
+[class*="mention"][class*="interactive"]:hover, [class*="mention"][class*="roleMention"]:hover {
+	background-color:rgba(114,137,218,.7);
+	color:#fff;
+}
+
+[class*="messagesWrapper-"] [class*="message-"][class*="mentioned-"] [class*="mention"][class*="interactive"]:hover {
+	color:#7289da;
 }
 
 /* Reactions */
-[class*="messagesWrapper-"] [class*="message-"] [class*="reaction-"] {
-	border-color:transparent;
-	border-radius:3px;
+[class*="reaction-"] {
+	background:var(--background-modifier-accent);
+	border-radius:.25rem;
+	border:none;
+	margin:0 .125rem .125rem 0;
+	padding:0;
+	-webkit-transition:background-color .1s ease;
+	transition:background-color .1s ease;
 }
 
-[class*="messagesWrapper-"] [class*="message-"] [class*="reaction-"]:not([class*="reactionMe-"]) {
-	background-color:var(--background-attachment);
+[class*="reaction-"]:hover, [class*="reaction-"]:active {
+	background-color:rgba(252, 245, 255, 0.05);
+}
+
+[class*="reaction-"][class*="reactionMe-"] {
+	background-color:rgba(114,137,218,.3);
+}
+
+[class*="reaction-"] [class*="reactionInner-"] {
+	padding:0 .375rem;
+}
+
+[class*="reaction-"] [class*="reactionCount-"]:not(#foo) {
+	color:var(--text-muted);
+}
+
+[class*="reaction-"]:hover [class*="reactionCount-"]:not(#foo) {
+	color:var(--interactive-hover);
+}
+
+[class*="reaction-"][class*="reactionMe-"] [class*="reactionCount-"]:not(#foo), [class*="reaction-"][class*="reactionMe-"]:hover [class*="reactionCount-"]:not(#foo) {
+	color:#7289da;
 }
 
 /* Transparent New Messages / Jump to Bottom */
