@@ -1,7 +1,7 @@
 /**
  * @name OldMessages
  * @author PseudoResonance
- * @version 1.3.1
+ * @version 1.3.2
  * @description Restores old messages style
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/OldMessages.theme.css
  */
@@ -12,7 +12,7 @@
 	--new-message-color:#f04747;
 	--background-mentioned-hover:transparent;
 	--background-message-hover:transparent;
-	--oldMessagesVersion:"1.3.1";
+	--oldMessagesVersion:"1.3.2";
 }
 
 /* Restore Reactions */
@@ -154,7 +154,7 @@
 }
 
 /* Disable Background on Message Buttons */
-[class*="messagesWrapper-"] [class*="message-"][class*="mentioned-"] > [class*="buttonContainer-"] [class*="buttons-"] [class*="wrapper-"] {
+[class*="messagesWrapper-"] [class*="buttonContainer-"] [class*="buttons-"] [class*="wrapper-"] {
 	background-color:transparent !important;
 }
 
