@@ -1,7 +1,7 @@
 /**
  * @name XposeRAW
  * @author PseudoResonance
- * @version 3.0.10
+ * @version 3.0.11
  * @description Custom theme.
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeRAW.theme.css
  */
@@ -19,7 +19,7 @@
  */
 
 :root, .theme-dark, .theme-light {
-	--xposeVersion:"3.0.10";
+	--xposeVersion:"3.0.11";
 	--blur-radius:10px;
 }
 
@@ -839,7 +839,7 @@ div:not([class*="translate-"]) > .layerContainer-yqaFcK [role="dialog"]:not(#emo
 	background-color:transparent !important;
 }
 
-[class*="nowPlayingColumn-"] [class*="itemCard-"], [class*="peopleListItem-"] [class*="actions-"] [class*="actionButton-"], [class*="pageWrapper-"] [class*="guildListSection-"] [class*="guildList-"] [class*="loaded-"], [class*="pageWrapper-"] [class*="guildList-"] [class*="card-"] {
+[class*="nowPlayingColumn-"] [class*="itemCard-"], [class*="peopleListItem-"] [class*="actions-"] [class*="actionButton-"], [class*="pageWrapper-"] [class*="guildListSection-"] [class*="guildList-"] [class*="loaded-"], [class*="pageWrapper-"] [class*="guildList-"] [class*="card-"], [class*="nowPlayingColumn-"]  [class*="card-"] {
 	backdrop-filter:blur(var(--blur-radius));
 	background-color:var(--activity-card-background);
 }
@@ -1252,6 +1252,7 @@ div:not([class*="translate-"]) > .layerContainer-yqaFcK [role="dialog"]:not(#emo
 /* CharCounter Plugin */
 [class*="messagesWrapper-"] ~ form [class*="charCounter-"] {
 	bottom:-0.5em;
+	right:10px;
 }
 
 [class*="uploadModal-"] [class*="comment-"] [class*="charCounterAdded-"] {
@@ -1260,6 +1261,7 @@ div:not([class*="translate-"]) > .layerContainer-yqaFcK [role="dialog"]:not(#emo
 
 [class*="uploadModal-"] [class*="comment-"] [class*="charCounterAdded-"] [class*="charCounter-"] {
 	bottom:0;
+	right:-1em;
 }
 
 /* GuildProfile Plugin */
