@@ -1,7 +1,7 @@
 /**
  * @name XposeRAW
  * @author PseudoResonance
- * @version 3.0.11
+ * @version 3.0.12
  * @description Custom theme.
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeRAW.theme.css
  */
@@ -19,7 +19,7 @@
  */
 
 :root, .theme-dark, .theme-light {
-	--xposeVersion:"3.0.11";
+	--xposeVersion:"3.0.12";
 	--blur-radius:10px;
 }
 
@@ -450,7 +450,7 @@
 }
 
 /* Transparent Notice */
-[class*="notice-"] {
+[class*="notice-"]:not([class*="-message"]) {
 	background-color:var(--background-notice) !important;
 	backdrop-filter:blur(var(--blur-radius));
 }
