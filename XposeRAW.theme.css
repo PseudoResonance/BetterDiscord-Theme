@@ -1,7 +1,7 @@
 /**
  * @name XposeRAW
  * @author PseudoResonance
- * @version 3.0.12
+ * @version 3.0.13
  * @description Custom theme.
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeRAW.theme.css
  */
@@ -19,7 +19,7 @@
  */
 
 :root, .theme-dark, .theme-light {
-	--xposeVersion:"3.0.12";
+	--xposeVersion:"3.0.13";
 	--blur-radius:10px;
 }
 
@@ -667,13 +667,13 @@ div:not([class*="translate-"]) > .layerContainer-yqaFcK [role="dialog"]:not(#emo
 }
 
 /* User Popouts */
-[class*="userPopout-"], .layerContainer-yqaFcK [role="dialog"] [class*="root-"] [class*="footer-"] {
+[class*="userPopout-"], .layerContainer-yqaFcK [role="dialog"] [class*="root-"] [class*="footer-"], [class*="userPopout-"] [class*="headerNormal-"]:not(#foo):not(#bar) {
 	background:transparent !important;
 	box-shadow:none !important;
 }
 
-[class*="userPopout-"] [class*="headerNormal-"]:not(#foo):not(#bar), [role="dialog"] [class*="topSectionNormal-"] {
-	background-color:rgba(22, 24, 27, 0.65) !important;
+[class*="userPopout-"] [class*="headerTop-"], [class*="userPopout-"] [class*="activity-"], [role="dialog"] [class*="topSectionNormal-"] {
+	background-color:var(--background-floating) !important;
 }
 
 [class*="userPopout-"] [class*="headerPlaying-"]:not(#foo):not(#bar), [role="dialog"] [class*="topSectionPlaying-"] {
@@ -690,6 +690,14 @@ div:not([class*="translate-"]) > .layerContainer-yqaFcK [role="dialog"]:not(#emo
 
 [class*="userPopout-"] [class*="headerStreaming-"]:not(#foo):not(#bar), [role="dialog"] [class*="topSectionStreaming-"] {
 	background-color:rgba(89, 54, 149, 0.45) !important;
+}
+
+[class*="userPopout-"] [class*="profileBanner-"]:not(#foo):not(#bar) {
+	opacity:0.35 !important;
+}
+
+[class*="userPopout-"] [class*="aboutMeSection-"] {
+	background:transparent !important;
 }
 
 .activityUserPopout-2yItg2, .headerFill-adLl4x {
