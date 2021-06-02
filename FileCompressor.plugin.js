@@ -20,17 +20,17 @@ module.exports = (() =>
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.0.0",
+			version: "1.0.1",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
 		},
 		changelog: [
 			{
-				title: "Initial Release",
+				title: "Status Toast",
 				type: "added",
 				items: [
-					"Automatically reduce image size for files that are too large to send"
+					"Toast to indicate when compression is ongoing"
 				]
 			}
 		]
@@ -68,14 +68,13 @@ module.exports = (() =>
 
 		const plugin = (Plugin, Api) =>
 		{
-			const { PluginUtilities, DiscordAPI } = Api;
+			const { Utilities, DOMTools, PluginUtilities, DiscordAPI } = Api;
 			
 			// File system for reading local files
 			const fs = require('fs');
 			
 			var appNode = null;
-			var uploadNode = null;
-			var blankDt = null;
+			var toastNode = null;
 			var originalUploadNode = null;
 			
 			const uploadCaps = new Map([["DEFAULT", 8388608], ["NITROCLASSIC", 52428800], ["NITRO", 104857600]]);
@@ -83,6 +82,9 @@ module.exports = (() =>
 			
 			const sizeMultiplier = 0.9;
 			const maxIterations = 50;
+			
+			const uploadToasts = new Map();
+			const loadingSvg = `<svg fill="currentColor" width="24" height="24" viewBox="0 0 24 24"><path d="M12,0v2C6.48,2,2,6.48,2,12c0,3.05,1.37,5.78,3.52,7.61l1.15-1.66C5.04,16.48,4,14.36,4,12c0-4.41,3.59-8,8-8v2l2.59-1.55l2.11-1.26L17,3L12,0z"/><path d="M18.48,4.39l-1.15,1.66C18.96,7.52,20,9.64,20,12c0,4.41-3.59,8-8,8v-2l-2.59,1.55L7.3,20.82L7,21l5,3v-2c5.52,0,10-4.48,10-10C22,8.95,20.63,6.22,18.48,4.39z"/></svg>`;
 
 			return class FileCompressor extends Plugin
 			{
@@ -97,47 +99,106 @@ module.exports = (() =>
 					PluginUtilities.addStyle(
 						'FileCompressor-CSS',
 						`
+						#pseudocompressor-toasts {
+							position:fixed;
+							top:0;
+							bottom:0;
+							left:0;
+							right:0;
+							z-index:5000;
+							pointer-events:none;
+						}
+						.pseudocompressor-toast {
+							position:absolute;
+							bottom:30px;
+							right:30px;
+							background-color:#43b581;
+							padding:7px;
+							border-radius:5px;
+							font-size:14px;
+							font-weight:500;
+							box-shadow:var(--elevation-medium),var(--elevation-stroke);
+							color:var(--header-primary);
+							user-select:none;
+							display:flex;
+							flex-flow:row nowrap;
+							align-items:center;
+						}
+						.pseudocompressor-toast-icon {
+							order:1;
+							flex-grow:0;
+							flex-shrink:0;
+							width:24px;
+							height:24px;
+							animation:spin 1.5s linear infinite;
+						}
+						.pseudocompressor-toast-message {
+							order:2;
+							padding-left:5px;
+						}
+						@keyframes spin {
+							100% {
+								-webkit-transform:rotate(360deg);
+								transform:rotate(360deg);
+							}
+						}
 						`
 					);
-					// Remove old upload node
-					uploadNode = document.getElementById('pseudocompressor-upload');
-					if (uploadNode != null) {
-						uploadNode.remove();
-						uploadNode = null;
-					}
 					// Generate new upload area node
-					this.addUploadArea();
-					blankDt = new DataTransfer();
-					blankDt.dropEffect = "copy";
-					blankDt.effectAllowed = "all";
 					appNode = document.getElementById('app-mount');
+					this.addToastArea();
+					// Add event listeners
+					window.addEventListener("drop", this.drop, true);
+					document.addEventListener("paste", this.paste, true);
 				}
 	
 				onStop()
 				{
 					// Remove upload node
-					if (uploadNode != null) {
-						uploadNode.remove();
-						uploadNode = null;
+					if (toastNode != null) {
+						toastNode.remove();
+						toastNode = null;
 					}
 					appNode = null;
-					// Remove event listener
-					window.removeEventListener("drop", _FileCompressor.drop, true);
-					document.removeEventListener("paste", _FileCompressor.paste, true);
+					uploadToasts.clear();
+					// Remove event listeners
+					window.removeEventListener("drop", this.drop, true);
+					document.removeEventListener("paste", this.paste, true);
 					PluginUtilities.removeStyle('FileCompressor-CSS');
 				}
 				
-				addUploadArea() {
-					// Generate new upload area node
-					originalUploadNode = document.querySelector('[class*="uploadArea-"]');
-					if (originalUploadNode != null) {
-						uploadNode = document.createElement("div");
-						uploadNode.id = "pseudocompressor-upload";
-						uploadNode.className = originalUploadNode.className;
-						originalUploadNode.parentElement.insertBefore(uploadNode, originalUploadNode);
-						// Add events listener
-						window.addEventListener("drop", _FileCompressor.drop, true);
-						document.addEventListener("paste", _FileCompressor.paste, true);
+				addToastArea() {
+					// Remove old upload node
+					toastNode = document.getElementById('pseudocompressor-toasts');
+					if (toastNode != null) {
+						toastNode.remove();
+						toastNode = null;
+					}
+					toastNode = document.createElement("div");
+					toastNode.id = "pseudocompressor-toasts";
+					appNode.appendChild(toastNode);
+				}
+				
+				setUploadToast(dt, remaining) {
+					if (uploadToasts.has(dt)) {
+						let toast = uploadToasts.get(dt);
+						let toastMsg = toast.querySelector('.pseudocompressor-toast-message');
+						toastMsg.innerHTML = "Compressing " + remaining + (remaining == 1 ? " file" : " files");
+					} else {
+						let toast = DOMTools.parseHTML(Utilities.formatString(`<div class="pseudocompressor-toast"><div class="pseudocompressor-toast-icon">{{icon}}</div><div class="pseudocompressor-toast-message">{{message}}</div></div>`, {
+							message: "Compressing " + remaining + (remaining == 1 ? " file" : " files"),
+							icon: loadingSvg
+						}));
+						toastNode.appendChild(toast);
+						uploadToasts.set(dt, toast);
+					}
+				}
+				
+				removeUploadToast(dt) {
+					if (uploadToasts.has(dt)) {
+						let toast = uploadToasts.get(dt);
+						toast.remove();
+						uploadToasts.delete(dt);
 					}
 				}
 				
@@ -146,27 +207,40 @@ module.exports = (() =>
 						// Stop event from propagating
 						event.stopPropagation();
 						// Dispatch new event
-						var dt = await _FileCompressor.processDataTransfer(event.clipboardData);
-						appNode.tabIndex = -1;
-						appNode.focus();
-						document.dispatchEvent(new ClipboardEvent("paste", {"clipboardData": dt}));
+						try {
+							let dt = await _FileCompressor.processDataTransfer(event.clipboardData);
+							appNode.tabIndex = -1;
+							appNode.focus();
+							document.dispatchEvent(new ClipboardEvent("paste", {"clipboardData": dt}));
+						} catch (e) {
+							console.error(e);
+							BdApi.showToast("Error uploading files!", {type: "error"});
+						}
 					}
 				}
 				
 				async drop(event) {
 					if (event.isTrusted && event.dataTransfer !== null && event.dataTransfer.files.length != 0) {
+						if (originalUploadNode == null) {
+							originalUploadNode = document.querySelector('[class*="uploadArea-"]');
+						}
 						if (originalUploadNode != null) {
 							if (_FileCompressor.listStartsWith(originalUploadNode.classList, "droppable-")) {
 								// Stop event from propagating
 								event.stopPropagation();
 								// Dispatch new event
-								var dt = await _FileCompressor.processDataTransfer(event.dataTransfer);
-								if (_FileCompressor.listStartsWith(originalUploadNode.classList, "droppable-")) {
-									originalUploadNode.dispatchEvent(new DragEvent("drop", {"dataTransfer": dt}));
-								} else {
-									appNode.tabIndex = -1;
-									appNode.focus();
-									document.dispatchEvent(new ClipboardEvent("paste", {"clipboardData": dt}));
+								try {
+									let dt = await _FileCompressor.processDataTransfer(event.dataTransfer);
+									if (_FileCompressor.listStartsWith(originalUploadNode.classList, "droppable-")) {
+										originalUploadNode.dispatchEvent(new DragEvent("drop", {"dataTransfer": dt}));
+									} else {
+										appNode.tabIndex = -1;
+										appNode.focus();
+										document.dispatchEvent(new ClipboardEvent("paste", {"clipboardData": dt}));
+									}
+								} catch (e) {
+									console.error(e);
+									BdApi.showToast("Error uploading files!", {type: "error"});
 								}
 							}
 						}
@@ -174,8 +248,9 @@ module.exports = (() =>
 				}
 				
 				async processDataTransfer(dt) {
-					var premiumType = DiscordAPI.currentUser.discordObject.premiumType;
-					switch (premiumType) {
+					// Check account status and update max file upload size
+					switch (DiscordAPI.currentUser.discordObject.premiumType) {
+						default:
 						case 0:
 							maxUploadSize = uploadCaps.get("DEFAULT");
 							break;
@@ -186,38 +261,55 @@ module.exports = (() =>
 							maxUploadSize = uploadCaps.get("NITRO");
 							break;
 					}
+					// Synthetic return DataTransfer
 					const retDt = new DataTransfer();
 					retDt.dropEffect = "copy";
 					retDt.effectAllowed = "all";
 					var files = dt.files;
+					var tempFiles = [];
 					for (let i = 0; i < files.length; i++) {
-						var file = files[i];
+						let file = files[i];
 						if (file.size >= maxUploadSize) {
+							// Check file MIME type
 							switch (file.type.split('/')[0]) {
 								case "image":
-									var imgFile = await _FileCompressor.compressImage(file);
-									if (imgFile != null) {
-										retDt.items.add(imgFile);
-									}
-									//https://github.com/davejm/client-compress
+									tempFiles.push(file);
 									break;
 								default:
-									if (i == files.length - 1) {
+									// If no files have are compressible and return is still empty, add file to trigger Discord's file too large modal
+									if (i == files.length - 1 && retDt.items.length == 0 && tempFiles.length == 0) {
 										retDt.items.add(file);
 									}
 									break;
 							}
 						} else {
+							// Add files that are small enough
 							retDt.items.add(file);
 						}
 					}
-					if (dt.files.length > retDt.files.length) {
-						var num = (dt.files.length - retDt.files.length);
+					for (let i = 0; i < tempFiles.length; i++) {
+						let file = tempFiles[i];
+						// Check file MIME type
+						switch (file.type.split('/')[0]) {
+							case "image":
+								_FileCompressor.setUploadToast(dt, tempFiles.length - i);
+								let compressedFile = await _FileCompressor.compressImage(file);
+								if (compressedFile != null) {
+									retDt.items.add(compressedFile);
+								}
+								//https://github.com/davejm/client-compress
+								break;
+							default:
+								break;
+						}
+					}
+					_FileCompressor.removeUploadToast(dt);
+					// Show toast saying a file was too large to upload if some files are being uploaded, but not others
+					if (retDt.files.length > 0 && files.length > retDt.files.length) {
+						let num = (files.length - retDt.files.length);
 						BdApi.showToast(num + (num == 1 ? " file was " : " files were ") + "too large to upload!", {type: "error"});
 					}
-					if (retDt.files.length > 0) {
-						return retDt;
-					}
+					return retDt;
 				}
 				
 				loadImageElement = (img, src) => {
@@ -235,8 +327,7 @@ module.exports = (() =>
 					URL.revokeObjectURL(objectUrl);
 					const image = {file: file, data: img, outputData: null, width: img.naturalWidth, height: img.naturalHeight, iterations: 0};
 					if (await _FileCompressor.compressImageLoop(image) !== null) {
-						var file = new File([image.outputData], image.file.name, {type: image.file.type});
-						return file;
+						return new File([image.outputData], image.file.name, {type: image.file.type});
 					}
 					return null;
 				}
