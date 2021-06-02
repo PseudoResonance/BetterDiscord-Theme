@@ -20,7 +20,7 @@ module.exports = (() =>
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.0.1",
+			version: "1.0.2",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -31,6 +31,13 @@ module.exports = (() =>
 				type: "added",
 				items: [
 					"Toast to indicate when compression is ongoing"
+				]
+			},
+			{
+				title: "Multiple Toast",
+				type: "fixed",
+				items: [
+					"Properly display multiple toasts simultaneously"
 				]
 			}
 		]
@@ -102,18 +109,20 @@ module.exports = (() =>
 						#pseudocompressor-toasts {
 							position:fixed;
 							top:0;
-							bottom:0;
+							bottom:30px;
 							left:0;
-							right:0;
+							right:30px;
 							z-index:5000;
 							pointer-events:none;
+							display:flex;
+							flex-direction:column;
+							align-items:flex-end;
+							justify-content:flex-end;
 						}
 						.pseudocompressor-toast {
-							position:absolute;
-							bottom:30px;
-							right:30px;
 							background-color:#43b581;
 							padding:7px;
+							margin-top:10px;
 							border-radius:5px;
 							font-size:14px;
 							font-weight:500;
