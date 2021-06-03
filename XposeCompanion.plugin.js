@@ -20,17 +20,17 @@ module.exports = (() =>
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "2.2.1",
+			version: "2.2.2",
 			description: "Companion plugin for Xpose theme.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeCompanion.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/XposeCompanion.plugin.js"
 		},
 		changelog: [
 			{
-				title: "Removed XenoLib",
+				title: "Fixed Error",
 				type: "fixed",
 				items: [
-					"You can delete the XenoLib plugin if not in use"
+					"Fixed null text field"
 				]
 			}
 		],
@@ -132,7 +132,9 @@ module.exports = (() =>
 						}
 						if (labelsText.length > 1) {
 							fileDescription.textContent = "";
-							inputName.placeholder = labelsText[0];
+							if (inputName != null) {
+								inputName.placeholder = labelsText[0];
+							}
 						}
 					}
 				}
