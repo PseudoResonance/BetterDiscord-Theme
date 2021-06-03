@@ -20,7 +20,7 @@ module.exports = (() =>
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "2.2.2",
+			version: "2.2.3",
 			description: "Companion plugin for Xpose theme.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeCompanion.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/XposeCompanion.plugin.js"
@@ -30,7 +30,8 @@ module.exports = (() =>
 				title: "Fixed Error",
 				type: "fixed",
 				items: [
-					"Fixed null text field"
+					"Fixed null text field",
+					"Fixed folder colors disappearing after language change"
 				]
 			}
 		],
@@ -85,7 +86,7 @@ module.exports = (() =>
 
 		const plugin = (Plugin, Api) =>
 		{
-			const { DOMTools, PluginUtilities } = Api;
+			const { DiscordModules, DOMTools, PluginUtilities } = Api;
 			
 			const uploadPlaceholderObserver = new MutationObserver(function(mutationsList, observer) {
 				if (document.getElementsByClassName("uploadModal-2ifh8j").length) {
@@ -207,6 +208,7 @@ module.exports = (() =>
 					);
 					uploadPlaceholderObserver.observe(document.querySelector(".popouts-2bnG9Z + div"), {subtree: true, childList: true});
 					this.updateFolderBackgrounds();
+					DiscordModules.UserSettingsStore.addChangeListener(this.handleUserSettingsChange);
 				}
 	
 				onStop()
@@ -215,6 +217,7 @@ module.exports = (() =>
 					uploadPlaceholderObserver.disconnect();
 					uploadPlaceholderTextObserver.disconnect();
 					guildListObserver.disconnect();
+					DiscordModules.UserSettingsStore.removeChangeListener(this.handleUserSettingsChange);
 				}
 				
 				updateFolderBackgrounds() {
@@ -252,6 +255,10 @@ module.exports = (() =>
 							this.updateFolderBackgrounds();
 						}
 					}
+				}
+
+				async handleUserSettingsChange() {
+					_XposeCompanion.updateFolderBackgrounds();
 				}
 				
 				listStartsWith(list, str) {
