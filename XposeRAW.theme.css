@@ -1,7 +1,7 @@
 /**
  * @name XposeRAW
  * @author PseudoResonance
- * @version 3.0.14
+ * @version 3.0.15
  * @description Custom theme.
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeRAW.theme.css
  */
@@ -19,7 +19,7 @@
  */
 
 :root, .theme-dark, .theme-light {
-	--xposeVersion:"3.0.14";
+	--xposeVersion:"3.0.15";
 	--blur-radius:10px;
 }
 
@@ -573,7 +573,7 @@ code.inline {
 	-webkit-clip-path:polygon(0px 4px, 1px 2px, 2px 1px, 4px 0px, calc(100% - 12px) 0%, calc(100% - 10px) 1px, calc(100% - 9px) 2px, calc(100% - 8px) 4px, calc(100% - 8px) calc(50% - 5px), 100% 50%, calc(100% - 8px) calc(50% + 5px), calc(100% - 8px) calc(100% - 4px), calc(100% - 9px) calc(100% - 2px), calc(100% - 10px) calc(100% - 1px), calc(100% - 12px) 100%, 4px 100%, 2px calc(100% - 1px), 1px calc(100% - 2px), 0px calc(100% - 4px)) !important;
 }
 
-[class*="tooltipTop-"], [class*="mediaBarWrapper-"] [class*="bubble-"], .layerContainer-yqaFcK .toolbar-2bjZV7, #EditUploadsToolbar .toolIconWrapper:not(#foo):hover::after /* EditUploads Plugin Tooltips */ {
+[class*="tooltipTop-"], .layerContainer-yqaFcK .toolbar-2bjZV7, #EditUploadsToolbar .toolIconWrapper:not(#foo):hover::after /* EditUploads Plugin Tooltips */ {
 	backdrop-filter:blur(var(--blur-radius));
 	background-color:var(--background-floating);
 	border-radius:0;
@@ -588,8 +588,13 @@ code.inline {
 
 /* Small Media Player Time Tooltip */
 [class*="mediaBarWrapper-"] [class*="bubble-"] {
-	padding:8px 12px;
 	line-height:12px;
+	background-color:var(--background-floating);
+	border-radius:0;
+	padding:8px 12px;
+	margin-bottom:-8px;
+	-webkit-clip-path:polygon(0 4px, 1px 2px, 2px 1px, 4px 0px, calc(100% - 4px) 0px, calc(100% - 2px) 1px, calc(100% - 1px) 2px, 100% 4px, 100% calc(100% - 12px), calc(100% - 1px) calc(100% - 10px), calc(100% - 2px) calc(100% - 9px), calc(100% - 4px) calc(100% - 8px), calc(50% + 5px) calc(100% - 8px), 50% calc(100% - 3px), calc(50% - 5px) calc(100% - 8px), 4px calc(100% - 8px), 2px calc(100% - 9px), 1px calc(100% - 10px), 0 calc(100% - 12px)) !important;
+
 }
 
 /* Popouts */
