@@ -1,7 +1,7 @@
 /**
  * @name XposeRAW
  * @author PseudoResonance
- * @version 3.0.15
+ * @version 3.0.16
  * @description Custom theme.
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeRAW.theme.css
  */
@@ -19,7 +19,7 @@
  */
 
 :root, .theme-dark, .theme-light {
-	--xposeVersion:"3.0.15";
+	--xposeVersion:"3.0.16";
 	--blur-radius:10px;
 }
 
@@ -678,13 +678,9 @@ div:not([class*="translate-"]) > .layerContainer-yqaFcK [role="dialog"]:not(#emo
 }
 
 /* User Popouts */
-[class*="userPopout-"], .layerContainer-yqaFcK [role="dialog"] [class*="root-"] [class*="footer-"], [class*="userPopout-"] [class*="headerNormal-"]:not(#foo):not(#bar) {
+[class*="userPopout-"], .layerContainer-yqaFcK [role="dialog"] [class*="root-"] [class*="footer-"], [class*="userPopout-"] [class*="headerTop-"]:not(#foo):not(#bar) {
 	background:transparent !important;
 	box-shadow:none !important;
-}
-
-[class*="userPopout-"] [class*="headerTop-"], [class*="userPopout-"] [class*="activity-"], [role="dialog"] [class*="topSectionNormal-"] {
-	background-color:var(--background-floating) !important;
 }
 
 [class*="userPopout-"] [class*="headerPlaying-"]:not(#foo):not(#bar), [role="dialog"] [class*="topSectionPlaying-"] {
@@ -703,16 +699,39 @@ div:not([class*="translate-"]) > .layerContainer-yqaFcK [role="dialog"]:not(#emo
 	background-color:rgba(89, 54, 149, 0.45) !important;
 }
 
-[class*="userPopout-"] [class*="profileBanner-"]:not(#foo):not(#bar) {
-	opacity:0.35 !important;
-}
-
 [class*="userPopout-"] [class*="aboutMeSection-"] {
 	background:transparent !important;
 }
 
 .activityUserPopout-2yItg2, .headerFill-adLl4x {
 	background-color:transparent !important;
+}
+
+/* Profile Banner */
+[class*="userPopout-"] [class*="popoutBanner-"]:not(#foo):not(#bar), [role="dialog"] [class*="profileBanner-"] {
+	opacity:0.7 !important;
+}
+
+/* Mask Out Profile Picture from Banner for Transparent Profile Pictures */
+[class*="userPopout-"] [class*="popoutBanner-"]:not(#foo):not(#bar) {
+	mask:radial-gradient(circle 46px at 62px 62px,transparent 97%,#fff 100%);
+	-webkit-mask:radial-gradient(circle 46px at 62px 62px,transparent 97%,#fff 100%);
+}
+
+[role="dialog"] [class*="profileBanner-"] {
+	mask:radial-gradient(circle 68px at 84px 120px,transparent 97%,#fff 100%);
+	-webkit-mask:radial-gradient(circle 68px at 84px 120px,transparent 97%,#fff 100%);
+}
+
+/* Premium Profile Banners */
+[class*="userPopout-"] [class*="popoutBannerPremium-"]:not(#foo):not(#bar) {
+	mask:radial-gradient(circle 46px at 62px 122px,transparent 97%,#fff 100%);
+	-webkit-mask:radial-gradient(circle 46px at 62px 122px,transparent 97%,#fff 100%);
+}
+
+[role="dialog"] [class*="profileBannerPremium-"] {
+	mask:radial-gradient(circle 68px at 84px 240px,transparent 97%,#fff 100%);
+	-webkit-mask:radial-gradient(circle 68px at 84px 240px,transparent 97%,#fff 100%);
 }
 
 /* Image Preview */
@@ -1222,6 +1241,15 @@ div:not([class*="translate-"]) > .layerContainer-yqaFcK [role="dialog"]:not(#emo
 	backdrop-filter:blur(var(--blur-radius));
 	box-shadow:none !important;
 	background-color:var(--background-floating) !important;
+}
+
+/* BetterDiscord/ZeresPluginLibrary Toasts */
+.bd-toasts .bd-toast:not([class*="toast-"]), #app-mount .toasts .toast:not([class*="toast-"]) {
+	background-color:var(--background-floating) !important;
+}
+
+#app-mount .toasts .toast {
+	box-shadow:none !important;
 }
 
 /* EditUploads Plugin */
