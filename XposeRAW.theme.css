@@ -1,7 +1,7 @@
 /**
  * @name XposeRAW
  * @author PseudoResonance
- * @version 3.0.18
+ * @version 3.0.19
  * @description Custom theme.
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeRAW.theme.css
  */
@@ -19,7 +19,7 @@
  */
 
 :root, .theme-dark, .theme-light {
-	--xposeVersion:"3.0.18";
+	--xposeVersion:"3.0.19";
 	--blur-radius:10px;
 }
 
@@ -616,11 +616,11 @@ code.inline {
 	backdrop-filter:blur(var(--blur-radius));
 }
 
-div:not([class*="translate-"]) > .layerContainer-yqaFcK [role="dialog"]:not(#emoji-picker-tab-panel):not([class*="colorPickerCustom-"]):not([class*="userPopout-"]) > div:not([role="combobox"]):not(.modal-qgFCbT), .layerContainer-yqaFcK > [role="listbox"], .layerContainer-yqaFcK > * > [role="listbox"], [class*="translate-"], .popouts-2bnG9Z [style*="translate"], .layerContainer-yqaFcK  [class*="drawerSizingWrapper-"] > [class*="contentWrapper-"], [class*="addGamePopout-"], [class*="quickswitcher-"], #app-mount [class*="app-"] .wrapper-3lJCnD, [class*="splashBackground-"] [class*="authBox-"], [class*="profileBannerPreview-"] {
+div:not([class*="translate-"]) > .layerContainer-yqaFcK [role="dialog"]:not(#emoji-picker-tab-panel):not([class*="colorPickerCustom-"]):not([class*="userPopout-"]) > div:not([role="combobox"]):not(.modal-qgFCbT), .layerContainer-yqaFcK > [role="listbox"], .layerContainer-yqaFcK > * > [role="listbox"], [class*="translate-"], .popouts-2bnG9Z [style*="translate"], .layerContainer-yqaFcK  [class*="drawerSizingWrapper-"] > [class*="contentWrapper-"], [class*="addGamePopout-"], [class*="quickswitcher-"], #app-mount [class*="app-"] .wrapper-3lJCnD, [class*="splashBackground-"] [class*="authBox-"], [class*="profileBannerPreview-"], [class*="channelTextArea-"] .container-JHR0NT:not([class*="hidden-"]) {
 	backdrop-filter:blur(var(--blur-radius));
 }
 
-div:not([class*="translate-"]) > .layerContainer-yqaFcK [role="dialog"]:not(#emoji-picker-tab-panel):not([class*="colorPickerCustom-"]) > div:not([role="combobox"]):not(.modal-qgFCbT), .layerContainer-yqaFcK > [role="listbox"], .layerContainer-yqaFcK > * > [role="listbox"], .layerContainer-yqaFcK .container-3XJ8ns, .layerContainer-yqaFcK [class*="colorPickerCustom-"], [role="dialog"]:not([class*="userPopout-"]) > [class*="body-"], [role="dialog"] [data-user-id] > [class*="body-"], .layerContainer-yqaFcK  [class*="drawerSizingWrapper-"] > [class*="contentWrapper-"], #emoji-picker-tab-panel:not([class*="emojiPickerInExpressionPicker-"]), [class*="addGamePopout-"], [class*="quickswitcher-"], [class*="streamPreview-"], #app-mount [class*="app-"] .wrapper-3lJCnD, [class*="splashBackground-"] [class*="authBox-"], [class*="profileBannerPreview-"] {
+div:not([class*="translate-"]) > .layerContainer-yqaFcK [role="dialog"]:not(#emoji-picker-tab-panel):not([class*="colorPickerCustom-"]) > div:not([role="combobox"]):not(.modal-qgFCbT), .layerContainer-yqaFcK > [role="listbox"], .layerContainer-yqaFcK > * > [role="listbox"], .layerContainer-yqaFcK .container-3XJ8ns, .layerContainer-yqaFcK [class*="colorPickerCustom-"], [role="dialog"]:not([class*="userPopout-"]) > [class*="body-"], [role="dialog"] [data-user-id] > [class*="body-"], .layerContainer-yqaFcK  [class*="drawerSizingWrapper-"] > [class*="contentWrapper-"], #emoji-picker-tab-panel:not([class*="emojiPickerInExpressionPicker-"]), [class*="addGamePopout-"], [class*="quickswitcher-"], [class*="streamPreview-"], #app-mount [class*="app-"] .wrapper-3lJCnD, [class*="splashBackground-"] [class*="authBox-"], [class*="profileBannerPreview-"], [class*="channelTextArea-"] .container-JHR0NT:not([class*="hidden-"]) {
 	box-shadow:none !important;
 	background-color:var(--background-floating) !important;
 }
