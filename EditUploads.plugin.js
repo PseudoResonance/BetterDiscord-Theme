@@ -22,18 +22,17 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "0.1.0",
+			version: "0.1.1",
 			description: "Edit image files before uploading.  Uses icons from icons8 https://icons8.com/",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/EditUploads.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/EditUploads.plugin.js"
 		},
 		changelog: [
 			{
-				title: "Migrate to ZeresPluginLibrary",
-				type: "added",
+				title: "Update",
+				type: "fixed",
 				items: [
-					"Autoupdating",
-					"Filled rectangle tool"
+					"Updated to work with new Discord version"
 				]
 			}
 		]
@@ -960,10 +959,13 @@ module.exports = (() => {
 					const reactInstance = this.getReactInstance(uploadModal);
 					const stateNode = reactInstance.return.stateNode;
 					const icon = uploadModal.getElementsByClassName(this.iconClass)[0];
-					this.editFile(reactInstance.return.stateNode.props.upload.file, modalWrapper)
+					const newNodeFormat = typeof reactInstance.return.stateNode.props.upload.item.file != "undefined";
+					const file = (newNodeFormat ? reactInstance.return.stateNode.props.upload.item.file : reactInstance.return.stateNode.props.upload.file);
+					this.editFile(file, modalWrapper)
 						.then((newFile) => {
+							console.log(stateNode);
 							stateNode.setState({
-								upload: Object.assign(stateNode.props.upload, {
+								upload: Object.assign(newNodeFormat ? stateNode.props.upload.item : stateNode.props.upload, {
 									file: newFile,
 									size: newFile.size
 								}),
