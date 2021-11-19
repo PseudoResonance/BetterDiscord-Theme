@@ -22,7 +22,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "0.1.1",
+			version: "0.1.2",
 			description: "Edit image files before uploading.  Uses icons from icons8 https://icons8.com/",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/EditUploads.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/EditUploads.plugin.js"
@@ -32,7 +32,7 @@ module.exports = (() => {
 				title: "Update",
 				type: "fixed",
 				items: [
-					"Updated to work with new Discord version"
+					"Updated to work with new Discord attachments system"
 				]
 			}
 		]
@@ -480,6 +480,11 @@ module.exports = (() => {
 							requestAnimationFrame(this.addButtonToDescription.bind(this));
 						}
 					});
+					this.cancelPatchAttachment = BdApi.monkeyPatch(BdApi.findModule(m => m.displayName === 'UploadAttachmentModal').prototype, 'render', {
+						after: _ => {
+							requestAnimationFrame(this.addButtonToDescription.bind(this));
+						}
+					});
 					PluginUtilities.addStyle('EditUploads-CSS', `
 						#EditUploadsEditButton {
 							padding: 0;
@@ -639,6 +644,7 @@ module.exports = (() => {
 				// Stop plugin
 				onStop() {
 					this.cancelPatch();
+					this.cancelPatchAttachment();
 					PluginUtilities.removeStyle('EditUploads-CSS');
 				}
 
@@ -864,7 +870,10 @@ module.exports = (() => {
 						document.body.removeEventListener('mouseup', handlers.up);
 						document.body.removeEventListener('mousemove', handlers.move);
 						//@ts-ignore
-						document.getElementsByClassName(this.uploadModalClass)[0].getElementsByClassName(this.textAreaClass)[0].focus();
+						const textArea = document.getElementsByClassName(this.uploadModalClass)[0].getElementsByClassName(this.textAreaClass)[0];
+						if (textArea) {
+							textArea.focus();
+						}
 					};
 					const modal = document.createElement('div');
 					modal.id = 'EditUploadsModal';
@@ -963,7 +972,6 @@ module.exports = (() => {
 					const file = (newNodeFormat ? reactInstance.return.stateNode.props.upload.item.file : reactInstance.return.stateNode.props.upload.file);
 					this.editFile(file, modalWrapper)
 						.then((newFile) => {
-							console.log(stateNode);
 							stateNode.setState({
 								upload: Object.assign(newNodeFormat ? stateNode.props.upload.item : stateNode.props.upload, {
 									file: newFile,
