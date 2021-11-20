@@ -16,7 +16,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.2.0",
+			version: "1.2.1",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -27,6 +27,13 @@ module.exports = (() => {
 				type: "added",
 				items: [
 					"Uses FFmpeg to compress video"
+				]
+			},
+			{
+				title: "Fixed",
+				type: "fixed",
+				items: [
+					"Fixed automatic channel switch option with threads"
 				]
 			}
 		],
@@ -43,7 +50,7 @@ module.exports = (() => {
 						note: 'Automatically switch to the required channel when a file is ready to be uploaded.',
 						id: 'autoChannelSwitch',
 						type: 'switch',
-						value: false
+						value: true
 					},
 					{
 						name: 'Immediate Upload',
@@ -662,24 +669,26 @@ module.exports = (() => {
 					let guildId = null;
 					let channelId = null;
 					let threadId = null;
+					let sidebar = false;
 					if (channel.threadMetadata) {
 						// Thread
 						guildId = channel.guild_id;
 						channelId = channel.parent_id;
 						threadId = channel.id;
+						sidebar = DiscordAPI.currentChannel ? DiscordAPI.currentChannel.discordObject.id !== threadId : false;
 					} else {
 						// Normal channel
 						guildId = channel.guild_id;
 						channelId = channel.id;
 					}
-					this.processFileList(fileList, guildId, channelId, threadId);
+					this.processFileList(fileList, guildId, channelId, threadId, sidebar);
 					return true;
 				}
 
-				uploadFileQueue(files, guildId, channelId, threadId) {
-					this.uploadFile(files, guildId, channelId, threadId);
+				uploadFileQueue(files, guildId, channelId, threadId, sidebar) {
+					this.uploadFile(files, guildId, channelId, threadId, sidebar);
 					if (this.settings.upload.autoChannelSwitch) {
-						this.switchChannel(guildId, channelId, threadId);
+						this.switchChannel(guildId, channelId, threadId, sidebar);
 					}
 				}
 				
@@ -689,21 +698,32 @@ module.exports = (() => {
 					return dt.files;
 				}
 				
-				switchChannel(guildId, channelId, threadId) {
+				switchChannel(guildId, channelId, threadId, sidebar) {
 					if (!channelId)
 						return false;
-					const originalGuildId = DiscordAPI.currentChannel !== null ? DiscordAPI.currentChannel.discordObject.guild_id : null;
-					const originalChannelId = DiscordAPI.currentChannel !== null ? (DiscordAPI.currentChannel.discordObject.threadMetadata ? DiscordAPI.currentChannel.discordObject.id : null) : null;
-					const originalThreadId = DiscordAPI.currentChannel !== null ? (DiscordAPI.currentChannel.discordObject.threadMetadata ? DiscordAPI.currentChannel.discordObject.parent_id : DiscordAPI.currentChannel.discordObject.id) : null;
-					if (threadId !== null)
-						DiscordModules.NavigationUtils.transitionToThread(!guildId ? "@me" : guildId, threadId);
-					else
+					const originalGuildId = DiscordAPI.currentChannel ? DiscordAPI.currentChannel.discordObject.guild_id : null;
+					const originalChannelId = DiscordAPI.currentChannel ? (DiscordAPI.currentChannel.discordObject.threadMetadata ? DiscordAPI.currentChannel.discordObject.parent_id : DiscordAPI.currentChannel.discordObject.id) : null;
+					const originalThreadId = DiscordAPI.currentChannel ? (DiscordAPI.currentChannel.discordObject.threadMetadata ? DiscordAPI.currentChannel.discordObject.id : null) : null;
+					let sidebarThreadData = BdApi.findModuleByProps('getThreadSidebarState').getThreadSidebarState(originalChannelId);
+					const sidebarThreadId = (DiscordAPI.currentChannel && !originalThreadId) ? (sidebarThreadData ? sidebarThreadData.channelId : null) : null;
+					if (threadId) {
+						if (threadId !== sidebarThreadId && threadId !== originalThreadId) {
+							if (sidebar) {
+								DiscordModules.NavigationUtils.transitionToThread(!guildId ? "@me" : guildId, channelId);
+								BdApi.findModuleByProps('gotoThread').gotoThread(null, {id: threadId});
+							} else {
+								DiscordModules.NavigationUtils.transitionToThread(!guildId ? "@me" : guildId, threadId);
+							}
+						}
+					} else {
 						DiscordModules.NavigationUtils.transitionToGuild(!guildId ? "@me" : guildId, channelId);
-					if ((guildId ? DiscordAPI.currentChannel.discordObject.guild_id === guildId : DiscordAPI.currentChannel.discordObject.guild_id === null) && (threadId ? (DiscordAPI.currentChannel.discordObject.id === threadId && DiscordAPI.currentChannel.discordObject.parent_id === channelId) : DiscordAPI.currentChannel.discordObject.id === channelId)) {
+					}
+					sidebarThreadData = BdApi.findModuleByProps('getThreadSidebarState').getThreadSidebarState(DiscordAPI.currentChannel.discordObject.id);
+					if ((guildId ? DiscordAPI.currentChannel.discordObject.guild_id === guildId : !DiscordAPI.currentChannel.discordObject.guild_id) && (threadId ? ((DiscordAPI.currentChannel.discordObject.id === threadId && DiscordAPI.currentChannel.discordObject.parent_id === channelId) || DiscordAPI.currentChannel.discordObject.id === channelId && (sidebarThreadData ? sidebarThreadData.channelId : null) === threadId) : DiscordAPI.currentChannel.discordObject.id === channelId)) {
 						return true;
 					} else {
 						BdApi.showToast("Unable to return to channel to upload files!", {type: "error"});
-						if (originalThreadId !== null)
+						if (originalThreadId)
 							DiscordModules.NavigationUtils.transitionToThread(!originalGuildId ? "@me" : originalGuildId, originalThreadId);
 						else
 							DiscordModules.NavigationUtils.transitionToGuild(!originalGuildId ? "@me" : originalGuildId, originalChannelId);
@@ -711,7 +731,7 @@ module.exports = (() => {
 					return false;
 				}
 				
-				uploadFile(files, guildId, channelId, threadId) {
+				uploadFile(files, guildId, channelId, threadId, sidebar) {
 					try {
 						const channelObj = threadId ? DiscordModules.ChannelStore.getChannel(threadId) : DiscordModules.ChannelStore.getChannel(channelId);
 						channelObj.fileCompressorCompressedFile = true;
@@ -722,7 +742,7 @@ module.exports = (() => {
 					}
 				}
 				
-				processFileList(files, guildId, channelId, threadId) {
+				processFileList(files, guildId, channelId, threadId, sidebar) {
 					// Check account status and update max file upload size
 					try {
 						maxUploadSize = DiscordModules.DiscordConstants.PremiumUserLimits[DiscordAPI.currentUser.discordObject.premiumType ? DiscordAPI.currentUser.discordObject.premiumType : 0].fileSize;
@@ -739,7 +759,7 @@ module.exports = (() => {
 						let file = files[i];
 						if (file.size >= maxUploadSize) {
 							// If file is returned, it was incompressible
-							let tempFile = this.checkCompressFile(file, file.type.split('/')[0], guildId, channelId, threadId);
+							let tempFile = this.checkCompressFile(file, file.type.split('/')[0], guildId, channelId, threadId, sidebar);
 							// Check if no files will be uploaded, and if so, trigger Discord's file too large modal by passing through large file
 							if (tempFile) {
 								if (i === files.length - 1 && originalDt.items.length === 0 && queuedFiles === 0) {
@@ -759,19 +779,19 @@ module.exports = (() => {
 						BdApi.showToast(num + (num === 1 ? " file was " : " files were ") + "too large to upload!", {type: "error"});
 					}
 					if (originalDt.files.length > 0) {
-						this.uploadFileQueue(originalDt.files, guildId, channelId, threadId);
+						this.uploadFileQueue(originalDt.files, guildId, channelId, threadId, sidebar);
 					}
 				}
 				
 				// Initial check if a large file is compressible
 				// Returns the original file if not compressible, otherwise sends all files to compressFile for compression queue
-				checkCompressFile(file, type, guildId, channelId, threadId) {
+				checkCompressFile(file, type, guildId, channelId, threadId, sidebar) {
 					switch (type) {
 						case "image":
-							this.compressFile(file, type, guildId, channelId, threadId);
+							this.compressFile(file, type, guildId, channelId, threadId, sidebar);
 							break;
 						case "video":
-							this.compressFile(file, type, guildId, channelId, threadId);
+							this.compressFile(file, type, guildId, channelId, threadId, sidebar);
 							break;
 						default:
 							return file;
@@ -780,7 +800,7 @@ module.exports = (() => {
 				}
 				
 				// Asks the user for settings to use when compressing the file and compresses the file if possible, or queues it for later
-				async compressFile(file, type, guildId, channelId, threadId) {
+				async compressFile(file, type, guildId, channelId, threadId, sidebar) {
 					let hash = await this.cache.hash(file);
 					let cacheFile;
 					if (this.cache) {
@@ -806,36 +826,36 @@ module.exports = (() => {
 					}
 					// If user wants to use cached options & cached file exists
 					if (cacheFile && options.useCache) {
-						this.uploadFileQueue(this.wrapFile(cacheFile), guildId, channelId, threadId);
+						this.uploadFileQueue(this.wrapFile(cacheFile), guildId, channelId, threadId, sidebar);
 					} else {
 						if (processingThreadCount < this.settings.compressor.concurrentThreads) {
 							this.setStatusToast("COMPRESSING", ++processingThreadCount);
-							this.compressFileType(file, type, guildId, channelId, threadId, options, hash);
+							this.compressFileType(file, type, guildId, channelId, threadId, sidebar, options, hash);
 						} else {
-							processingQueue.push({file: file, type: type, guildId: guildId, channelId: channelId, threadId: threadId, options: options, originalHash, hash});
+							processingQueue.push({file: file, type: type, guildId: guildId, channelId: channelId, threadId: threadId, sidebar: sidebar, options: options, originalHash, hash});
 							this.setStatusToast("QUEUEING", processingQueue.length);
 						}
 					}
 				}
 				
 				// Sends the file to the appropriate compressor once all checks have passed
-				compressFileType(file, type, guildId, channelId, threadId, options, originalHash) {
+				compressFileType(file, type, guildId, channelId, threadId, sidebar, options, originalHash) {
 					switch (type) {
 						case "image":
-							this.finishProcessing(this.compressImage(file, options), guildId, channelId, threadId, originalHash, true);
+							this.finishProcessing(this.compressImage(file, options), guildId, channelId, threadId, sidebar, originalHash, true);
 							// https://github.com/davejm/client-compress
 							break;
 						case "video":
-							this.finishProcessing(this.compressVideo(file, options, originalHash), guildId, channelId, threadId, originalHash, false);
+							this.finishProcessing(this.compressVideo(file, options, originalHash), guildId, channelId, threadId, sidebar, originalHash, false);
 							break;
 					}
 				}
 				
 				// When a file is done processing, add it to the upload queue and check if a new file can be processed
-				finishProcessing(promise, guildId, channelId, threadId, originalHash, shouldCache) {
+				finishProcessing(promise, guildId, channelId, threadId, sidebar, originalHash, shouldCache) {
 					promise.then(file => {
 						if (file != null) {
-							this.uploadFileQueue(this.wrapFile(file), guildId, channelId, threadId);
+							this.uploadFileQueue(this.wrapFile(file), guildId, channelId, threadId, sidebar);
 							if (this.cache && shouldCache) {
 								this.cache.saveAndCache(file, originalHash);
 							}
@@ -853,7 +873,7 @@ module.exports = (() => {
 						if (processingThreadCount <= this.settings.compressor.concurrentThreads) {
 							let entry = processingQueue.shift();
 							this.setStatusToast("QUEUEING", processingQueue.length);
-							this.compressFileType(entry.file, entry.type, entry.guildId, entry.channelId, entry.threadId, entry.options, entry.originalHash);
+							this.compressFileType(entry.file, entry.type, entry.guildId, entry.channelId, entry.threadId, entry.sidebar, entry.options, entry.originalHash);
 						}
 					} else {
 						this.setStatusToast("COMPRESSING", --processingThreadCount);
