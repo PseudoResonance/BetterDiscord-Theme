@@ -16,7 +16,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.2.1",
+			version: "1.2.2",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -33,7 +33,8 @@ module.exports = (() => {
 				title: "Fixed",
 				type: "fixed",
 				items: [
-					"Fixed automatic channel switch option with threads"
+					"Fixed automatic channel switch option with threads",
+					"Fixed FFmpeg download prompt modal"
 				]
 			}
 		],
@@ -200,7 +201,7 @@ module.exports = (() => {
 			let processingThreadCount = 0;
 			
 			// Discord related data
-			const Markdown = WebpackModules.getByDisplayName("Markdown");
+			const Markdown = BdApi.findModule(m => m.displayName === "Markdown" && m.rules);
 			let uploadModalClass = null;
 			let appNode = null;
 			let uploadNode = null;
@@ -914,24 +915,40 @@ module.exports = (() => {
 						}
 						if (noFfmpeg) {
 							if (this.settings.compressor.ffmpegDownload) {
-								Modals.showModal("FFmpeg " + ffmpegVersion + " Required", DiscordModules.React.createElement("div", null, [DiscordModules.React.createElement(Markdown, null, "To compress video/audio, " + config.info.name + " needs to use FFmpeg."), DiscordModules.React.createElement("hr"), DiscordModules.React.createElement(Markdown, null, "If you would like to specify a custom FFmpeg installation, please press cancel and add setup FFmpeg in the " + config.info.name + " plugin settings. Otherwise, click  install to automatically download and install FFmpeg."), DiscordModules.React.createElement("hr"), DiscordModules.React.createElement(Markdown, null, "FFmpeg " + ffmpegVersion + " source code is available here: " + ffmpegSourceUrl), DiscordModules.React.createElement(Markdown, null, "FFmpeg is licensed under " + ffmpegLicense + ", available to read here: " + ffmpegLicenseUrl)]), {danger: false, confirmText: "Install FFmpeg", onConfirm: () => {
-									this.saveSettings("compressor", "ffmpeg", true);
-									this.downloadLibrary(ffmpegPath, ffmpegDownloadUrls, "FFmpeg", () => {
-										this.downloadLibrary(ffmpegPath, ffprobeDownloadUrls, "FFprobe", () => {
-											try {
-												ffmpeg = new FFmpeg(ffmpegPath);
-												BdApi.setData(config.info.name, "ffmpeg.version", ffmpegVersion);
-												resolve();
-											} catch (err) {
-												Logger.err(config.info.name, "Unable to fetch FFmpeg");
-												Logger.err(config.info.name, err);
-												BdApi.showToast("Error downloading FFmpeg", {type: "error"});
-												ffmpeg = null;
-												reject(err);
-											}
-										});
-									});
-								}});
+								BdApi.showConfirmationModal("FFmpeg " + ffmpegVersion + " Required",
+									DiscordModules.React.createElement("div", {},
+										[
+											DiscordModules.React.createElement(Markdown, {}, "To compress video/audio, " + config.info.name + " needs to use FFmpeg."),
+											DiscordModules.React.createElement("hr"),
+											DiscordModules.React.createElement(Markdown, {}, "If you would like to specify a custom FFmpeg installation, please press cancel and add setup FFmpeg in the " + config.info.name + " plugin settings. Otherwise, click  install to automatically download and install FFmpeg."),
+											DiscordModules.React.createElement("hr"),
+											DiscordModules.React.createElement(Markdown, {}, "FFmpeg " + ffmpegVersion + " source code is available here: " + ffmpegSourceUrl),
+											DiscordModules.React.createElement(Markdown, {}, "FFmpeg is licensed under " + ffmpegLicense + ", available to read here: " + ffmpegLicenseUrl)
+										]
+									),
+									{
+										danger: false,
+										onConfirm: () => {
+											this.saveSettings("compressor", "ffmpeg", true);
+											this.downloadLibrary(ffmpegPath, ffmpegDownloadUrls, "FFmpeg", () => {
+												this.downloadLibrary(ffmpegPath, ffprobeDownloadUrls, "FFprobe", () => {
+													try {
+														ffmpeg = new FFmpeg(ffmpegPath);
+														BdApi.setData(config.info.name, "ffmpeg.version", ffmpegVersion);
+														BdApi.showToast("FFmpeg successfully downloaded", {type: "success"});
+														reject();
+													} catch (err) {
+														Logger.err(config.info.name, "Unable to fetch FFmpeg");
+														Logger.err(config.info.name, err);
+														BdApi.showToast("Error downloading FFmpeg", {type: "error"});
+														ffmpeg = null;
+														reject(err);
+													}
+												});
+											});
+										}
+									}
+								);
 							} else {
 								Modals.showAlertModal("FFmpeg " + ffmpegVersion + " Required", "To compress video/audio, " + config.info.name + " needs to use FFmpeg. The path to FFmpeg specified in the " + config.info.name + " settings is invalid!\n\nPlease check the path and ensure FFmpeg use is enabled.");
 							}
@@ -1018,7 +1035,7 @@ module.exports = (() => {
 					return new Promise((resolve, reject) => {
 						(async () => {
 							if (!ffmpeg || !ffmpeg.checkFFmpeg()) {
-								await this.initFfmpeg();
+								this.initFfmpeg();
 							}
 							if (ffmpeg && ffmpeg.checkFFmpeg()) {
 								if (this.initTempFolder()) {
@@ -1069,7 +1086,7 @@ module.exports = (() => {
 												}
 												const audioStats = fs.statSync(tempAudioPath);
 												const audioSize = audioStats ? audioStats.size : 0;
-												const cappedFileSize = Math.floor((options.sizeCap < maxUploadSize ? options.sizeCap : maxUploadSize) - 50000);
+												const cappedFileSize = Math.floor((options.sizeCap < maxUploadSize ? options.sizeCap : maxUploadSize) - 250000);
 												const videoBitrate = Math.floor(((cappedFileSize - audioSize) / 1024) / duration) * 8;
 												try {
 													if (options.maxHeight && originalHeight > options.maxHeight)
@@ -1173,6 +1190,7 @@ module.exports = (() => {
 									reject();
 								}
 							}
+							reject();
 						})();
 					});
 				}
