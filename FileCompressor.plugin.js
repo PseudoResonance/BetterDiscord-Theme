@@ -16,7 +16,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.2.2",
+			version: "1.2.3",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -34,7 +34,8 @@ module.exports = (() => {
 				type: "fixed",
 				items: [
 					"Fixed automatic channel switch option with threads",
-					"Fixed FFmpeg download prompt modal"
+					"Fixed FFmpeg download prompt modal",
+					"Tuned FFmpeg to reach 8MB targets with better quality"
 				]
 			}
 		],
@@ -199,6 +200,8 @@ module.exports = (() => {
 			let processingQueue = [];
 			// Number of files currently being processed
 			let processingThreadCount = 0;
+			// List of currently running processes
+			let runningProcesses = [];
 			
 			// Discord related data
 			const Markdown = BdApi.findModule(m => m.displayName === "Markdown" && m.rules);
@@ -296,16 +299,22 @@ module.exports = (() => {
 					return new Promise((resolve, reject) => {
 						if (fs.existsSync(this.ffmpeg)) {
 							Logger.info(config.info.name, "Running FFmpeg with " + args.join(' '));
-							child_process.execFile(this.ffmpeg, args, (err, stdout, stderr) => {
-								if (err)
+							const process = child_process.execFile(this.ffmpeg, args, (err, stdout, stderr) => {
+								if (err) {
 									console.error(stderr);
+									reject(e);
+								}
 								try {
 									resolve({data: stdout, error: err});
 								} catch (e) {
 									console.error(e);
 									reject(e);
 								}
+								const index = runningProcesses.indexOf(process);
+								if (index > -1)
+									runningProcesses.splice(index, 1);
 							});
+							runningProcesses.push(process);
 						} else {
 							throw new Error("Unable to find FFmpeg");
 						}
@@ -316,16 +325,22 @@ module.exports = (() => {
 					return new Promise((resolve, reject) => {
 						if (fs.existsSync(this.ffprobe)) {
 							Logger.info(config.info.name, "Running FFprobe with " + args.join(' '));
-							child_process.execFile(this.ffprobe, args, (err, stdout, stderr) => {
-								if (err)
+							const process = child_process.execFile(this.ffprobe, args, (err, stdout, stderr) => {
+								if (err) {
 									console.error(stderr);
+									reject(e);
+								}
 								try {
 									resolve({data: stdout, error: err});
 								} catch (e) {
 									console.error(e);
 									reject(e);
 								}
+								const index = runningProcesses.indexOf(process);
+								if (index > -1)
+									runningProcesses.splice(index, 1);
 							});
+							runningProcesses.push(process);
 						} else {
 							throw new Error("Unable to find FFprobe");
 						}
@@ -356,11 +371,29 @@ module.exports = (() => {
 				}
 
 				async hash(file) {
-					return file.text().then(text => {
-						let hash = cryptoModule.createHash('md5');
-						hash.update(text);
-						return hash.digest('hex');
+					const hash = cryptoModule.createHash('md5');
+					const fileStreamReader = file.stream().getReader();
+					const hashPromise = new Promise((resolve, reject) => {
+						fileStreamReader.read().then(function processData({done, value}) {
+							try {
+								if (done) {
+									resolve(hash.digest('hex'));
+									return;
+								}
+								hash.update(value);
+								return fileStreamReader.read().then(processData);
+							} catch (err) {
+								console.error(err);
+								reject();
+								return;
+							}
+						});
 					});
+					try {
+						return await hashPromise;
+					} catch (e) {
+					}
+					return;
 				}
 
 				getFile(hash) {
@@ -570,6 +603,11 @@ module.exports = (() => {
 						toastNode.remove();
 						toastNode = null;
 					}
+					// Killing running processes
+					runningProcesses.filter(process => {
+						process.kill("SIGKILL");
+						return false;
+					});
 					uploadToasts.clear();
 					appNode = null;
 					processingQueue = [];
@@ -1042,17 +1080,43 @@ module.exports = (() => {
 									const nameSplit = file.name.split('.');
 									const name = nameSplit.slice(0, nameSplit.length - 1).join(".");
 									const extension = nameSplit[nameSplit.length - 1];
-									const buffer = Buffer.from(await file.arrayBuffer());
 									const tempPath = path.join(this.tempDataPath, name + "." + uuidv4() + "." + extension);
 									const tempAudioPath = path.join(this.tempDataPath, name + "." + uuidv4() + ".opus");
 									const tempVideoPath = path.join(this.tempDataPath, name + "." + uuidv4() + "." + encoderSettings[options.encoder].fileType);
+									const compressedPathPre = path.join(this.tempDataPath, name + "." + uuidv4() + ".mkv");
 									let compressedPath = "";
 									if (this.cache) {
-										compressedPath = path.join(this.cache.getCachePath(), name + "." + uuidv4() + "." + extension);
+										compressedPath = path.join(this.cache.getCachePath(), name + "." + uuidv4() + ".webm");
 									} else {
-										compressedPath = path.join(this.tempDataPath, name + "." + uuidv4() + "." + extension);
+										compressedPath = path.join(this.tempDataPath, name + "." + uuidv4() + ".webm");
 									}
-									fs.writeFileSync(tempPath, buffer);
+									const fileStream = file.stream();
+									const fileStreamReader = fileStream.getReader();
+									const writeStream = fs.createWriteStream(tempPath);
+									const writeFilePromise = new Promise((resolve1, reject1) => {
+										fileStreamReader.read().then(function processData({done, value}) {
+											try {
+												if (done) {
+													writeStream.close();
+													resolve1();
+													return;
+												}
+												writeStream.write(value);
+												return fileStreamReader.read().then(processData);
+											} catch (err) {
+												console.error(err);
+												reject1();
+												return false;
+											}
+										});
+									});
+									try {
+										await writeFilePromise;
+									} catch (e) {
+										reject(e);
+										return;
+									}
+									writeStream.close();
 									try {
 										const data = await ffmpeg.runProbeWithArgs(["-v", "error", "-show_entries", "format=duration", "-show_entries", "stream=height", "-of", "default=noprint_wrappers=1:nokey=1", tempPath]);
 										if (data) {
@@ -1087,10 +1151,29 @@ module.exports = (() => {
 												const audioStats = fs.statSync(tempAudioPath);
 												const audioSize = audioStats ? audioStats.size : 0;
 												const cappedFileSize = Math.floor((options.sizeCap < maxUploadSize ? options.sizeCap : maxUploadSize) - 250000);
-												const videoBitrate = Math.floor(((cappedFileSize - audioSize) / 1024) / duration) * 8;
+												let videoBitrate = Math.floor((((cappedFileSize - audioSize) * 8) / 1024) / duration);
+												videoBitrate = videoBitrate > 2 ? videoBitrate - 1 : videoBitrate;
+												let maxVideoHeight = options.maxHeight;
+												if (videoBitrate < 100)
+													maxVideoHeight = 144;
+												else if (videoBitrate < 200)
+													maxVideoHeight = 240;
+												else if (videoBitrate < 500)
+													maxVideoHeight = 360;
+												else if (videoBitrate < 850)
+													maxVideoHeight = 480;
+												else if (videoBitrate < 1250)
+													maxVideoHeight = 720;
+												else if (videoBitrate < 2500)
+													maxVideoHeight = 1080;
+												else if (videoBitrate < 6000)
+													maxVideoHeight = 1440;
+												else if (videoBitrate < 10000)
+													maxVideoHeight = 2160;
+												maxVideoHeight = (options.maxHeight && options.maxHeight < maxVideoHeight) ? options.maxHeight : maxVideoHeight;
 												try {
-													if (options.maxHeight && originalHeight > options.maxHeight)
-														await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-vf", "scale=-1:" + options.maxHeight + ", scale=trunc(iw/2)*2:" + options.maxHeight, "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", options.encoder, "-pass", "1", "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")]);
+													if (maxVideoHeight && originalHeight > maxVideoHeight)
+														await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-vf", "scale=-1:" + maxVideoHeight + ", scale=trunc(iw/2)*2:" + maxVideoHeight, "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", options.encoder, "-pass", "1", "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")]);
 													else
 														await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", options.encoder, "-pass", "1", "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")]);
 												} catch (e) {
@@ -1108,8 +1191,8 @@ module.exports = (() => {
 													reject(e);
 												}
 												try {
-													if (options.maxHeight && originalHeight > options.maxHeight)
-														await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-vf", "scale=-1:" + options.maxHeight + ", scale=trunc(iw/2)*2:" + options.maxHeight, "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", options.encoder, "-pass", "2", tempVideoPath]);
+													if (maxVideoHeight && originalHeight > maxVideoHeight)
+														await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-vf", "scale=-1:" + maxVideoHeight + ", scale=trunc(iw/2)*2:" + maxVideoHeight, "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", options.encoder, "-pass", "2", tempVideoPath]);
 													else
 														await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", options.encoder, "-pass", "2", tempVideoPath]);
 												} catch (e) {
@@ -1136,7 +1219,7 @@ module.exports = (() => {
 													return;
 												}
 												try {
-													await ffmpeg.runWithArgs(["-y", "-i", tempAudioPath, "-i", tempVideoPath, "-c", "copy", compressedPath]);
+													await ffmpeg.runWithArgs(["-y", "-i", tempAudioPath, "-i", tempVideoPath, "-c", "copy", compressedPathPre]);
 												} catch (e) {
 													Logger.err(config.info.name, "Unable to run FFmpeg");
 													BdApi.showToast("Unable to compress video", {type: "error"});
@@ -1150,17 +1233,23 @@ module.exports = (() => {
 														fs.rmSync(tempVideoPath);
 													} catch (e) {}
 													try {
-														fs.rmSync(compressedPath);
+														fs.rmSync(compressedPathPre);
 													} catch (e) {}
 													reject(e);
 												}
+												if (fs.existsSync(compressedPathPre)) {
+													fs.renameSync(compressedPathPre, compressedPath);
+												}
 												if (fs.existsSync(compressedPath)) {
 													if (this.cache) {
-														this.cache.addToCache(compressedPath, file.name, originalHash);
+														this.cache.addToCache(compressedPath,  name + ".webm", originalHash);
 													}
-													const retFile = new File([Uint8Array.from(Buffer.from(fs.readFileSync(compressedPath))).buffer], file.name, {type: file.type});
+													const retFile = new File([Uint8Array.from(Buffer.from(fs.readFileSync(compressedPath))).buffer], name + ".webm", {type: file.type});
 													try {
 														fs.rmSync(tempPath);
+													} catch (e) {}
+													try {
+														fs.rmSync(compressedPathPre);
 													} catch (e) {}
 													try {
 														fs.rmSync(tempAudioPath);
