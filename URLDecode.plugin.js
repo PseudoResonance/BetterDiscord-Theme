@@ -16,16 +16,24 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.0.0",
+			version: "1.0.1",
 			description: "Automatic URL decoder.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/URLDecode.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/URLDecode.plugin.js"
 		},
-		changelog: [{
+		changelog: [
+			{
 				title: "Initial Release",
 				type: "added",
 				items: [
 					"Automatically decodes URLs in chat and embeds."
+				]
+			},
+			{
+				title: "Fixed",
+				type: "fixed",
+				items: [
+					"Fixed missing null check."
 				]
 			}
 		],
@@ -99,8 +107,8 @@ module.exports = (() => {
 								for (const item of args) {
 									if (item.childrenMessageContent) {
 										const msg = item.childrenMessageContent;
-										if (this.settings.general.decodeChat && !msg.chatDecoded) {
-											if (Symbol.iterator in msg.props.content) {
+										if (this.settings.general.decodeChat) {
+											if (msg.props && msg.props.content && Symbol.iterator in msg.props.content) {
 												for (const elem of msg.props.content) {
 													if (!(elem instanceof String || typeof elem === "string")) {
 														if (elem.props && elem.props.href) {
@@ -115,8 +123,8 @@ module.exports = (() => {
 												}
 											}
 										}
-										if (this.settings.general.decodeEmbed && !msg.embedDecoded) {
-											if (msg.props.message.embeds && Symbol.iterator in msg.props.message.embeds) {
+										if (this.settings.general.decodeEmbed) {
+											if (msg.props && msg.props.message && msg.props.message.embeds && Symbol.iterator in msg.props.message.embeds) {
 												for (const embed of msg.props.message.embeds) {
 													if (embed.url) {
 														embed.url = this.decodeText(embed.url);
