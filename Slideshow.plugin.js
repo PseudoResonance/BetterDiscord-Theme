@@ -24,7 +24,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "4.4.0",
+			version: "4.4.1",
 			description: "Turns a transparent Discord background into a slideshow.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/Slideshow.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/Slideshow.plugin.js"
@@ -35,7 +35,8 @@ module.exports = (() => {
 				type: "fixed",
 				items:
 				[
-					"Updated code quality"
+					"Updated code quality",
+					"Fixed transition bug"
 				]
 			}
 		],
@@ -502,7 +503,7 @@ module.exports = (() => {
 				startInterval() {
 					if (backgroundNode != null) {
 						if (backgroundNode.children.length > 1) {
-							interval = window.setInterval(function () {
+							interval = window.setInterval(function() {
 								// Current index (before change)
 								let lastIndex = 0;
 								// Is image shuffling on
@@ -533,7 +534,7 @@ module.exports = (() => {
 								// Update selected image in settings menu if possible
 								this.updateChecks();
 								// Wait until transition is over + 10ms to ensure it is done
-								setTimeout(function () {
+								setTimeout(() => {
 									// Disable transition on old image
 									backgroundNode.children[lastIndex].style.transition = "0s";
 									// Set old image to no longer visible
@@ -541,7 +542,7 @@ module.exports = (() => {
 									// Move new image back to match z-index of other images
 									backgroundNode.children[backgroundIndex].style.zIndex = "-3";
 								}, Number(this.settings.general.speed) + 10);
-							}, this.settings.general.delay * 1000);
+							}.bind(this), this.settings.general.delay * 1000);
 						}
 					}
 				}
