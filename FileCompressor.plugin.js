@@ -15,22 +15,16 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.2.4",
+			version: "1.2.5",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
 		},
 		changelog: [{
-				title: "Audio Compression",
-				type: "added",
-				items: [
-					"Uses FFmpeg to compress audio"
-				]
-			}, {
 				title: "Fixed",
 				type: "fixed",
 				items: [
-					"Fixed using custom FFmpeg installs"
+					"Fixed file copy ending early for large files."
 				]
 			}, {
 				title: "Known Bugs",
@@ -442,7 +436,7 @@ module.exports = (() => {
 						let name = nameSplit.slice(0, nameSplit.length - 1).join(".");
 						let extension = nameSplit[nameSplit.length - 1];
 						for (let i = 0; i < 5; i++) {
-							let filePath = path.join(this.cachePath, name + "." + uuidv4() + "." + extension);
+							let filePath = path.join(this.cachePath, uuidv4().replace(/-/g, "") + "." + extension);
 							if (!fs.existsSync(filePath)) {
 								let fr = new FileReader();
 								fr.readAsBinaryString(file);
@@ -1163,30 +1157,43 @@ module.exports = (() => {
 									const nameSplit = file.name.split('.');
 									const name = nameSplit.slice(0, nameSplit.length - 1).join(".");
 									const extension = nameSplit[nameSplit.length - 1];
-									const tempPath = path.join(this.tempDataPath, name + "." + uuidv4() + "." + extension);
-									const compressedPathPre = path.join(this.tempDataPath, name + "." + uuidv4() + ".opus");
+									const tempPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + "." + extension);
+									const compressedPathPre = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".opus");
 									let compressedPath = "";
 									if (this.cache) {
-										compressedPath = path.join(this.cache.getCachePath(), name + "." + uuidv4() + ".ogg");
+										compressedPath = path.join(this.cache.getCachePath(), uuidv4().replace(/-/g, "") + ".ogg");
 									} else {
-										compressedPath = path.join(this.tempDataPath, name + "." + uuidv4() + ".ogg");
+										compressedPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".ogg");
 									}
 									const fileStream = file.stream();
 									const fileStreamReader = fileStream.getReader();
 									const writeStream = fs.createWriteStream(tempPath);
+									const totalBytes = file.size;
+									let bytesWritten = 0;
 									const writeFilePromise = new Promise((resolve1, reject1) => {
 										fileStreamReader.read().then(function processData({
 												done,
 												value
 											}) {
 											try {
+												if (value) {
+													bytesWritten += value.byteLength;
+													console.log(Math.round((bytesWritten / totalBytes) * 100) + "% Written");
+												}
 												if (done) {
 													writeStream.destroy();
 													resolve1();
 													return;
 												}
-												writeStream.write(value);
-												return fileStreamReader.read().then(processData);
+												const writeReady = writeStream.write(value);
+												if (writeReady) {
+													return fileStreamReader.read().then(processData);
+												} else {
+													writeStream.once('drain', () => {
+														fileStreamReader.read().then(processData);
+													});
+													return true;
+												}
 											} catch (err) {
 												Logger.err(config.info.name, err);
 												reject1();
@@ -1245,7 +1252,7 @@ module.exports = (() => {
 														type: file.type
 													});
 													try {
-														fs.rmSync(tempPath);
+														//fs.rmSync(tempPath);
 													} catch (e) {}
 													try {
 														fs.rmSync(compressedPathPre);
@@ -1290,32 +1297,45 @@ module.exports = (() => {
 									const nameSplit = file.name.split('.');
 									const name = nameSplit.slice(0, nameSplit.length - 1).join(".");
 									const extension = nameSplit[nameSplit.length - 1];
-									const tempPath = path.join(this.tempDataPath, name + "." + uuidv4() + "." + extension);
-									const tempAudioPath = path.join(this.tempDataPath, name + "." + uuidv4() + ".opus");
-									const tempVideoPath = path.join(this.tempDataPath, name + "." + uuidv4() + "." + encoderSettings[options.encoder].fileType);
-									const compressedPathPre = path.join(this.tempDataPath, name + "." + uuidv4() + ".mkv");
+									const tempPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + "." + extension);
+									const tempAudioPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".opus");
+									const tempVideoPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + "." + encoderSettings[options.encoder].fileType);
+									const compressedPathPre = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".mkv");
 									let compressedPath = "";
 									if (this.cache) {
-										compressedPath = path.join(this.cache.getCachePath(), name + "." + uuidv4() + ".webm");
+										compressedPath = path.join(this.cache.getCachePath(), uuidv4().replace(/-/g, "") + ".webm");
 									} else {
-										compressedPath = path.join(this.tempDataPath, name + "." + uuidv4() + ".webm");
+										compressedPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".webm");
 									}
 									const fileStream = file.stream();
 									const fileStreamReader = fileStream.getReader();
 									const writeStream = fs.createWriteStream(tempPath);
+									const totalBytes = file.size;
+									let bytesWritten = 0;
 									const writeFilePromise = new Promise((resolve1, reject1) => {
 										fileStreamReader.read().then(function processData({
 												done,
 												value
 											}) {
 											try {
+												if (value) {
+													bytesWritten += value.byteLength;
+													console.log(Math.round((bytesWritten / totalBytes) * 100) + "% Written");
+												}
 												if (done) {
 													writeStream.destroy();
 													resolve1();
 													return;
 												}
-												writeStream.write(value);
-												return fileStreamReader.read().then(processData);
+												const writeReady = writeStream.write(value);
+												if (writeReady) {
+													return fileStreamReader.read().then(processData);
+												} else {
+													writeStream.once('drain', () => {
+														fileStreamReader.read().then(processData);
+													});
+													return true;
+												}
 											} catch (err) {
 												Logger.err(config.info.name, err);
 												reject1();
