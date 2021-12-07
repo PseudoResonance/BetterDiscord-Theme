@@ -15,7 +15,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.2.5",
+			version: "1.2.6",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -24,7 +24,8 @@ module.exports = (() => {
 				title: "Fixed",
 				type: "fixed",
 				items: [
-					"Fixed file copy ending early for large files."
+					"Fixed file copy ending early for large files.",
+					"Fixed temp files not being removed."
 				]
 			}, {
 				title: "Known Bugs",
@@ -1252,7 +1253,7 @@ module.exports = (() => {
 														type: file.type
 													});
 													try {
-														//fs.rmSync(tempPath);
+														fs.rmSync(tempPath);
 													} catch (e) {}
 													try {
 														fs.rmSync(compressedPathPre);
