@@ -15,16 +15,16 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.3.0",
+			version: "1.3.1",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
 		},
 		changelog: [{
-				title: "Rewrite",
-				type: "fixed",
+				title: "Added",
+				type: "added",
 				items: [
-					"Reworked process system for improved efficiency and updatability."
+					"Added compression options modal to fine-tune compression"
 				]
 			}, {
 				title: "Known Bugs",
@@ -62,6 +62,12 @@ module.exports = (() => {
 				collapsible: true,
 				shown: false,
 				settings: [{
+						name: 'Prompt for Options',
+						note: 'Prompt for compression options before compressing',
+						id: 'promptOptions',
+						type: 'switch',
+						value: true
+					}, {
 						name: 'Concurrent Compression Threads',
 						note: 'Number of compression jobs that can be processing simultaneously.',
 						id: 'concurrentThreads',
@@ -138,7 +144,9 @@ module.exports = (() => {
 				Utilities,
 				DOMTools,
 				PluginUtilities,
-				DiscordAPI
+				DiscordAPI,
+				Settings,
+				ReactTools
 			} = Api;
 
 			// Node modules
@@ -317,7 +325,7 @@ module.exports = (() => {
 							});
 							process.stderr.on('data', data => {
 								const str = data.toString();
-								if (outputFilter && outputCallback && outputFilter(str)) {
+								if (typeof(outputFilter) == "function" && typeof(outputCallback) == "function" && outputFilter(str)) {
 									outputCallback(str);
 								}
 							});
@@ -393,7 +401,7 @@ module.exports = (() => {
 								value
 							}) {
 							try {
-								if (percentageCallback && value) {
+								if (typeof(percentageCallback) == "function" && value) {
 									bytesProcessed += value.byteLength;
 									percentageCallback(Math.round((bytesProcessed / totalBytes) * 100));
 								}
@@ -579,6 +587,7 @@ module.exports = (() => {
 					this.processUploadFileList = this.processUploadFileList.bind(this);
 					this.checkIsCompressible = this.checkIsCompressible.bind(this);
 					this.compressFile = this.compressFile.bind(this);
+					this.showSettings = this.showSettings.bind(this);
 					this.compressFileType = this.compressFileType.bind(this);
 					this.finishProcessing = this.finishProcessing.bind(this);
 					this.processNextFile = this.processNextFile.bind(this);
@@ -846,7 +855,7 @@ module.exports = (() => {
 								fileStream.on('finish', function () {
 									// The file has been downloaded
 									plugin.toasts.setToast("DOWNLOADING");
-									if (callback) {
+									if (typeof(callback) == "function") {
 										callback();
 									}
 								});
@@ -1048,29 +1057,83 @@ module.exports = (() => {
 						}
 						toasts.setToast(job.jobId);
 					}
-					job.options.useCache = true;
+					if (cacheFile) {
+						job.options.useCache = {
+							name: "Use Cache",
+							description: "Use the previously cached file if available",
+							type: "switch",
+							defaultValue: true
+						};
+					}
 					// If cached file exists, ask user if they want to use cached options
 					switch (job.type) {
 					case "image":
 						// Ask for compression settings
-						//job.options.sizeCap = "8388608" // Max size in bytes
-						job.options.sizeMultiplier = 0.9;
-						job.options.maxIterations = 50;
+						job.options.sizeCap = {
+							name: "Size Cap",
+							description: "Max file size in bytes",
+							type: "textbox",
+							defaultValue: "",
+							validation: value => {return (!isNaN(value) && !isNaN(parseInt(value)));}
+						};
+						job.options.sizeMultiplier = {
+							name: "Iterative Size Multiplier",
+							description: "Amount to multiply image size by with each attempt",
+							type: "textbox",
+							defaultValue: 0.9,
+							validation: value => {return (!isNaN(value) && !isNaN(parseFloat(value)));}
+						};
+						job.options.maxIterations = {
+							name: "Max Iterations",
+							description: "Maximum number of attempts to resize image",
+							type: "textbox",
+							defaultValue: 50,
+							validation: value => {return (!isNaN(value) && !isNaN(parseInt(value)));}
+						};
+						if (!await this.showSettings("Image Compression Options", job.options))
+							return false;
 						break;
 					case "video":
 						// Ask for compression settings
-						//job.options.encoder = "libvpx-vp9";
-						job.options.encoder = "libx264";
-						//job.options.sizeCap = "8388608" // Max size in bytes
-						//job.options.maxHeight = 720;
+						job.options.encoder = {
+							name: "Encoder",
+							type: "dropdown",
+							defaultValue: "libx264",
+							props: {
+								values: ["libx264", "libvpx-vp9"]
+							}
+						};
+						job.options.sizeCap = {
+							name: "Size Cap",
+							description: "Max file size in bytes",
+							type: "textbox",
+							defaultValue: "",
+							validation: value => {return (!isNaN(value) && !isNaN(parseInt(value)));}
+						};
+						job.options.maxHeight = {
+							name: "Max Video Height",
+							type: "textbox",
+							defaultValue: "",
+							validation: value => {return (!isNaN(value) && !isNaN(parseInt(value)));}
+						};
+						if (!await this.showSettings("Video Compression Options", job.options))
+							return false;
 						break;
 					case "audio":
 						// Ask for compression settings
-						//job.options.sizeCap = "8388608" // Max size in bytes
+						job.options.sizeCap = {
+							name: "Size Cap",
+							description: "Max file size in bytes",
+							type: "textbox",
+							defaultValue: "",
+							validation: value => {return (!isNaN(value) && !isNaN(parseInt(value)));}
+						};
+						if (!await this.showSettings("Audio Compression Options", job.options))
+							return false;
 						break;
 					}
 					// If user wants to use cached options & cached file exists
-					if (cacheFile && job.options.useCache) {
+					if (cacheFile && job.options.useCache.value) {
 						this.sendUploadFileList(this.wrapFileInList(cacheFile), job.guildId, job.channelId, job.threadId, job.isSidebar);
 					} else {
 						if (runningJobs.length < this.settings.compressor.concurrentThreads) {
@@ -1081,6 +1144,55 @@ module.exports = (() => {
 							processingQueue.push(job);
 							toasts.setToast(0, (processingQueue.length === 1 ? " file" : " files") + " to be compressed");
 						}
+					}
+				}
+
+				showSettings(title, options) {
+					return new Promise((resolve, reject) => {
+						if (this.settings.compressor.promptOptions) {
+							const settingsElements = [];
+							for (const setting in options) {
+								options[setting].value = options[setting].defaultValue;
+								settingsElements.push(this.createSettingField(options[setting].type, options[setting].name, options[setting].description, options[setting].defaultValue, value => {if (typeof(options[setting].validation) != "function" || options[setting].validation(value)) options[setting].value = value;}, options[setting].props));
+							}
+							const settingsPanel = Settings.SettingPanel.build(null, ...settingsElements);
+							BdApi.showConfirmationModal(title, ReactTools.createWrappedElement(settingsPanel), {
+								onConfirm: () => {
+									resolve(true);
+								},
+								onCancel: () => {
+									resolve(false);
+								}
+							});
+						} else {
+							for (const setting in options) {
+								options[setting].value = options[setting].defaultValue;
+							}
+							resolve(true);
+						}
+					});
+				}
+				
+				createSettingField(type, name, description, defaultValue, onChange, props) {
+					switch (type) {
+					case "color":
+						return new Settings.ColorPicker(name, description, defaultValue, onChange, props);
+					case "dropdown":
+						return new Settings.Dropdown(name, description, defaultValue, props.values, onChange, props);
+					case "file":
+						return new Settings.FilePicker(name, description, onChange, props);
+					case "keybind":
+						return new Settings.Keybind(name, description, defaultValue, onChange, props);
+					case "radiogroup":
+						return new Settings.RadioGroup(name, description, defaultValue, props.values, onChange, props);
+					case "slider":
+						return new Settings.Slider(name, description, props.min, props.max, defaultValue, onChange, props);
+					case "switch":
+						return new Settings.Switch(name, description, defaultValue, onChange, props);
+					case "textbox":
+						return new Settings.Textbox(name, description, defaultValue, onChange, props);
+					default:
+						return null;
 					}
 				}
 
@@ -1206,7 +1318,7 @@ module.exports = (() => {
 										if (data) {
 											try {
 												const duration = Math.ceil(data.data);
-												const cappedFileSize = Math.floor((job.options.sizeCap < maxUploadSize ? job.options.sizeCap : maxUploadSize) - 500000);
+												const cappedFileSize = Math.floor((job.options.sizeCap.value && parseInt(job.options.sizeCap.value) < maxUploadSize ? parseInt(job.options.sizeCap.value) : maxUploadSize) - 500000);
 												let audioBitrate = Math.floor((cappedFileSize * 8) / duration);
 												if (audioBitrate > 256000)
 													audioBitrate = 256000;
@@ -1310,7 +1422,7 @@ module.exports = (() => {
 									const extension = nameSplit[nameSplit.length - 1];
 									const tempPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + "." + extension);
 									const tempAudioPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".opus");
-									const tempVideoPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + "." + encoderSettings[job.options.encoder].fileType);
+									const tempVideoPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + "." + encoderSettings[job.options.encoder.value].fileType);
 									const compressedPathPre = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".mkv");
 									let compressedPath = "";
 									if (cache) {
@@ -1415,10 +1527,10 @@ module.exports = (() => {
 												}
 												const audioStats = fs.statSync(tempAudioPath);
 												const audioSize = audioStats ? audioStats.size : 0;
-												const cappedFileSize = Math.floor((job.options.sizeCap < maxUploadSize ? job.options.sizeCap : maxUploadSize) - 250000);
+												const cappedFileSize = Math.floor((job.options.sizeCap.value && parseInt(job.options.sizeCap.value) < maxUploadSize ? parseInt(job.options.sizeCap.value) : maxUploadSize) - 250000);
 												let videoBitrate = Math.floor((((cappedFileSize - audioSize) * 8) / 1024) / duration);
 												videoBitrate = videoBitrate > 2 ? videoBitrate - 1 : videoBitrate;
-												let maxVideoHeight = job.options.maxHeight;
+												let maxVideoHeight = job.options.maxHeight.value;
 												if (videoBitrate < 100)
 													maxVideoHeight = 144;
 												else if (videoBitrate < 200)
@@ -1435,11 +1547,11 @@ module.exports = (() => {
 													maxVideoHeight = 1440;
 												else if (videoBitrate < 10000)
 													maxVideoHeight = 2160;
-												maxVideoHeight = (job.options.maxHeight && job.options.maxHeight < maxVideoHeight) ? job.options.maxHeight : maxVideoHeight;
+												maxVideoHeight = (job.options.maxHeight.value && job.options.maxHeight.value < maxVideoHeight) ? job.options.maxHeight.value : maxVideoHeight;
 												try {
 													toasts.setToast(job.jobId, "Compressing 1st Pass 0%");
 													if (maxVideoHeight && originalHeight > maxVideoHeight)
-														await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-vf", "scale=-1:" + maxVideoHeight + ", scale=trunc(iw/2)*2:" + maxVideoHeight, "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder, "-pass", "1", "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")], str => {
+														await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-vf", "scale=-1:" + maxVideoHeight + ", scale=trunc(iw/2)*2:" + maxVideoHeight, "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "1", "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")], str => {
 															return str.includes("time=")
 														}, str => {
 															try {
@@ -1455,7 +1567,7 @@ module.exports = (() => {
 															}
 														});
 													else
-														await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder, "-pass", "1", "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")], str => {
+														await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "1", "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")], str => {
 															return str.includes("time=")
 														}, str => {
 															try {
@@ -1490,7 +1602,7 @@ module.exports = (() => {
 												try {
 													toasts.setToast(job.jobId, "Compressing 2nd Pass 0%");
 													if (maxVideoHeight && originalHeight > maxVideoHeight)
-														await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-vf", "scale=-1:" + maxVideoHeight + ", scale=trunc(iw/2)*2:" + maxVideoHeight, "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder, "-pass", "2", tempVideoPath], str => {
+														await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-vf", "scale=-1:" + maxVideoHeight + ", scale=trunc(iw/2)*2:" + maxVideoHeight, "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "2", tempVideoPath], str => {
 															return str.includes("time=")
 														}, str => {
 															try {
@@ -1506,7 +1618,7 @@ module.exports = (() => {
 															}
 														});
 													else
-														await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder, "-pass", "2", tempVideoPath], str => {
+														await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "2", tempVideoPath], str => {
 															return str.includes("time=")
 														}, str => {
 															try {
@@ -1701,7 +1813,7 @@ module.exports = (() => {
 					toasts.setToast(job.jobId, "Compression Try " + image.iterations);
 					image.outputData = await this.compressImageCanvas(image, job.options);
 					if (image.outputData.size >= maxUploadSize) {
-						if (image.iterations >= job.options.maxIterations) {
+						if (image.iterations >= job.options.maxIterations.value) {
 							BdApi.showToast("Unable to comress impage!", {
 								type: "error"
 							});
@@ -1717,7 +1829,7 @@ module.exports = (() => {
 				async compressImageCanvas(image, options) {
 					const canvas = document.createElement("canvas");
 					const context = canvas.getContext("2d");
-					const multiplier = Math.pow(options.sizeMultiplier, image.iterations);
+					const multiplier = Math.pow(options.sizeMultiplier.value, image.iterations);
 					canvas.width = Math.round(image.width * multiplier);
 					canvas.height = Math.round(image.height * multiplier);
 					context.drawImage(image.data, 0, 0, canvas.width, canvas.height);
