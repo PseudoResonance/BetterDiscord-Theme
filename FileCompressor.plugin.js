@@ -224,10 +224,10 @@ module.exports = (() => {
 			const queueSvg = `<svg fill="currentColor" width="24" height="24" viewBox="0 0 24 24"><path d="M21.84,1H2.16l7.15,11L2.16,23h19.68l-7.15-11L21.84,1z M11.69,12L5.84,3h12.31l-5.85,9H11.69z"/></svg>`;
 
 			// Original Discord upload function before patch
-			let originalUploadFunction = null
+			let originalUploadFunction = null;
 
-				// Current upload cap
-				let maxUploadSize = 8388608;
+			// Current upload cap
+			let maxUploadSize = 8388608;
 
 			const FFmpeg = class {
 				constructor(ffmpegFolder) {
