@@ -1819,8 +1819,6 @@ module.exports = (() => {
 					return panel.getElement();
 				}
 
-				// https://github.com/jaimeadf/BetterDiscordPlugins/blob/84a8d3e7cf454d3a25c2caa337a3612529d5fee3/src/GuildProfile/index.jsx#L55
-				// https://github.com/QWERTxD/BetterDiscordPlugins/blob/main/InAppNotifications/InAppNotifications.plugin.js#L35
 				saveSettings(category, setting, value) {
 					this.settings[category][setting] = value;
 					PluginUtilities.saveSettings(config.info.name, this.settings);
