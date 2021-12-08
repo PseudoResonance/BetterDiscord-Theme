@@ -15,17 +15,16 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.2.6",
+			version: "1.3.0",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
 		},
 		changelog: [{
-				title: "Fixed",
+				title: "Rewrite",
 				type: "fixed",
 				items: [
-					"Fixed file copy ending early for large files.",
-					"Fixed temp files not being removed."
+					"Reworked process system for improved efficiency and updatability."
 				]
 			}, {
 				title: "Known Bugs",
@@ -134,15 +133,12 @@ module.exports = (() => {
 			const {
 				Logger,
 				Patcher,
-				UserSettingsStore,
 				Modals,
 				DiscordModules,
-				DiscordClasses,
 				Utilities,
 				DOMTools,
 				PluginUtilities,
-				DiscordAPI,
-				WebpackModules
+				DiscordAPI
 			} = Api;
 
 			// Node modules
@@ -160,8 +156,7 @@ module.exports = (() => {
 
 			// FFmpeg container
 			let ffmpeg = null;
-			let tempDataPath = null;
-
+			// FFmpeg constants
 			const ffmpegVersion = "4.4";
 			const ffmpegSourceUrl = "https://github.com/FFmpeg/FFmpeg/tree/n4.4";
 			const ffmpegLicense = "GPL Version 2";
@@ -190,7 +185,7 @@ module.exports = (() => {
 				armhf: "-linux-armhf",
 				i686: "-linux-i686"
 			};
-
+			// Default encoder settings
 			const encoderSettings = {
 				"libx264": {
 					fileType: "mp4"
@@ -199,23 +194,23 @@ module.exports = (() => {
 					fileType: "webm"
 				}
 			};
+			const timeRegex = /time=(\d+:\d+:\d+.\d+)/g;
+
+			// Persistent toasts container
+			let toasts = null;
+
+			// Temp folder
+			let tempDataPath = null;
 
 			// Queue for files waiting to be compressed
 			let processingQueue = [];
-			// Number of files currently being processed
-			let processingThreadCount = 0;
+			// List of currently running jobs
+			let runningJobs = [];
 			// List of currently running processes
 			let runningProcesses = [];
 
 			// Discord related data
 			const Markdown = BdApi.findModule(m => m.displayName === "Markdown" && m.rules);
-			let uploadModalClass = null;
-			let appNode = null;
-			let uploadNode = null;
-			// Custom elements
-			let toastNode = null;
-			// Map of current toasts
-			const uploadToasts = new Map();
 			// Toast icon SVGs
 			const loadingSvg = `<svg fill="currentColor" width="24" height="24" viewBox="0 0 24 24"><path d="M12,0v2C6.48,2,2,6.48,2,12c0,3.05,1.37,5.78,3.52,7.61l1.15-1.66C5.04,16.48,4,14.36,4,12c0-4.41,3.59-8,8-8v2l2.59-1.55l2.11-1.26L17,3L12,0z"/><path d="M18.48,4.39l-1.15,1.66C18.96,7.52,20,9.64,20,12c0,4.41-3.59,8-8,8v-2l-2.59,1.55L7.3,20.82L7,21l5,3v-2c5.52,0,10-4.48,10-10C22,8.95,20.63,6.22,18.48,4.39z"/></svg>`;
 			const queueSvg = `<svg fill="currentColor" width="24" height="24" viewBox="0 0 24 24"><path d="M21.84,1H2.16l7.15,11L2.16,23h19.68l-7.15-11L21.84,1z M11.69,12L5.84,3h12.31l-5.85,9H11.69z"/></svg>`;
@@ -225,9 +220,6 @@ module.exports = (() => {
 
 				// Current upload cap
 				let maxUploadSize = 8388608;
-
-			const imageSizeMultiplier = 0.9;
-			const imageMaxIterations = 50;
 
 			const FFmpeg = class {
 				constructor(ffmpegFolder) {
@@ -301,28 +293,33 @@ module.exports = (() => {
 					}
 				}
 
-				runWithArgs(args) {
+				runWithArgs(args, outputFilter, outputCallback) {
 					return new Promise((resolve, reject) => {
 						if (fs.existsSync(this.ffmpeg)) {
 							Logger.info(config.info.name, "Running FFmpeg with " + args.join(' '));
-							const process = child_process.execFile(this.ffmpeg, args, (err, stdout, stderr) => {
-								console.log(stderr);
-								if (err) {
-									Logger.err(config.info.name, stderr);
-									reject(e);
-								}
-								try {
-									resolve({
-										data: stdout,
-										error: err
-									});
-								} catch (e) {
-									Logger.err(config.info.name, e);
-									reject(e);
+							const process = child_process.spawn(this.ffmpeg, args);
+							process.on('error', err => {
+								Logger.err(config.info.name, err);
+								reject(err);
+								const index = runningProcesses.indexOf(process);
+								if (index > -1)
+									runningProcesses.splice(index, 1);
+							});
+							process.on('exit', (code, signal) => {
+								if (code == 0) {
+									resolve(true);
+								} else {
+									reject();
 								}
 								const index = runningProcesses.indexOf(process);
 								if (index > -1)
 									runningProcesses.splice(index, 1);
+							});
+							process.stderr.on('data', data => {
+								const str = data.toString();
+								if (outputFilter && outputCallback && outputFilter(str)) {
+									outputCallback(str);
+								}
 							});
 							runningProcesses.push(process);
 						} else {
@@ -338,7 +335,7 @@ module.exports = (() => {
 							const process = child_process.execFile(this.ffprobe, args, (err, stdout, stderr) => {
 								if (err) {
 									Logger.err(config.info.name, stderr);
-									reject(e);
+									reject(err);
 								}
 								try {
 									resolve({
@@ -385,7 +382,9 @@ module.exports = (() => {
 					this.clear();
 				}
 
-				async hash(file) {
+				async hash(file, percentageCallback) {
+					const totalBytes = file.size;
+					let bytesProcessed = 0;
 					const hash = cryptoModule.createHash('md5');
 					const fileStreamReader = file.stream().getReader();
 					const hashPromise = new Promise((resolve, reject) => {
@@ -394,6 +393,10 @@ module.exports = (() => {
 								value
 							}) {
 							try {
+								if (percentageCallback && value) {
+									bytesProcessed += value.byteLength;
+									percentageCallback(Math.round((bytesProcessed / totalBytes) * 100));
+								}
 								if (done) {
 									resolve(hash.digest('hex'));
 									return;
@@ -510,71 +513,90 @@ module.exports = (() => {
 				}
 			}
 
+			const Toasts = class {
+				constructor() {
+					this.currentToasts = new Map();
+					// Check for existing upload node
+					this.toastNode = document.getElementById('pseudocompressor-toasts');
+					if (this.toastNode == null) {
+						this.toastNode = document.createElement('div');
+						this.toastNode.id = 'pseudocompressor-toasts';
+						document.getElementById('app-mount')?.appendChild(this.toastNode);
+					}
+				}
+
+				setToast(jobId, message) {
+					if (!message) {
+						if (this.currentToasts.has(jobId)) {
+							const toast = this.currentToasts.get(jobId);
+							toast.remove();
+							this.currentToasts.delete(jobId);
+						}
+					} else {
+						if (this.currentToasts.has(jobId)) {
+							this.currentToasts.get(jobId).querySelector('.pseudocompressor-toast-message').innerHTML = message;
+						} else {
+							let toast = null;
+							if (jobId == 0) {
+								toast = DOMTools.parseHTML(Utilities.formatString(`<div class="pseudocompressor-toast"><div class="pseudocompressor-toast-icon">{{icon}}</div><div class="pseudocompressor-toast-message">{{message}}</div></div>`, {
+											message: message,
+											icon: queueSvg
+										}));
+							} else {
+								toast = DOMTools.parseHTML(Utilities.formatString(`<div class="pseudocompressor-toast"><div class="pseudocompressor-toast-icon spin">{{icon}}</div><div class="pseudocompressor-toast-message">{{message}}</div></div>`, {
+											message: message,
+											icon: loadingSvg
+										}));
+							}
+							this.toastNode.appendChild(toast);
+							this.currentToasts.set(jobId, toast);
+						}
+					}
+				}
+
+				remove() {
+					this.currentToasts.forEach(value => {
+						value.remove();
+					});
+					this.currentToasts.clear();
+					this.toastNode.remove();
+				}
+			};
+
 			return class FileCompressor extends Plugin {
 				constructor() {
 					super();
+					this.onStart = this.onStart.bind(this);
+					this.onStop = this.onStop.bind(this);
+					this.monkeyPatch = this.monkeyPatch.bind(this);
 					this.updateCache = this.updateCache.bind(this);
-					this.handleUpload = this.handleUpload.bind(this);
-					this.uploadFileQueue = this.uploadFileQueue.bind(this);
-					this.uploadFile = this.uploadFile.bind(this);
-					this.processFileList = this.processFileList.bind(this);
-					this.checkCompressFile = this.checkCompressFile.bind(this);
+					this.initFfmpeg = this.initFfmpeg.bind(this);
+					this.downloadLibrary = this.downloadLibrary.bind(this);
+					this.initTempFolder = this.initTempFolder.bind(this);
+					this.handleUploadEvent = this.handleUploadEvent.bind(this);
+					this.sendUploadFileList = this.sendUploadFileList.bind(this);
+					this.sendUploadFileListInternal = this.sendUploadFileListInternal.bind(this);
+					this.processUploadFileList = this.processUploadFileList.bind(this);
+					this.checkIsCompressible = this.checkIsCompressible.bind(this);
 					this.compressFile = this.compressFile.bind(this);
 					this.compressFileType = this.compressFileType.bind(this);
 					this.finishProcessing = this.finishProcessing.bind(this);
 					this.processNextFile = this.processNextFile.bind(this);
-					this.initFfmpeg = this.initFfmpeg.bind(this);
-					this.downloadLibrary = this.downloadLibrary.bind(this);
-					this.initTempFolder = this.initTempFolder.bind(this);
 					this.compressVideo = this.compressVideo.bind(this);
 					this.compressImage = this.compressImage.bind(this);
 					this.compressImageLoop = this.compressImageLoop.bind(this);
 					this.saveSettings = this.saveSettings.bind(this);
-					this.onStart = this.onStart.bind(this);
-					this.onStop = this.onStop.bind(this);
 				}
 
 				onStart() {
-					const promptToUploadModule = BdApi.findModuleByProps("promptToUpload");
-					if (promptToUploadModule) {
-						this.originalUploadFunction = promptToUploadModule.promptToUpload;
-						const uploadFunc = this.handleUpload;
-						const originalFunc = this.originalUploadFunction;
-						if (this.originalUploadFunction && this.originalUploadFunction.length === 7) {
-							promptToUploadModule.promptToUpload = function (fileList, channel, draftType, instantBackdrop, requireConfirmation, showLargeMessageDialog, ignoreDraft, fileCompressorCompressedFile = false) {
-								if (fileCompressorCompressedFile) {
-									return originalFunc(fileList, channel, draftType, instantBackdrop, requireConfirmation, showLargeMessageDialog, ignoreDraft);
-								} else {
-									return uploadFunc(fileList, channel, draftType, instantBackdrop, requireConfirmation, showLargeMessageDialog, ignoreDraft);
-								}
-							};
-						} else {
-							BdApi.showToast("Unable to hook into Discord upload handler!", {
-								type: "error"
-							});
-							if (this.originalUploadFunction) {
-								Logger.err(config.info.name, "Unable to hook into Discord upload handler! Method " + this.originalUploadFunction + (this.originalUploadFunction ? " has " + this.originalUploadFunction.length + " arguments!" : " doesn't exist!"));
-							} else {
-								Logger.err(config.info.name, "Unable to hook into Discord upload handler! Method doesn't exist in promptToUpload: " + promptToUploadModule);
-							}
-							promptToUploadModule.promptToUpload = this.originalUploadFunction;
-							this.originalUploadFunction = null;
-						}
-					} else {
-						BdApi.showToast("Unable to hook into Discord upload handler!", {
-							type: "error"
-						});
-						Logger.err(config.info.name, "Unable to hook into Discord upload handler! promptToUpload module doesn't exist!");
-					}
+					// Monkey patch to hook into upload events
+					this.monkeyPatch();
 					// Add event listeners
 					DiscordModules.UserSettingsStore.addChangeListener(this.handleUserSettingsChange);
-					// Get Discord related variables
-					appNode = document.getElementById('app-mount');
-					uploadModalClass = BdApi.findModuleByProps('uploadModal').uploadModal.split(' ')[0];
 					// Setup cache
 					this.updateCache();
 					// Setup toasts
-					this.addToastArea();
+					toasts = new Toasts();
 					PluginUtilities.addStyle('FileCompressor-CSS', `
 						#pseudocompressor-toasts {
 							position:fixed;
@@ -635,370 +657,79 @@ module.exports = (() => {
 					// Remove event listeners
 					DiscordModules.UserSettingsStore.removeChangeListener(this.handleUserSettingsChange);
 					// Remove upload node
-					if (toastNode != null) {
-						toastNode.remove();
-						toastNode = null;
-					}
+					if (toasts)
+						toasts.remove();
+					toasts = null;
 					// Killing running processes
 					runningProcesses.filter(process => {
 						process.kill("SIGKILL");
 						return false;
 					});
-					uploadToasts.clear();
-					appNode = null;
 					processingQueue = [];
-					processingThreadCount = 0;
+					runningJobs = [];
 					// Clear cache
 					try {
-						if (this.cache) {
-							this.cache.clear();
+						if (cache) {
+							cache.clear();
 						}
 					} catch (err) {
 						Logger.err(config.info.name, err);
 					}
-					this.cache = null;
+					cache = null;
 					PluginUtilities.removeStyle('FileCompressor-CSS');
 				}
 
+				monkeyPatch() {
+					const promptToUploadModule = BdApi.findModuleByProps("promptToUpload");
+					if (promptToUploadModule) {
+						this.originalUploadFunction = promptToUploadModule.promptToUpload;
+						const uploadFunc = this.handleUploadEvent;
+						const originalFunc = this.originalUploadFunction;
+						if (this.originalUploadFunction && this.originalUploadFunction.length === 7) {
+							promptToUploadModule.promptToUpload = function (fileList, channel, draftType, instantBackdrop, requireConfirmation, showLargeMessageDialog, ignoreDraft, fileCompressorCompressedFile = false) {
+								if (fileCompressorCompressedFile) {
+									return originalFunc(fileList, channel, draftType, instantBackdrop, requireConfirmation, showLargeMessageDialog, ignoreDraft);
+								} else {
+									return uploadFunc(fileList, channel, draftType, instantBackdrop, requireConfirmation, showLargeMessageDialog, ignoreDraft);
+								}
+							};
+						} else {
+							BdApi.showToast("Unable to hook into Discord upload handler!", {
+								type: "error"
+							});
+							if (this.originalUploadFunction) {
+								Logger.err(config.info.name, "Unable to hook into Discord upload handler! Method " + this.originalUploadFunction + (this.originalUploadFunction ? " has " + this.originalUploadFunction.length + " arguments!" : " doesn't exist!"));
+							} else {
+								Logger.err(config.info.name, "Unable to hook into Discord upload handler! Method doesn't exist in promptToUpload: " + promptToUploadModule);
+							}
+							promptToUploadModule.promptToUpload = this.originalUploadFunction;
+							this.originalUploadFunction = null;
+						}
+					} else {
+						BdApi.showToast("Unable to hook into Discord upload handler!", {
+							type: "error"
+						});
+						Logger.err(config.info.name, "Unable to hook into Discord upload handler! promptToUpload module doesn't exist!");
+					}
+				}
+
 				updateCache() {
-					if (this.cache) {
+					if (cache) {
 						try {
-							this.cache.clear();
+							cache.clear();
 						} catch (err) {
 							Logger.err(config.info.name, err);
 						}
 					}
 					// Setup cache
 					try {
-						this.cache = new FileCache(this.settings.compressor.cachePath ? this.settings.compressor.cachePath : path.join(BdApi.Plugins.folder, "CompressorCache"));
+						cache = new FileCache(this.settings.compressor.cachePath ? this.settings.compressor.cachePath : path.join(BdApi.Plugins.folder, "CompressorCache"));
 					} catch (err) {
 						BdApi.showToast("Error setting up cache!", {
 							type: "error"
 						});
 					}
 				}
-
-				addToastArea() {
-					// Remove old upload node
-					toastNode = document.getElementById('pseudocompressor-toasts');
-					if (toastNode == null) {
-						toastNode = document.createElement("div");
-						toastNode.id = "pseudocompressor-toasts";
-						appNode.appendChild(toastNode);
-					}
-				}
-
-				async setStatusToast(type, remaining) {
-					this.addToastArea();
-					if (remaining <= 0) {
-						if (uploadToasts.has(type)) {
-							let toast = uploadToasts.get(type);
-							toast.remove();
-							uploadToasts.delete(type);
-						}
-					} else {
-						if (uploadToasts.has(type)) {
-							let toast = uploadToasts.get(type);
-							let toastMsg = toast.querySelector('.pseudocompressor-toast-message');
-							switch (type) {
-							default:
-							case "COMPRESSING":
-								toastMsg.innerHTML = "Compressing " + remaining + (remaining === 1 ? " file" : " files");
-								break;
-							case "QUEUEING":
-								toastMsg.innerHTML = remaining + (remaining === 1 ? " file" : " files") + " to be compressed";
-								break;
-							case "DOWNLOADING":
-								toastMsg.innerHTML = "Downloading libraries";
-								break;
-							}
-
-						} else {
-							let toast = null;
-							switch (type) {
-							default:
-							case "COMPRESSING":
-								toast = DOMTools.parseHTML(Utilities.formatString(`<div class="pseudocompressor-toast"><div class="pseudocompressor-toast-icon spin">{{icon}}</div><div class="pseudocompressor-toast-message">{{message}}</div></div>`, {
-											message: "Compressing " + remaining + (remaining === 1 ? " file" : " files"),
-											icon: loadingSvg
-										}));
-								break;
-							case "QUEUEING":
-								toast = DOMTools.parseHTML(Utilities.formatString(`<div class="pseudocompressor-toast"><div class="pseudocompressor-toast-icon">{{icon}}</div><div class="pseudocompressor-toast-message">{{message}}</div></div>`, {
-											message: remaining + (remaining === 1 ? " file" : " files") + " to be compressed",
-											icon: queueSvg
-										}));
-								break;
-							case "DOWNLOADING":
-								toast = DOMTools.parseHTML(Utilities.formatString(`<div class="pseudocompressor-toast"><div class="pseudocompressor-toast-icon">{{icon}}</div><div class="pseudocompressor-toast-message">{{message}}</div></div>`, {
-											message: "Downloading libraries",
-											icon: queueSvg
-										}));
-								break;
-							}
-							toastNode.appendChild(toast);
-							uploadToasts.set(type, toast);
-						}
-					}
-				}
-
-				async handleUpload(fileList, channel, draftType, instantBackdrop, requireConfirmation, showLargeMessageDialog, ignoreDraft) {
-					let guildId = null;
-					let channelId = null;
-					let threadId = null;
-					let sidebar = false;
-					if (channel.threadMetadata) {
-						// Thread
-						guildId = channel.guild_id;
-						channelId = channel.parent_id;
-						threadId = channel.id;
-						sidebar = DiscordAPI.currentChannel ? DiscordAPI.currentChannel.discordObject.id !== threadId : false;
-					} else {
-						// Normal channel
-						guildId = channel.guild_id;
-						channelId = channel.id;
-					}
-					this.processFileList(fileList, guildId, channelId, threadId, sidebar);
-					return true;
-				}
-
-				uploadFileQueue(files, guildId, channelId, threadId, sidebar) {
-					this.uploadFile(files, guildId, channelId, threadId, sidebar);
-					if (this.settings.upload.autoChannelSwitch) {
-						this.switchChannel(guildId, channelId, threadId, sidebar);
-					}
-				}
-
-				wrapFile(file) {
-					const dt = new DataTransfer();
-					dt.items.add(file);
-					return dt.files;
-				}
-
-				switchChannel(guildId, channelId, threadId, sidebar) {
-					if (!channelId)
-						return false;
-					const originalGuildId = DiscordAPI.currentChannel ? DiscordAPI.currentChannel.discordObject.guild_id : null;
-					const originalChannelId = DiscordAPI.currentChannel ? (DiscordAPI.currentChannel.discordObject.threadMetadata ? DiscordAPI.currentChannel.discordObject.parent_id : DiscordAPI.currentChannel.discordObject.id) : null;
-					const originalThreadId = DiscordAPI.currentChannel ? (DiscordAPI.currentChannel.discordObject.threadMetadata ? DiscordAPI.currentChannel.discordObject.id : null) : null;
-					let sidebarThreadData = BdApi.findModuleByProps('getThreadSidebarState').getThreadSidebarState(originalChannelId);
-					const sidebarThreadId = (DiscordAPI.currentChannel && !originalThreadId) ? (sidebarThreadData ? sidebarThreadData.channelId : null) : null;
-					if (threadId) {
-						if (threadId !== sidebarThreadId && threadId !== originalThreadId) {
-							if (sidebar) {
-								DiscordModules.NavigationUtils.transitionToThread(!guildId ? "@me" : guildId, channelId);
-								BdApi.findModuleByProps('gotoThread').gotoThread(null, {
-									id: threadId
-								});
-							} else {
-								DiscordModules.NavigationUtils.transitionToThread(!guildId ? "@me" : guildId, threadId);
-							}
-						}
-					} else {
-						DiscordModules.NavigationUtils.transitionToGuild(!guildId ? "@me" : guildId, channelId);
-					}
-					sidebarThreadData = BdApi.findModuleByProps('getThreadSidebarState').getThreadSidebarState(DiscordAPI.currentChannel.discordObject.id);
-					if ((guildId ? DiscordAPI.currentChannel.discordObject.guild_id === guildId : !DiscordAPI.currentChannel.discordObject.guild_id) && (threadId ? ((DiscordAPI.currentChannel.discordObject.id === threadId && DiscordAPI.currentChannel.discordObject.parent_id === channelId) || DiscordAPI.currentChannel.discordObject.id === channelId && (sidebarThreadData ? sidebarThreadData.channelId : null) === threadId) : DiscordAPI.currentChannel.discordObject.id === channelId)) {
-						return true;
-					} else {
-						BdApi.showToast("Unable to return to channel to upload files!", {
-							type: "error"
-						});
-						if (originalThreadId)
-							DiscordModules.NavigationUtils.transitionToThread(!originalGuildId ? "@me" : originalGuildId, originalThreadId);
-						else
-							DiscordModules.NavigationUtils.transitionToGuild(!originalGuildId ? "@me" : originalGuildId, originalChannelId);
-					}
-					return false;
-				}
-
-				uploadFile(files, guildId, channelId, threadId, sidebar) {
-					try {
-						const channelObj = threadId ? DiscordModules.ChannelStore.getChannel(threadId) : DiscordModules.ChannelStore.getChannel(channelId);
-						channelObj.fileCompressorCompressedFile = true;
-						BdApi.findModuleByProps("promptToUpload").promptToUpload(files, channelObj, 0, true, !(this.settings.upload.immediateUpload), false, false, true /*Special boolean to mark file as processed and prevent loops*/);
-					} catch (e) {
-						Logger.err(config.info.name, e);
-						BdApi.showToast("Error uploading files!", {
-							type: "error"
-						});
-					}
-				}
-
-				processFileList(files, guildId, channelId, threadId, sidebar) {
-					// Check account status and update max file upload size
-					try {
-						maxUploadSize = DiscordModules.DiscordConstants.PremiumUserLimits[DiscordAPI.currentUser.discordObject.premiumType ? DiscordAPI.currentUser.discordObject.premiumType : 0].fileSize;
-					} catch (e) {
-						Logger.err(config.info.name, e);
-						BdApi.showToast("Error getting account info!", {
-							type: "error"
-						});
-						maxUploadSize = 8388608;
-					}
-					// Synthetic DataTransfer to generate FileList
-					const originalDt = new DataTransfer();
-					const tempFiles = [];
-					let queuedFiles = 0;
-					for (let i = 0; i < files.length; i++) {
-						let file = files[i];
-						if (file.size >= maxUploadSize) {
-							// If file is returned, it was incompressible
-							let tempFile = this.checkCompressFile(file, file.type.split('/')[0], guildId, channelId, threadId, sidebar);
-							// Check if no files will be uploaded, and if so, trigger Discord's file too large modal by passing through large file
-							if (tempFile) {
-								if (i === files.length - 1 && originalDt.items.length === 0 && queuedFiles === 0) {
-									originalDt.items.add(file);
-								}
-							} else {
-								queuedFiles++;
-							}
-						} else {
-							// Add files that are small enough
-							originalDt.items.add(file);
-						}
-					}
-					// Show toast saying a file was too large to upload if some files are being uploaded, but not others
-					if (originalDt.files.length > 0 && files.length > (originalDt.files.length + queuedFiles)) {
-						let num = (files.length - (originalDt.files.length + queuedFiles));
-						BdApi.showToast(num + (num === 1 ? " file was " : " files were ") + "too large to upload!", {
-							type: "error"
-						});
-					}
-					if (originalDt.files.length > 0) {
-						this.uploadFileQueue(originalDt.files, guildId, channelId, threadId, sidebar);
-					}
-				}
-
-				// Initial check if a large file is compressible
-				// Returns the original file if not compressible, otherwise sends all files to compressFile for compression queue
-				checkCompressFile(file, type, guildId, channelId, threadId, sidebar) {
-					switch (type) {
-					case "image":
-					case "video":
-					case "audio":
-						this.compressFile(file, type, guildId, channelId, threadId, sidebar);
-						break;
-					default:
-						return file;
-					}
-					return null;
-				}
-
-				// Asks the user for settings to use when compressing the file and compresses the file if possible, or queues it for later
-				async compressFile(file, type, guildId, channelId, threadId, sidebar) {
-					let hash = await this.cache.hash(file);
-					let cacheFile;
-					if (this.cache) {
-						try {
-							cacheFile = this.cache.getFile(hash);
-						} catch (err) {
-							Logger.err(config.info.name, err);
-						}
-					}
-					let options = {
-						useCache: true
-					};
-					// If cached file exists, ask user if they want to use cached options
-					switch (type) {
-					case "image":
-						// Ask for compression settings
-						//options.sizeCap = "8388608" // Max size in bytes
-						break;
-					case "video":
-						// Ask for compression settings
-						//options.encoder = "libvpx-vp9";
-						options.encoder = "libx264";
-						//options.sizeCap = "8388608" // Max size in bytes
-						//options.maxHeight = 720;
-						break;
-					case "audio":
-						// Ask for compression settings
-						//options.sizeCap = "8388608" // Max size in bytes
-						break;
-					}
-					// If user wants to use cached options & cached file exists
-					if (cacheFile && options.useCache) {
-						this.uploadFileQueue(this.wrapFile(cacheFile), guildId, channelId, threadId, sidebar);
-					} else {
-						if (processingThreadCount < this.settings.compressor.concurrentThreads) {
-							this.setStatusToast("COMPRESSING", ++processingThreadCount);
-							this.compressFileType(file, type, guildId, channelId, threadId, sidebar, options, hash);
-						} else {
-							processingQueue.push({
-								file: file,
-								type: type,
-								guildId: guildId,
-								channelId: channelId,
-								threadId: threadId,
-								sidebar: sidebar,
-								options: options,
-								originalHash,
-								hash
-							});
-							this.setStatusToast("QUEUEING", processingQueue.length);
-						}
-					}
-				}
-
-				// Sends the file to the appropriate compressor once all checks have passed
-				compressFileType(file, type, guildId, channelId, threadId, sidebar, options, originalHash) {
-					switch (type) {
-					case "image":
-						this.finishProcessing(this.compressImage(file, options), guildId, channelId, threadId, sidebar, originalHash, true);
-						// https://github.com/davejm/client-compress
-						break;
-					case "video":
-						this.finishProcessing(this.compressVideo(file, options, originalHash), guildId, channelId, threadId, sidebar, originalHash, false);
-						break;
-					case "audio":
-						this.finishProcessing(this.compressAudio(file, options, originalHash), guildId, channelId, threadId, sidebar, originalHash, false);
-						break;
-					}
-				}
-
-				// When a file is done processing, add it to the upload queue and check if a new file can be processed
-				finishProcessing(promise, guildId, channelId, threadId, sidebar, originalHash, shouldCache) {
-					promise.then(file => {
-						if (file != null) {
-							this.uploadFileQueue(this.wrapFile(file), guildId, channelId, threadId, sidebar);
-							if (this.cache && shouldCache) {
-								this.cache.saveAndCache(file, originalHash);
-							}
-						}
-						this.processNextFile();
-					}).catch(error => {
-						BdApi.showToast("Error compressing file!", {
-							type: "error"
-						});
-						this.processNextFile();
-					});
-				}
-
-				// Start processing a new file if possible
-				processNextFile() {
-					if (processingQueue.length > 0) {
-						if (processingThreadCount <= this.settings.compressor.concurrentThreads) {
-							let entry = processingQueue.shift();
-							this.setStatusToast("QUEUEING", processingQueue.length);
-							this.compressFileType(entry.file, entry.type, entry.guildId, entry.channelId, entry.threadId, entry.sidebar, entry.options, entry.originalHash);
-						}
-					} else {
-						this.setStatusToast("COMPRESSING", --processingThreadCount);
-					}
-				}
-
-				loadImageElement = (img, src) => {
-					return new Promise((resolve, reject) => {
-						img.addEventListener("load", () => {
-							resolve(img)
-						}, false);
-						img.addEventListener("error", (err) => {
-							reject(err)
-						}, false);
-						img.src = src;
-					});
-				};
 
 				initFfmpeg() {
 					return new Promise((resolve, reject) => {
@@ -1012,7 +743,7 @@ module.exports = (() => {
 								if (!ffmpeg || !ffmpeg.checkFFmpeg()) {
 									try {
 										ffmpeg = new FFmpeg(ffmpegPath);
-										resolve();
+										resolve(true);
 									} catch (err) {
 										Logger.err(config.info.name, err);
 										noFfmpeg = true;
@@ -1105,7 +836,7 @@ module.exports = (() => {
 							try {
 								const filename = regexp.exec(result.headers['content-disposition'])[1];
 								const fileStream = fs.createWriteStream(path.join(downloadPath, filename));
-								plugin.setStatusToast("DOWNLOADING", 1);
+								plugin.toasts.setToast("DOWNLOADING", "Downloading libraries");
 								result.pipe(fileStream);
 								fileStream.on('error', function (e) {
 									// Handle write errors
@@ -1114,7 +845,7 @@ module.exports = (() => {
 								});
 								fileStream.on('finish', function () {
 									// The file has been downloaded
-									plugin.setStatusToast("DOWNLOADING", 0);
+									plugin.toasts.setToast("DOWNLOADING");
 									if (callback) {
 										callback();
 									}
@@ -1130,7 +861,7 @@ module.exports = (() => {
 								type: "error"
 							});
 						}
-						plugin.setStatusToast("DOWNLOADING", 0);
+						plugin.toasts.setToast("DOWNLOADING");
 					});
 				}
 
@@ -1147,29 +878,289 @@ module.exports = (() => {
 					return false;
 				}
 
-				async compressAudio(file, options, originalHash) {
+				async handleUploadEvent(fileList, channel, draftType, instantBackdrop, requireConfirmation, showLargeMessageDialog, ignoreDraft) {
+					let guildId = null;
+					let channelId = null;
+					let threadId = null;
+					let sidebar = false;
+					if (channel.threadMetadata) {
+						// Thread
+						guildId = channel.guild_id;
+						channelId = channel.parent_id;
+						threadId = channel.id;
+						sidebar = DiscordAPI.currentChannel ? DiscordAPI.currentChannel.discordObject.id !== threadId : false;
+					} else {
+						// Normal channel
+						guildId = channel.guild_id;
+						channelId = channel.id;
+					}
+					this.processUploadFileList(fileList, guildId, channelId, threadId, sidebar);
+					return true;
+				}
+
+				processUploadFileList(files, guildId, channelId, threadId, sidebar) {
+					// Check account status and update max file upload size
+					try {
+						maxUploadSize = DiscordModules.DiscordConstants.PremiumUserLimits[DiscordAPI.currentUser.discordObject.premiumType ? DiscordAPI.currentUser.discordObject.premiumType : 0].fileSize;
+					} catch (e) {
+						Logger.err(config.info.name, e);
+						BdApi.showToast("Error getting account info!", {
+							type: "error"
+						});
+						maxUploadSize = 8388608;
+					}
+					// Synthetic DataTransfer to generate FileList
+					const originalDt = new DataTransfer();
+					const tempFiles = [];
+					let queuedFiles = 0;
+					for (let i = 0; i < files.length; i++) {
+						const file = files[i];
+						if (file.size >= maxUploadSize) {
+							// If file is returned, it was incompressible
+							const tempFile = this.checkIsCompressible(file, file.type.split('/')[0], guildId, channelId, threadId, sidebar);
+							// Check if no files will be uploaded, and if so, trigger Discord's file too large modal by passing through large file
+							if (tempFile) {
+								if (i === files.length - 1 && originalDt.items.length === 0 && queuedFiles === 0) {
+									originalDt.items.add(file);
+								}
+							} else {
+								queuedFiles++;
+							}
+						} else {
+							// Add files that are small enough
+							originalDt.items.add(file);
+						}
+					}
+					// Show toast saying a file was too large to upload if some files are being uploaded, but not others
+					if (originalDt.files.length > 0 && files.length > (originalDt.files.length + queuedFiles)) {
+						const num = (files.length - (originalDt.files.length + queuedFiles));
+						BdApi.showToast(num + (num === 1 ? " file was " : " files were ") + "too large to upload!", {
+							type: "error"
+						});
+					}
+					if (originalDt.files.length > 0) {
+						this.sendUploadFileList(originalDt.files, guildId, channelId, threadId, sidebar);
+					}
+				}
+
+				sendUploadFileList(files, guildId, channelId, threadId, sidebar) {
+					this.sendUploadFileListInternal(files, guildId, channelId, threadId, sidebar);
+					if (this.settings.upload.autoChannelSwitch) {
+						this.switchChannel(guildId, channelId, threadId, sidebar);
+					}
+				}
+
+				wrapFileInList(file) {
+					const dt = new DataTransfer();
+					dt.items.add(file);
+					return dt.files;
+				}
+
+				switchChannel(guildId, channelId, threadId, sidebar) {
+					if (!channelId)
+						return false;
+					const originalGuildId = DiscordAPI.currentChannel ? DiscordAPI.currentChannel.discordObject.guild_id : null;
+					const originalChannelId = DiscordAPI.currentChannel ? (DiscordAPI.currentChannel.discordObject.threadMetadata ? DiscordAPI.currentChannel.discordObject.parent_id : DiscordAPI.currentChannel.discordObject.id) : null;
+					const originalThreadId = DiscordAPI.currentChannel ? (DiscordAPI.currentChannel.discordObject.threadMetadata ? DiscordAPI.currentChannel.discordObject.id : null) : null;
+					let sidebarThreadData = BdApi.findModuleByProps('getThreadSidebarState').getThreadSidebarState(originalChannelId);
+					const sidebarThreadId = (DiscordAPI.currentChannel && !originalThreadId) ? (sidebarThreadData ? sidebarThreadData.channelId : null) : null;
+					if (threadId) {
+						if (threadId !== sidebarThreadId && threadId !== originalThreadId) {
+							if (sidebar) {
+								DiscordModules.NavigationUtils.transitionToThread(!guildId ? "@me" : guildId, channelId);
+								BdApi.findModuleByProps('gotoThread').gotoThread(null, {
+									id: threadId
+								});
+							} else {
+								DiscordModules.NavigationUtils.transitionToThread(!guildId ? "@me" : guildId, threadId);
+							}
+						}
+					} else {
+						DiscordModules.NavigationUtils.transitionToGuild(!guildId ? "@me" : guildId, channelId);
+					}
+					sidebarThreadData = BdApi.findModuleByProps('getThreadSidebarState').getThreadSidebarState(DiscordAPI.currentChannel.discordObject.id);
+					if ((guildId ? DiscordAPI.currentChannel.discordObject.guild_id === guildId : !DiscordAPI.currentChannel.discordObject.guild_id) && (threadId ? ((DiscordAPI.currentChannel.discordObject.id === threadId && DiscordAPI.currentChannel.discordObject.parent_id === channelId) || DiscordAPI.currentChannel.discordObject.id === channelId && (sidebarThreadData ? sidebarThreadData.channelId : null) === threadId) : DiscordAPI.currentChannel.discordObject.id === channelId)) {
+						return true;
+					} else {
+						BdApi.showToast("Unable to return to channel to upload files!", {
+							type: "error"
+						});
+						if (originalThreadId)
+							DiscordModules.NavigationUtils.transitionToThread(!originalGuildId ? "@me" : originalGuildId, originalThreadId);
+						else
+							DiscordModules.NavigationUtils.transitionToGuild(!originalGuildId ? "@me" : originalGuildId, originalChannelId);
+					}
+					return false;
+				}
+
+				sendUploadFileListInternal(files, guildId, channelId, threadId, sidebar) {
+					try {
+						const channelObj = threadId ? DiscordModules.ChannelStore.getChannel(threadId) : DiscordModules.ChannelStore.getChannel(channelId);
+						channelObj.fileCompressorCompressedFile = true;
+						BdApi.findModuleByProps("promptToUpload").promptToUpload(files, channelObj, 0, true, !(this.settings.upload.immediateUpload), false, false, true /*Special boolean to mark file as processed and prevent loops*/);
+					} catch (e) {
+						Logger.err(config.info.name, e);
+						BdApi.showToast("Error uploading files!", {
+							type: "error"
+						});
+					}
+				}
+
+				// Initial check if a large file is compressible
+				// Returns the original file if not compressible, otherwise sends all files to compressFile for compression queue
+				checkIsCompressible(file, type, guildId, channelId, threadId, sidebar) {
+					switch (type) {
+					case "image":
+					case "video":
+					case "audio":
+						// Async function schedules file to be compressed without blocking
+						this.compressFile({
+							jobId: uuidv4(),
+							file: file,
+							compressedFile: null,
+							hash: null,
+							type: type,
+							guildId: guildId,
+							channelId: channelId,
+							threadId: threadId,
+							isSidebar: sidebar,
+							options: {}
+						});
+						break;
+					default:
+						return file;
+					}
+					return null;
+				}
+
+				// Asks the user for settings to use when compressing the file and compresses the file if possible, or queues it for later
+				async compressFile(job) {
+					let cacheFile;
+					if (cache) {
+						toasts.setToast(job.jobId, "Hashing 0%");
+						job.hash = await cache.hash(job.file, percentage => {
+							toasts.setToast(job.jobId, "Hashing " + percentage + "%");
+						});
+						try {
+							cacheFile = cache.getFile(job.hash);
+						} catch (err) {
+							Logger.err(config.info.name, err);
+						}
+						toasts.setToast(job.jobId);
+					}
+					job.options.useCache = true;
+					// If cached file exists, ask user if they want to use cached options
+					switch (job.type) {
+					case "image":
+						// Ask for compression settings
+						//job.options.sizeCap = "8388608" // Max size in bytes
+						job.options.sizeMultiplier = 0.9;
+						job.options.maxIterations = 50;
+						break;
+					case "video":
+						// Ask for compression settings
+						//job.options.encoder = "libvpx-vp9";
+						job.options.encoder = "libx264";
+						//job.options.sizeCap = "8388608" // Max size in bytes
+						//job.options.maxHeight = 720;
+						break;
+					case "audio":
+						// Ask for compression settings
+						//job.options.sizeCap = "8388608" // Max size in bytes
+						break;
+					}
+					// If user wants to use cached options & cached file exists
+					if (cacheFile && job.options.useCache) {
+						this.sendUploadFileList(this.wrapFileInList(cacheFile), job.guildId, job.channelId, job.threadId, job.isSidebar);
+					} else {
+						if (runningJobs.length < this.settings.compressor.concurrentThreads) {
+							toasts.setToast(job.jobId, "Initializing");
+							runningJobs.push(job);
+							this.compressFileType(job);
+						} else {
+							processingQueue.push(job);
+							toasts.setToast(0, (processingQueue.length === 1 ? " file" : " files") + " to be compressed");
+						}
+					}
+				}
+
+				// Sends the file to the appropriate compressor once all checks have passed
+				compressFileType(job) {
+					switch (job.type) {
+					case "image":
+						this.finishProcessing(job, this.compressImage(job));
+						// https://github.com/davejm/client-compress
+						break;
+					case "video":
+						this.finishProcessing(job, this.compressVideo(job));
+						break;
+					case "audio":
+						this.finishProcessing(job, this.compressAudio(job));
+						break;
+					}
+				}
+
+				// When a file is done processing, add it to the upload queue and check if a new file can be processed
+				finishProcessing(job, promise) {
+					promise.then(returnJob => {
+						if (returnJob != null) {
+							if (returnJob.compressedFile) {
+								this.sendUploadFileList(this.wrapFileInList(returnJob.compressedFile), returnJob.guildId, returnJob.channelId, returnJob.threadId, returnJob.isSidebar);
+							}
+						}
+						toasts.setToast(job.jobId);
+						const index = runningJobs.indexOf(job);
+						if (index >= 0)
+							runningJobs.splice(index, 1);
+						this.processNextFile();
+					}).catch(error => {
+						BdApi.showToast("Error compressing file!", {
+							type: "error"
+						});
+						Logger.err(error);
+						toasts.setToast(job.jobId);
+						const index = runningJobs.indexOf(job);
+						if (index >= 0)
+							runningJobs.splice(index, 1);
+						this.processNextFile();
+					});
+				}
+
+				// Start processing a new file if possible
+				processNextFile() {
+					if (processingQueue.length > 0) {
+						if (runningJobs.length <= this.settings.compressor.concurrentThreads) {
+							const job = processingQueue.shift();
+							toasts.setToast(0, (processingQueue.length === 1 ? " file" : " files") + " to be compressed");
+							runningJobs.push(job);
+							this.compressFileType(job);
+						}
+					}
+				}
+
+				async compressAudio(job) {
 					return new Promise((resolve, reject) => {
 						(async() => {
 							if (!ffmpeg || !ffmpeg.checkFFmpeg()) {
 								this.initFfmpeg();
 							}
 							if (ffmpeg && ffmpeg.checkFFmpeg()) {
-								if (this.initTempFolder()) {
-									const nameSplit = file.name.split('.');
+								if (await this.initTempFolder()) {
+									const nameSplit = job.file.name.split('.');
 									const name = nameSplit.slice(0, nameSplit.length - 1).join(".");
 									const extension = nameSplit[nameSplit.length - 1];
 									const tempPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + "." + extension);
 									const compressedPathPre = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".opus");
 									let compressedPath = "";
-									if (this.cache) {
-										compressedPath = path.join(this.cache.getCachePath(), uuidv4().replace(/-/g, "") + ".ogg");
+									if (cache) {
+										compressedPath = path.join(cache.getCachePath(), uuidv4().replace(/-/g, "") + ".ogg");
 									} else {
 										compressedPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".ogg");
 									}
-									const fileStream = file.stream();
+									const fileStream = job.file.stream();
 									const fileStreamReader = fileStream.getReader();
 									const writeStream = fs.createWriteStream(tempPath);
-									const totalBytes = file.size;
+									const totalBytes = job.file.size;
 									let bytesWritten = 0;
 									const writeFilePromise = new Promise((resolve1, reject1) => {
 										fileStreamReader.read().then(function processData({
@@ -1179,11 +1170,11 @@ module.exports = (() => {
 											try {
 												if (value) {
 													bytesWritten += value.byteLength;
-													console.log(Math.round((bytesWritten / totalBytes) * 100) + "% Written");
+													toasts.setToast(job.jobId, Math.round((bytesWritten / totalBytes) * 100) + "% Copied");
 												}
 												if (done) {
 													writeStream.destroy();
-													resolve1();
+													resolve1(true);
 													return;
 												}
 												const writeReady = writeStream.write(value);
@@ -1210,18 +1201,34 @@ module.exports = (() => {
 									}
 									writeStream.destroy();
 									try {
+										toasts.setToast(job.jobId, "Calculating");
 										const data = await ffmpeg.runProbeWithArgs(["-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", tempPath]);
 										if (data) {
 											try {
 												const duration = Math.ceil(data.data);
-												const cappedFileSize = Math.floor((options.sizeCap < maxUploadSize ? options.sizeCap : maxUploadSize) - 500000);
+												const cappedFileSize = Math.floor((job.options.sizeCap < maxUploadSize ? job.options.sizeCap : maxUploadSize) - 500000);
 												let audioBitrate = Math.floor((cappedFileSize * 8) / duration);
 												if (audioBitrate > 256000)
 													audioBitrate = 256000;
 												if (audioBitrate < 500)
 													audioBitrate = 500;
 												try {
-													await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-vn", "-c:a", "libopus", "-b:a", audioBitrate, "-ac", "1", "-sn", "-map_chapters", "-1", compressedPathPre]);
+													toasts.setToast(job.jobId, "Compressing 0%");
+													await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-vn", "-c:a", "libopus", "-b:a", audioBitrate, "-ac", "1", "-sn", "-map_chapters", "-1", compressedPathPre], str => {
+														return str.includes("time=")
+													}, str => {
+														try {
+															const timeStr = timeRegex.exec(str);
+															let elapsedTime = 0;
+															if (timeStr) {
+																const timeStrParts = timeStr[1].split(':');
+																const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
+																toasts.setToast(job.jobId, "Compressing " + Math.round((elapsedTime / duration) * 100) + "%");
+															}
+														} catch (e) {
+															Logger.err(config.info.name, e);
+														}
+													});
 												} catch (e) {
 													Logger.err(config.info.name, "Unable to run FFmpeg");
 													BdApi.showToast("Unable to compress audio", {
@@ -1236,21 +1243,23 @@ module.exports = (() => {
 													reject(e);
 													return;
 												}
+												toasts.setToast(job.jobId, "Packaging");
 												if (fs.existsSync(compressedPathPre)) {
 													fs.renameSync(compressedPathPre, compressedPath);
 												} else {
 													try {
 														fs.rmSync(tempPath);
-													} catch (e) {}
-													reject(e);
+													} catch (e) {
+														reject(e);
+													}
 													return;
 												}
 												if (fs.existsSync(compressedPath)) {
-													if (this.cache) {
-														this.cache.addToCache(compressedPath, name + ".ogg", originalHash);
+													if (cache) {
+														cache.addToCache(compressedPath, name + ".ogg", job.hash);
 													}
 													const retFile = new File([Uint8Array.from(Buffer.from(fs.readFileSync(compressedPath))).buffer], name + ".ogg", {
-														type: file.type
+														type: job.file.type
 													});
 													try {
 														fs.rmSync(tempPath);
@@ -1258,8 +1267,9 @@ module.exports = (() => {
 													try {
 														fs.rmSync(compressedPathPre);
 													} catch (e) {}
-													resolve(retFile);
-													if (!this.cache) {
+													job.compressedFile = retFile;
+													resolve(job);
+													if (!cache) {
 														try {
 															fs.rmSync(compressedPath);
 														} catch (e) {}
@@ -1287,31 +1297,31 @@ module.exports = (() => {
 					});
 				}
 
-				async compressVideo(file, options, originalHash) {
+				async compressVideo(job) {
 					return new Promise((resolve, reject) => {
 						(async() => {
 							if (!ffmpeg || !ffmpeg.checkFFmpeg()) {
 								this.initFfmpeg();
 							}
 							if (ffmpeg && ffmpeg.checkFFmpeg()) {
-								if (this.initTempFolder()) {
-									const nameSplit = file.name.split('.');
+								if (await this.initTempFolder()) {
+									const nameSplit = job.file.name.split('.');
 									const name = nameSplit.slice(0, nameSplit.length - 1).join(".");
 									const extension = nameSplit[nameSplit.length - 1];
 									const tempPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + "." + extension);
 									const tempAudioPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".opus");
-									const tempVideoPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + "." + encoderSettings[options.encoder].fileType);
+									const tempVideoPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + "." + encoderSettings[job.options.encoder].fileType);
 									const compressedPathPre = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".mkv");
 									let compressedPath = "";
-									if (this.cache) {
-										compressedPath = path.join(this.cache.getCachePath(), uuidv4().replace(/-/g, "") + ".webm");
+									if (cache) {
+										compressedPath = path.join(cache.getCachePath(), uuidv4().replace(/-/g, "") + ".webm");
 									} else {
 										compressedPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".webm");
 									}
-									const fileStream = file.stream();
+									const fileStream = job.file.stream();
 									const fileStreamReader = fileStream.getReader();
 									const writeStream = fs.createWriteStream(tempPath);
-									const totalBytes = file.size;
+									const totalBytes = job.file.size;
 									let bytesWritten = 0;
 									const writeFilePromise = new Promise((resolve1, reject1) => {
 										fileStreamReader.read().then(function processData({
@@ -1321,11 +1331,11 @@ module.exports = (() => {
 											try {
 												if (value) {
 													bytesWritten += value.byteLength;
-													console.log(Math.round((bytesWritten / totalBytes) * 100) + "% Written");
+													toasts.setToast(job.jobId, Math.round((bytesWritten / totalBytes) * 100) + "% Copied");
 												}
 												if (done) {
 													writeStream.destroy();
-													resolve1();
+													resolve1(true);
 													return;
 												}
 												const writeReady = writeStream.write(value);
@@ -1352,6 +1362,7 @@ module.exports = (() => {
 									}
 									writeStream.destroy();
 									try {
+										toasts.setToast(job.jobId, "Calculating");
 										const data = await ffmpeg.runProbeWithArgs(["-v", "error", "-show_entries", "format=duration", "-show_entries", "stream=height", "-of", "default=noprint_wrappers=1:nokey=1", tempPath]);
 										if (data) {
 											try {
@@ -1364,7 +1375,22 @@ module.exports = (() => {
 												else if (audioBitrate < 10240)
 													audioBitrate = 10240;
 												try {
-													await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-vn", "-c:a", "libopus", "-b:a", audioBitrate, "-ac", "1", "-sn", "-map_chapters", "-1", tempAudioPath]);
+													toasts.setToast(job.jobId, "Compressing Audio 0%");
+													await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-vn", "-c:a", "libopus", "-b:a", audioBitrate, "-ac", "1", "-sn", "-map_chapters", "-1", tempAudioPath], str => {
+														return str.includes("time=")
+													}, str => {
+														try {
+															const timeStr = timeRegex.exec(str);
+															let elapsedTime = 0;
+															if (timeStr) {
+																const timeStrParts = timeStr[1].split(':');
+																const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
+																toasts.setToast(job.jobId, "Compressing Audio " + Math.round((elapsedTime / duration) * 100) + "%");
+															}
+														} catch (e) {
+															Logger.err(config.info.name, e);
+														}
+													});
 												} catch (e) {
 													Logger.err(config.info.name, "Unable to run FFmpeg");
 													BdApi.showToast("Unable to compress video", {
@@ -1382,16 +1408,17 @@ module.exports = (() => {
 												if (!fs.existsSync(tempAudioPath)) {
 													try {
 														fs.rmSync(tempPath);
-													} catch (e) {}
-													reject(e);
+													} catch (e) {
+														reject(e);
+													}
 													return;
 												}
 												const audioStats = fs.statSync(tempAudioPath);
 												const audioSize = audioStats ? audioStats.size : 0;
-												const cappedFileSize = Math.floor((options.sizeCap < maxUploadSize ? options.sizeCap : maxUploadSize) - 250000);
+												const cappedFileSize = Math.floor((job.options.sizeCap < maxUploadSize ? job.options.sizeCap : maxUploadSize) - 250000);
 												let videoBitrate = Math.floor((((cappedFileSize - audioSize) * 8) / 1024) / duration);
 												videoBitrate = videoBitrate > 2 ? videoBitrate - 1 : videoBitrate;
-												let maxVideoHeight = options.maxHeight;
+												let maxVideoHeight = job.options.maxHeight;
 												if (videoBitrate < 100)
 													maxVideoHeight = 144;
 												else if (videoBitrate < 200)
@@ -1408,12 +1435,41 @@ module.exports = (() => {
 													maxVideoHeight = 1440;
 												else if (videoBitrate < 10000)
 													maxVideoHeight = 2160;
-												maxVideoHeight = (options.maxHeight && options.maxHeight < maxVideoHeight) ? options.maxHeight : maxVideoHeight;
+												maxVideoHeight = (job.options.maxHeight && job.options.maxHeight < maxVideoHeight) ? job.options.maxHeight : maxVideoHeight;
 												try {
+													toasts.setToast(job.jobId, "Compressing 1st Pass 0%");
 													if (maxVideoHeight && originalHeight > maxVideoHeight)
-														await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-vf", "scale=-1:" + maxVideoHeight + ", scale=trunc(iw/2)*2:" + maxVideoHeight, "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", options.encoder, "-pass", "1", "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")]);
+														await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-vf", "scale=-1:" + maxVideoHeight + ", scale=trunc(iw/2)*2:" + maxVideoHeight, "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder, "-pass", "1", "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")], str => {
+															return str.includes("time=")
+														}, str => {
+															try {
+																const timeStr = timeRegex.exec(str);
+																let elapsedTime = 0;
+																if (timeStr) {
+																	const timeStrParts = timeStr[1].split(':');
+																	const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
+																	toasts.setToast(job.jobId, "Compressing 1st Pass " + Math.round((elapsedTime / duration) * 100) + "%");
+																}
+															} catch (e) {
+																Logger.err(config.info.name, e);
+															}
+														});
 													else
-														await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", options.encoder, "-pass", "1", "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")]);
+														await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder, "-pass", "1", "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")], str => {
+															return str.includes("time=")
+														}, str => {
+															try {
+																const timeStr = timeRegex.exec(str);
+																let elapsedTime = 0;
+																if (timeStr) {
+																	const timeStrParts = timeStr[1].split(':');
+																	const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
+																	toasts.setToast(job.jobId, "Compressing 1st Pass " + Math.round((elapsedTime / duration) * 100) + "%");
+																}
+															} catch (e) {
+																Logger.err(config.info.name, e);
+															}
+														});
 												} catch (e) {
 													Logger.err(config.info.name, "Unable to run FFmpeg");
 													BdApi.showToast("Unable to compress video", {
@@ -1432,10 +1488,39 @@ module.exports = (() => {
 													return;
 												}
 												try {
+													toasts.setToast(job.jobId, "Compressing 2nd Pass 0%");
 													if (maxVideoHeight && originalHeight > maxVideoHeight)
-														await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-vf", "scale=-1:" + maxVideoHeight + ", scale=trunc(iw/2)*2:" + maxVideoHeight, "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", options.encoder, "-pass", "2", tempVideoPath]);
+														await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-vf", "scale=-1:" + maxVideoHeight + ", scale=trunc(iw/2)*2:" + maxVideoHeight, "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder, "-pass", "2", tempVideoPath], str => {
+															return str.includes("time=")
+														}, str => {
+															try {
+																const timeStr = timeRegex.exec(str);
+																let elapsedTime = 0;
+																if (timeStr) {
+																	const timeStrParts = timeStr[1].split(':');
+																	const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
+																	toasts.setToast(job.jobId, "Compressing 2nd Pass " + Math.round((elapsedTime / duration) * 100) + "%");
+																}
+															} catch (e) {
+																Logger.err(config.info.name, e);
+															}
+														});
 													else
-														await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", options.encoder, "-pass", "2", tempVideoPath]);
+														await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder, "-pass", "2", tempVideoPath], str => {
+															return str.includes("time=")
+														}, str => {
+															try {
+																const timeStr = timeRegex.exec(str);
+																let elapsedTime = 0;
+																if (timeStr) {
+																	const timeStrParts = timeStr[1].split(':');
+																	const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
+																	toasts.setToast(job.jobId, "Compressing 2nd Pass " + Math.round((elapsedTime / duration) * 100) + "%");
+																}
+															} catch (e) {
+																Logger.err(config.info.name, e);
+															}
+														});
 												} catch (e) {
 													Logger.err(config.info.name, "Unable to run FFmpeg");
 													BdApi.showToast("Unable to compress video", {
@@ -1459,12 +1544,28 @@ module.exports = (() => {
 													} catch (e) {}
 													try {
 														fs.rmSync(tempAudioPath);
-													} catch (e) {}
-													reject(e);
+													} catch (e) {
+														reject(e);
+													}
 													return;
 												}
 												try {
-													await ffmpeg.runWithArgs(["-y", "-i", tempAudioPath, "-i", tempVideoPath, "-c", "copy", compressedPathPre]);
+													toasts.setToast(job.jobId, "Packaging 0%");
+													await ffmpeg.runWithArgs(["-y", "-i", tempAudioPath, "-i", tempVideoPath, "-c", "copy", compressedPathPre], str => {
+														return str.includes("time=")
+													}, str => {
+														try {
+															const timeStr = timeRegex.exec(str);
+															let elapsedTime = 0;
+															if (timeStr) {
+																const timeStrParts = timeStr[1].split(':');
+																const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
+																toasts.setToast(job.jobId, "Packaging " + Math.round((elapsedTime / duration) * 100) + "%");
+															}
+														} catch (e) {
+															Logger.err(config.info.name, e);
+														}
+													});
 												} catch (e) {
 													Logger.err(config.info.name, "Unable to run FFmpeg");
 													BdApi.showToast("Unable to compress video", {
@@ -1503,16 +1604,17 @@ module.exports = (() => {
 													} catch (e) {}
 													try {
 														fs.rmSync(compressedPathPre);
-													} catch (e) {}
-													reject(e);
+													} catch (e) {
+														reject(e);
+													}
 													return;
 												}
 												if (fs.existsSync(compressedPath)) {
-													if (this.cache) {
-														this.cache.addToCache(compressedPath, name + ".webm", originalHash);
+													if (cache) {
+														cache.addToCache(compressedPath, name + ".webm", job.hash);
 													}
 													const retFile = new File([Uint8Array.from(Buffer.from(fs.readFileSync(compressedPath))).buffer], name + ".webm", {
-														type: file.type
+														type: job.file.type
 													});
 													try {
 														fs.rmSync(tempPath);
@@ -1526,8 +1628,9 @@ module.exports = (() => {
 													try {
 														fs.rmSync(tempVideoPath);
 													} catch (e) {}
-													resolve(retFile);
-													if (!this.cache) {
+													job.compressedFile = retFile;
+													resolve(job);
+													if (!cache) {
 														try {
 															fs.rmSync(compressedPath);
 														} catch (e) {}
@@ -1555,48 +1658,66 @@ module.exports = (() => {
 					});
 				}
 
-				async compressImage(file, options) {
-					const objectUrl = URL.createObjectURL(file);
+				loadImageElement(img, src) {
+					return new Promise((resolve, reject) => {
+						img.addEventListener("load", () => {
+							resolve(img)
+						}, false);
+						img.addEventListener("error", (err) => {
+							reject(err)
+						}, false);
+						img.src = src;
+					});
+				}
+
+				async compressImage(job) {
+					const objectUrl = URL.createObjectURL(job.file);
 					const img = new window.Image();
 					await this.loadImageElement(img, objectUrl);
 					URL.revokeObjectURL(objectUrl);
 					const image = {
-						file: file,
+						file: job.file,
 						data: img,
 						outputData: null,
 						width: img.naturalWidth,
 						height: img.naturalHeight,
 						iterations: 0
 					};
-					if (await this.compressImageLoop(image, options) !== null) {
-						return new File([image.outputData], image.file.name, {
+					if (await this.compressImageLoop(job, image)) {
+						toasts.setToast(job.jobId, "Packaging");
+						job.compressedFile = new File([image.outputData], image.file.name, {
 							type: image.file.type
 						});
+						if (cache) {
+							cache.saveAndCache(job.compressedFile, job.hash);
+						}
+						return job;
 					}
 					return null;
 				}
 
-				async compressImageLoop(image, options) {
+				async compressImageLoop(job, image) {
 					image.iterations++;
-					image.outputData = await this.compressImageCanvas(image);
+					toasts.setToast(job.jobId, "Compression Try " + image.iterations);
+					image.outputData = await this.compressImageCanvas(image, job.options);
 					if (image.outputData.size >= maxUploadSize) {
-						if (image.iterations >= imageMaxIterations) {
+						if (image.iterations >= job.options.maxIterations) {
 							BdApi.showToast("Unable to comress impage!", {
 								type: "error"
 							});
 							return null;
 						} else {
-							return await this.compressImageLoop(image, options);
+							return await this.compressImageLoop(job, image);
 						}
 					} else {
 						return image;
 					}
 				}
 
-				async compressImageCanvas(image) {
+				async compressImageCanvas(image, options) {
 					const canvas = document.createElement("canvas");
 					const context = canvas.getContext("2d");
-					const multiplier = Math.pow(imageSizeMultiplier, image.iterations);
+					const multiplier = Math.pow(options.sizeMultiplier, image.iterations);
 					canvas.width = Math.round(image.width * multiplier);
 					canvas.height = Math.round(image.height * multiplier);
 					context.drawImage(image.data, 0, 0, canvas.width, canvas.height);
