@@ -15,12 +15,18 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.3.1",
+			version: "1.3.2",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
 		},
 		changelog: [{
+				title: "Fixed",
+				type: "fixed",
+				items: [
+					"Simplified encoder selection"
+				]
+			},{
 				title: "Added",
 				type: "added",
 				items: [
@@ -1100,7 +1106,7 @@ module.exports = (() => {
 							type: "dropdown",
 							defaultValue: "libx264",
 							props: {
-								values: ["libx264", "libvpx-vp9"]
+								values: Object.getOwnPropertyNames(encoderSettings)
 							}
 						};
 						job.options.sizeCap = {
