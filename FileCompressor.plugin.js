@@ -15,7 +15,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.3.3",
+			version: "1.3.4",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -31,7 +31,8 @@ module.exports = (() => {
 				title: "Added",
 				type: "added",
 				items: [
-					"Added compression options modal to fine-tune compression"
+					"Added compression options modal to fine-tune compression",
+					"Hooks into message attachment menu + button"
 				]
 			}, {
 				title: "Known Bugs",
@@ -728,6 +729,10 @@ module.exports = (() => {
 						});
 						Logger.err(config.info.name, "Unable to hook into Discord upload handler! promptToUpload module doesn't exist!");
 					}
+					Patcher.before(BdApi.findModuleByDisplayName("FileInput").prototype, "render", (t, args) => {
+						// Bypass initial file size check
+						t.props.maxSize = Infinity;
+					});
 				}
 
 				updateCache() {
