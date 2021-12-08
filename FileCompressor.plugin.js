@@ -15,7 +15,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.3.2",
+			version: "1.3.3",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -24,7 +24,8 @@ module.exports = (() => {
 				title: "Fixed",
 				type: "fixed",
 				items: [
-					"Simplified encoder selection"
+					"Simplified encoder selection",
+					"Fixed automatic download of FFmpeg"
 				]
 			},{
 				title: "Added",
@@ -551,7 +552,7 @@ module.exports = (() => {
 							this.currentToasts.get(jobId).querySelector('.pseudocompressor-toast-message').innerHTML = message;
 						} else {
 							let toast = null;
-							if (jobId == 0) {
+							if (jobId <= 0) {
 								toast = DOMTools.parseHTML(Utilities.formatString(`<div class="pseudocompressor-toast"><div class="pseudocompressor-toast-icon">{{icon}}</div><div class="pseudocompressor-toast-message">{{message}}</div></div>`, {
 											message: message,
 											icon: queueSvg
@@ -586,6 +587,7 @@ module.exports = (() => {
 					this.updateCache = this.updateCache.bind(this);
 					this.initFfmpeg = this.initFfmpeg.bind(this);
 					this.downloadLibrary = this.downloadLibrary.bind(this);
+					this.downloadFile = this.downloadFile.bind(this);
 					this.initTempFolder = this.initTempFolder.bind(this);
 					this.handleUploadEvent = this.handleUploadEvent.bind(this);
 					this.sendUploadFileList = this.sendUploadFileList.bind(this);
@@ -785,41 +787,42 @@ module.exports = (() => {
 									danger: false,
 									onConfirm: () => {
 										this.saveSettings("compressor", "ffmpeg", true);
-										this.downloadLibrary(ffmpegPath, ffmpegDownloadUrls, "FFmpeg", () => {
-											this.downloadLibrary(ffmpegPath, ffprobeDownloadUrls, "FFprobe", () => {
-												try {
-													ffmpeg = new FFmpeg(ffmpegPath);
-													BdApi.setData(config.info.name, "ffmpeg.version", ffmpegVersion);
-													BdApi.showToast("FFmpeg successfully downloaded", {
-														type: "success"
-													});
-													reject();
-												} catch (err) {
-													Logger.err(config.info.name, "Unable to fetch FFmpeg");
-													Logger.err(config.info.name, err);
-													BdApi.showToast("Error downloading FFmpeg", {
-														type: "error"
-													});
-													ffmpeg = null;
-													reject(err);
-												}
+										const ffmpegPromise = this.downloadLibrary(ffmpegPath, ffmpegDownloadUrls, "FFmpeg");
+										ffmpegPromise.catch(e => {
+											Logger.err(config.info.name, "Unable to download FFmpeg", e);
+											BdApi.showToast("Error downloading FFmpeg", {
+												type: "error"
 											});
+											reject(e);
 										});
+										const ffprobePromise = this.downloadLibrary(ffmpegPath, ffprobeDownloadUrls, "FFprobe");
+										ffprobePromise.catch(e => {
+											Logger.err(config.info.name, "Unable to download FFprobe", e);
+											BdApi.showToast("Error downloading FFprobe", {
+												type: "error"
+											});
+											reject(e);
+										});
+										Promise.all([ffmpegPromise, ffprobePromise]).then(() => {
+											resolve(this.initFfmpeg());
+										});
+									},
+									onCancel: () => {
+										reject();
 									}
 								});
 							} else {
 								Modals.showAlertModal("FFmpeg " + ffmpegVersion + " Required", "To compress video/audio, " + config.info.name + " needs to use FFmpeg. The path to FFmpeg specified in the " + config.info.name + " settings is invalid!\n\nPlease check the path and ensure FFmpeg use is enabled.");
+								reject();
 							}
 						}
-						reject();
 					});
 				}
 
-				downloadLibrary(downloadPath, downloadUrls, name, callback) {
+				async downloadLibrary(downloadPath, downloadUrls, name) {
 					fs.mkdirSync(downloadPath, {
 						recursive: true
 					});
-					const request = require('request');
 					let dlUrl = "";
 					switch (process.platform) {
 					case "win32":
@@ -844,39 +847,48 @@ module.exports = (() => {
 							break;
 						}
 					}
-					const regexp = /filename=(.*?)(?=;|$)/gi;
-					const plugin = this;
-					const req = request.get(dlUrl).on('response', function (result) {
-						if (result.statusCode === 200) {
-							try {
+					return this.downloadFile("-" + uuidv4().replace(/-/g, ""), dlUrl, downloadPath, name);
+				}
+
+				downloadFile(jobId, url, downloadPath, name) {
+					return new Promise((resolve, reject) => {
+						const toastsModule = toasts;
+						const https = require('https');
+						const req = https.request(url);
+						req.on('response', result => {
+							if (result.statusCode === 200) {
+								const regexp = /filename=(.*?)(?=;|$)/gi;
 								const filename = regexp.exec(result.headers['content-disposition'])[1];
+								const totalLength = result.headers['content-length'];
+								let writtenLength = 0;
 								const fileStream = fs.createWriteStream(path.join(downloadPath, filename));
-								plugin.toasts.setToast("DOWNLOADING", "Downloading libraries");
+								toastsModule.setToast(jobId, "Downloading " + name + " 0%");
+								result.on('data', chunk => {
+									writtenLength += chunk.length;
+									toastsModule.setToast(jobId, "Downloading " + name + " " + Math.round((writtenLength / totalLength) * 100) + "%");
+								});
 								result.pipe(fileStream);
 								fileStream.on('error', function (e) {
 									// Handle write errors
-									Logger.err(config.info.name, "Error while downloading " + name);
-									Logger.err(config.info.name, e);
+									reject(new Error("Error while downloading " + url + " for " + name));
 								});
 								fileStream.on('finish', function () {
 									// The file has been downloaded
-									plugin.toasts.setToast("DOWNLOADING");
-									if (typeof(callback) == "function") {
-										callback();
-									}
+									toastsModule.setToast(jobId);
+									resolve(true);
 								});
-							} catch (e) {
-								// Handle request errors
-								Logger.err(config.info.name, "Error while downloading" + name);
-								Logger.err(config.info.name, e);
+							} else if (result.statusCode === 302) {
+								const location = result.headers['location'];
+								if (location) {
+									resolve(this.downloadFile(jobId, location, downloadPath, name));
+								} else {
+									reject(new Error("Invalid file URL: " + url + " for downloading " + name));
+								}
+							} else {
+								reject(new Error("Server returned " + result.statusCode + " at " + url + " for downloading " + name));
 							}
-						} else {
-							Logger.err(config.info.name, "HTML status code when downloading " + name + ": " + result.statusCode);
-							BdApi.showToast("Error downloading " + name, {
-								type: "error"
-							});
-						}
-						plugin.toasts.setToast("DOWNLOADING");
+						});
+						req.end();
 					});
 				}
 
@@ -1257,523 +1269,474 @@ module.exports = (() => {
 				}
 
 				async compressAudio(job) {
-					return new Promise((resolve, reject) => {
-						(async() => {
-							if (!ffmpeg || !ffmpeg.checkFFmpeg()) {
-								this.initFfmpeg();
+					if (!ffmpeg || !ffmpeg.checkFFmpeg()) {
+						await this.initFfmpeg();
+					}
+					if (ffmpeg && ffmpeg.checkFFmpeg()) {
+						if (await this.initTempFolder()) {
+							const nameSplit = job.file.name.split('.');
+							const name = nameSplit.slice(0, nameSplit.length - 1).join(".");
+							const extension = nameSplit[nameSplit.length - 1];
+							const tempPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + "." + extension);
+							const compressedPathPre = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".opus");
+							let compressedPath = "";
+							if (cache) {
+								compressedPath = path.join(cache.getCachePath(), uuidv4().replace(/-/g, "") + ".ogg");
+							} else {
+								compressedPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".ogg");
 							}
-							if (ffmpeg && ffmpeg.checkFFmpeg()) {
-								if (await this.initTempFolder()) {
-									const nameSplit = job.file.name.split('.');
-									const name = nameSplit.slice(0, nameSplit.length - 1).join(".");
-									const extension = nameSplit[nameSplit.length - 1];
-									const tempPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + "." + extension);
-									const compressedPathPre = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".opus");
-									let compressedPath = "";
-									if (cache) {
-										compressedPath = path.join(cache.getCachePath(), uuidv4().replace(/-/g, "") + ".ogg");
-									} else {
-										compressedPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".ogg");
-									}
-									const fileStream = job.file.stream();
-									const fileStreamReader = fileStream.getReader();
-									const writeStream = fs.createWriteStream(tempPath);
-									const totalBytes = job.file.size;
-									let bytesWritten = 0;
-									const writeFilePromise = new Promise((resolve1, reject1) => {
-										fileStreamReader.read().then(function processData({
-												done,
-												value
-											}) {
-											try {
-												if (value) {
-													bytesWritten += value.byteLength;
-													toasts.setToast(job.jobId, Math.round((bytesWritten / totalBytes) * 100) + "% Copied");
-												}
-												if (done) {
-													writeStream.destroy();
-													resolve1(true);
-													return;
-												}
-												const writeReady = writeStream.write(value);
-												if (writeReady) {
-													return fileStreamReader.read().then(processData);
-												} else {
-													writeStream.once('drain', () => {
-														fileStreamReader.read().then(processData);
-													});
-													return true;
-												}
-											} catch (err) {
-												Logger.err(config.info.name, err);
-												reject1();
-												return false;
-											}
-										});
-									});
+							const fileStream = job.file.stream();
+							const fileStreamReader = fileStream.getReader();
+							const writeStream = fs.createWriteStream(tempPath);
+							const totalBytes = job.file.size;
+							let bytesWritten = 0;
+							await new Promise((resolve1, reject1) => {
+								fileStreamReader.read().then(function processData({
+										done,
+										value
+									}) {
 									try {
-										await writeFilePromise;
-									} catch (e) {
-										reject(e);
-										return;
+										if (value) {
+											bytesWritten += value.byteLength;
+											toasts.setToast(job.jobId, Math.round((bytesWritten / totalBytes) * 100) + "% Copied");
+										}
+										if (done) {
+											writeStream.destroy();
+											resolve1(true);
+											return;
+										}
+										const writeReady = writeStream.write(value);
+										if (writeReady) {
+											return fileStreamReader.read().then(processData);
+										} else {
+											writeStream.once('drain', () => {
+												fileStreamReader.read().then(processData);
+											});
+											return true;
+										}
+									} catch (err) {
+										Logger.err(config.info.name, err);
+										reject1();
+										return false;
 									}
-									writeStream.destroy();
+								});
+							});
+							writeStream.destroy();
+							toasts.setToast(job.jobId, "Calculating");
+							const data = await ffmpeg.runProbeWithArgs(["-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", tempPath]);
+							if (data) {
+								try {
+									const duration = Math.ceil(data.data);
+									const cappedFileSize = Math.floor((job.options.sizeCap.value && parseInt(job.options.sizeCap.value) < maxUploadSize ? parseInt(job.options.sizeCap.value) : maxUploadSize) - 500000);
+									let audioBitrate = Math.floor((cappedFileSize * 8) / duration);
+									if (audioBitrate > 256000)
+										audioBitrate = 256000;
+									if (audioBitrate < 500)
+										audioBitrate = 500;
 									try {
-										toasts.setToast(job.jobId, "Calculating");
-										const data = await ffmpeg.runProbeWithArgs(["-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", tempPath]);
-										if (data) {
+										toasts.setToast(job.jobId, "Compressing 0%");
+										await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-vn", "-c:a", "libopus", "-b:a", audioBitrate, "-ac", "1", "-sn", "-map_chapters", "-1", compressedPathPre], str => {
+											return str.includes("time=")
+										}, str => {
 											try {
-												const duration = Math.ceil(data.data);
-												const cappedFileSize = Math.floor((job.options.sizeCap.value && parseInt(job.options.sizeCap.value) < maxUploadSize ? parseInt(job.options.sizeCap.value) : maxUploadSize) - 500000);
-												let audioBitrate = Math.floor((cappedFileSize * 8) / duration);
-												if (audioBitrate > 256000)
-													audioBitrate = 256000;
-												if (audioBitrate < 500)
-													audioBitrate = 500;
-												try {
-													toasts.setToast(job.jobId, "Compressing 0%");
-													await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-vn", "-c:a", "libopus", "-b:a", audioBitrate, "-ac", "1", "-sn", "-map_chapters", "-1", compressedPathPre], str => {
-														return str.includes("time=")
-													}, str => {
-														try {
-															const timeStr = timeRegex.exec(str);
-															let elapsedTime = 0;
-															if (timeStr) {
-																const timeStrParts = timeStr[1].split(':');
-																const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
-																toasts.setToast(job.jobId, "Compressing " + Math.round((elapsedTime / duration) * 100) + "%");
-															}
-														} catch (e) {
-															Logger.err(config.info.name, e);
-														}
-													});
-												} catch (e) {
-													Logger.err(config.info.name, "Unable to run FFmpeg");
-													BdApi.showToast("Unable to compress audio", {
-														type: "error"
-													});
-													try {
-														fs.rmSync(tempPath);
-													} catch (e) {}
-													try {
-														fs.rmSync(compressedPathPre);
-													} catch (e) {}
-													reject(e);
-													return;
-												}
-												toasts.setToast(job.jobId, "Packaging");
-												if (fs.existsSync(compressedPathPre)) {
-													fs.renameSync(compressedPathPre, compressedPath);
-												} else {
-													try {
-														fs.rmSync(tempPath);
-													} catch (e) {
-														reject(e);
-													}
-													return;
-												}
-												if (fs.existsSync(compressedPath)) {
-													if (cache) {
-														cache.addToCache(compressedPath, name + ".ogg", job.hash);
-													}
-													const retFile = new File([Uint8Array.from(Buffer.from(fs.readFileSync(compressedPath))).buffer], name + ".ogg", {
-														type: job.file.type
-													});
-													try {
-														fs.rmSync(tempPath);
-													} catch (e) {}
-													try {
-														fs.rmSync(compressedPathPre);
-													} catch (e) {}
-													job.compressedFile = retFile;
-													resolve(job);
-													if (!cache) {
-														try {
-															fs.rmSync(compressedPath);
-														} catch (e) {}
-													}
+												const timeStr = timeRegex.exec(str);
+												if (timeStr) {
+													const timeStrParts = timeStr[1].split(':');
+													const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
+													toasts.setToast(job.jobId, "Compressing " + Math.round((elapsedTime / duration) * 100) + "%");
 												}
 											} catch (e) {
 												Logger.err(config.info.name, e);
-												try {
-													fs.rmSync(tempPath);
-												} catch (e) {}
-												reject(e);
 											}
+										});
+									} catch (e) {
+										try {
+											fs.rmSync(tempPath);
+										} catch (e) {}
+										try {
+											fs.rmSync(compressedPathPre);
+										} catch (e) {}
+										throw e;
+									}
+									toasts.setToast(job.jobId, "Packaging");
+									if (fs.existsSync(compressedPathPre)) {
+										fs.renameSync(compressedPathPre, compressedPath);
+									} else {
+										try {
+											fs.rmSync(tempPath);
+										} catch (e) {}
+										throw new Error("Cannot find FFmpeg output");
+									}
+									if (fs.existsSync(compressedPath)) {
+										if (cache) {
+											cache.addToCache(compressedPath, name + ".ogg", job.hash);
 										}
+										const retFile = new File([Uint8Array.from(Buffer.from(fs.readFileSync(compressedPath))).buffer], name + ".ogg", {
+											type: job.file.type
+										});
+										try {
+											fs.rmSync(tempPath);
+										} catch (e) {}
+										try {
+											fs.rmSync(compressedPathPre);
+										} catch (e) {}
+										job.compressedFile = retFile;
+										if (!cache) {
+											try {
+												fs.rmSync(compressedPath);
+											} catch (e) {}
+										}
+										return job;
+									} else {
+										try {
+											fs.rmSync(tempPath);
+										} catch (e) {}
+										try {
+											fs.rmSync(compressedPathPre);
+										} catch (e) {}
+										throw new Error("Cannot find FFmpeg output");
+									}
+								} catch (e) {
+									try {
+										fs.rmSync(tempPath);
 									} catch (e) {}
-								} else {
-									Logger.err(config.info.name, "Unable to access temp data directory");
-									BdApi.showToast("Unable to compress audio", {
-										type: "error"
-									});
-									reject();
+									throw e;
 								}
+							} else {
+								throw new Error("Cannot read FFprobe output");
 							}
-							reject();
-						})();
-					});
+						} else {
+							throw new Error("Unable to access temp data directory");
+						}
+					} else {
+						throw new Error("Unable to run FFmpeg");
+					}
 				}
 
 				async compressVideo(job) {
-					return new Promise((resolve, reject) => {
-						(async() => {
-							if (!ffmpeg || !ffmpeg.checkFFmpeg()) {
-								this.initFfmpeg();
+					if (!ffmpeg || !ffmpeg.checkFFmpeg()) {
+						await this.initFfmpeg();
+					}
+					if (ffmpeg && ffmpeg.checkFFmpeg()) {
+						if (await this.initTempFolder()) {
+							const nameSplit = job.file.name.split('.');
+							const name = nameSplit.slice(0, nameSplit.length - 1).join(".");
+							const extension = nameSplit[nameSplit.length - 1];
+							const tempPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + "." + extension);
+							const tempAudioPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".opus");
+							const tempVideoPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + "." + encoderSettings[job.options.encoder.value].fileType);
+							const compressedPathPre = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".mkv");
+							let compressedPath = "";
+							if (cache) {
+								compressedPath = path.join(cache.getCachePath(), uuidv4().replace(/-/g, "") + ".webm");
+							} else {
+								compressedPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".webm");
 							}
-							if (ffmpeg && ffmpeg.checkFFmpeg()) {
-								if (await this.initTempFolder()) {
-									const nameSplit = job.file.name.split('.');
-									const name = nameSplit.slice(0, nameSplit.length - 1).join(".");
-									const extension = nameSplit[nameSplit.length - 1];
-									const tempPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + "." + extension);
-									const tempAudioPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".opus");
-									const tempVideoPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + "." + encoderSettings[job.options.encoder.value].fileType);
-									const compressedPathPre = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".mkv");
-									let compressedPath = "";
-									if (cache) {
-										compressedPath = path.join(cache.getCachePath(), uuidv4().replace(/-/g, "") + ".webm");
-									} else {
-										compressedPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".webm");
-									}
-									const fileStream = job.file.stream();
-									const fileStreamReader = fileStream.getReader();
-									const writeStream = fs.createWriteStream(tempPath);
-									const totalBytes = job.file.size;
-									let bytesWritten = 0;
-									const writeFilePromise = new Promise((resolve1, reject1) => {
-										fileStreamReader.read().then(function processData({
-												done,
-												value
-											}) {
-											try {
-												if (value) {
-													bytesWritten += value.byteLength;
-													toasts.setToast(job.jobId, Math.round((bytesWritten / totalBytes) * 100) + "% Copied");
-												}
-												if (done) {
-													writeStream.destroy();
-													resolve1(true);
-													return;
-												}
-												const writeReady = writeStream.write(value);
-												if (writeReady) {
-													return fileStreamReader.read().then(processData);
-												} else {
-													writeStream.once('drain', () => {
-														fileStreamReader.read().then(processData);
-													});
-													return true;
-												}
-											} catch (err) {
-												Logger.err(config.info.name, err);
-												reject1();
-												return false;
-											}
-										});
-									});
+							const fileStream = job.file.stream();
+							const fileStreamReader = fileStream.getReader();
+							const writeStream = fs.createWriteStream(tempPath);
+							const totalBytes = job.file.size;
+							let bytesWritten = 0;
+							await new Promise((resolve1, reject1) => {
+								fileStreamReader.read().then(function processData({
+										done,
+										value
+									}) {
 									try {
-										await writeFilePromise;
-									} catch (e) {
-										reject(e);
-										return;
+										if (value) {
+											bytesWritten += value.byteLength;
+											toasts.setToast(job.jobId, Math.round((bytesWritten / totalBytes) * 100) + "% Copied");
+										}
+										if (done) {
+											writeStream.destroy();
+											resolve1(true);
+											return;
+										}
+										const writeReady = writeStream.write(value);
+										if (writeReady) {
+											return fileStreamReader.read().then(processData);
+										} else {
+											writeStream.once('drain', () => {
+												fileStreamReader.read().then(processData);
+											});
+											return true;
+										}
+									} catch (err) {
+										Logger.err(config.info.name, err);
+										reject1();
+										return false;
 									}
-									writeStream.destroy();
+								});
+							});
+							writeStream.destroy();
+							toasts.setToast(job.jobId, "Calculating");
+							const data = await ffmpeg.runProbeWithArgs(["-v", "error", "-show_entries", "format=duration", "-show_entries", "stream=height", "-of", "default=noprint_wrappers=1:nokey=1", tempPath]);
+							if (data) {
+								try {
+									const dataSplit = data.data.split(/\r?\n/);
+									const originalHeight = parseInt(dataSplit[0]);
+									const duration = Math.ceil(dataSplit[1]);
+									let audioBitrate = 1320000 / duration + 10000;
+									if (audioBitrate > 32768)
+										audioBitrate = 32768;
+									else if (audioBitrate < 10240)
+										audioBitrate = 10240;
 									try {
-										toasts.setToast(job.jobId, "Calculating");
-										const data = await ffmpeg.runProbeWithArgs(["-v", "error", "-show_entries", "format=duration", "-show_entries", "stream=height", "-of", "default=noprint_wrappers=1:nokey=1", tempPath]);
-										if (data) {
+										toasts.setToast(job.jobId, "Compressing Audio 0%");
+										await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-vn", "-c:a", "libopus", "-b:a", audioBitrate, "-ac", "1", "-sn", "-map_chapters", "-1", tempAudioPath], str => {
+											return str.includes("time=")
+										}, str => {
 											try {
-												const dataSplit = data.data.split(/\r?\n/);
-												const originalHeight = parseInt(dataSplit[0]);
-												const duration = Math.ceil(dataSplit[1]);
-												let audioBitrate = 1320000 / duration + 10000;
-												if (audioBitrate > 32768)
-													audioBitrate = 32768;
-												else if (audioBitrate < 10240)
-													audioBitrate = 10240;
-												try {
-													toasts.setToast(job.jobId, "Compressing Audio 0%");
-													await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-vn", "-c:a", "libopus", "-b:a", audioBitrate, "-ac", "1", "-sn", "-map_chapters", "-1", tempAudioPath], str => {
-														return str.includes("time=")
-													}, str => {
-														try {
-															const timeStr = timeRegex.exec(str);
-															let elapsedTime = 0;
-															if (timeStr) {
-																const timeStrParts = timeStr[1].split(':');
-																const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
-																toasts.setToast(job.jobId, "Compressing Audio " + Math.round((elapsedTime / duration) * 100) + "%");
-															}
-														} catch (e) {
-															Logger.err(config.info.name, e);
-														}
-													});
-												} catch (e) {
-													Logger.err(config.info.name, "Unable to run FFmpeg");
-													BdApi.showToast("Unable to compress video", {
-														type: "error"
-													});
-													try {
-														fs.rmSync(tempPath);
-													} catch (e) {}
-													try {
-														fs.rmSync(tempAudioPath);
-													} catch (e) {}
-													reject(e);
-													return;
-												}
-												if (!fs.existsSync(tempAudioPath)) {
-													try {
-														fs.rmSync(tempPath);
-													} catch (e) {
-														reject(e);
-													}
-													return;
-												}
-												const audioStats = fs.statSync(tempAudioPath);
-												const audioSize = audioStats ? audioStats.size : 0;
-												const cappedFileSize = Math.floor((job.options.sizeCap.value && parseInt(job.options.sizeCap.value) < maxUploadSize ? parseInt(job.options.sizeCap.value) : maxUploadSize) - 250000);
-												let videoBitrate = Math.floor((((cappedFileSize - audioSize) * 8) / 1024) / duration);
-												videoBitrate = videoBitrate > 2 ? videoBitrate - 1 : videoBitrate;
-												let maxVideoHeight = job.options.maxHeight.value;
-												if (videoBitrate < 100)
-													maxVideoHeight = 144;
-												else if (videoBitrate < 200)
-													maxVideoHeight = 240;
-												else if (videoBitrate < 500)
-													maxVideoHeight = 360;
-												else if (videoBitrate < 850)
-													maxVideoHeight = 480;
-												else if (videoBitrate < 1250)
-													maxVideoHeight = 720;
-												else if (videoBitrate < 2500)
-													maxVideoHeight = 1080;
-												else if (videoBitrate < 6000)
-													maxVideoHeight = 1440;
-												else if (videoBitrate < 10000)
-													maxVideoHeight = 2160;
-												maxVideoHeight = (job.options.maxHeight.value && job.options.maxHeight.value < maxVideoHeight) ? job.options.maxHeight.value : maxVideoHeight;
-												try {
-													toasts.setToast(job.jobId, "Compressing 1st Pass 0%");
-													if (maxVideoHeight && originalHeight > maxVideoHeight)
-														await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-vf", "scale=-1:" + maxVideoHeight + ", scale=trunc(iw/2)*2:" + maxVideoHeight, "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "1", "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")], str => {
-															return str.includes("time=")
-														}, str => {
-															try {
-																const timeStr = timeRegex.exec(str);
-																let elapsedTime = 0;
-																if (timeStr) {
-																	const timeStrParts = timeStr[1].split(':');
-																	const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
-																	toasts.setToast(job.jobId, "Compressing 1st Pass " + Math.round((elapsedTime / duration) * 100) + "%");
-																}
-															} catch (e) {
-																Logger.err(config.info.name, e);
-															}
-														});
-													else
-														await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "1", "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")], str => {
-															return str.includes("time=")
-														}, str => {
-															try {
-																const timeStr = timeRegex.exec(str);
-																let elapsedTime = 0;
-																if (timeStr) {
-																	const timeStrParts = timeStr[1].split(':');
-																	const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
-																	toasts.setToast(job.jobId, "Compressing 1st Pass " + Math.round((elapsedTime / duration) * 100) + "%");
-																}
-															} catch (e) {
-																Logger.err(config.info.name, e);
-															}
-														});
-												} catch (e) {
-													Logger.err(config.info.name, "Unable to run FFmpeg");
-													BdApi.showToast("Unable to compress video", {
-														type: "error"
-													});
-													try {
-														fs.rmSync(tempPath);
-													} catch (e) {}
-													try {
-														fs.rmSync(tempAudioPath);
-													} catch (e) {}
-													try {
-														fs.rmSync(tempVideoPath);
-													} catch (e) {}
-													reject(e);
-													return;
-												}
-												try {
-													toasts.setToast(job.jobId, "Compressing 2nd Pass 0%");
-													if (maxVideoHeight && originalHeight > maxVideoHeight)
-														await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-vf", "scale=-1:" + maxVideoHeight + ", scale=trunc(iw/2)*2:" + maxVideoHeight, "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "2", tempVideoPath], str => {
-															return str.includes("time=")
-														}, str => {
-															try {
-																const timeStr = timeRegex.exec(str);
-																let elapsedTime = 0;
-																if (timeStr) {
-																	const timeStrParts = timeStr[1].split(':');
-																	const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
-																	toasts.setToast(job.jobId, "Compressing 2nd Pass " + Math.round((elapsedTime / duration) * 100) + "%");
-																}
-															} catch (e) {
-																Logger.err(config.info.name, e);
-															}
-														});
-													else
-														await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "2", tempVideoPath], str => {
-															return str.includes("time=")
-														}, str => {
-															try {
-																const timeStr = timeRegex.exec(str);
-																let elapsedTime = 0;
-																if (timeStr) {
-																	const timeStrParts = timeStr[1].split(':');
-																	const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
-																	toasts.setToast(job.jobId, "Compressing 2nd Pass " + Math.round((elapsedTime / duration) * 100) + "%");
-																}
-															} catch (e) {
-																Logger.err(config.info.name, e);
-															}
-														});
-												} catch (e) {
-													Logger.err(config.info.name, "Unable to run FFmpeg");
-													BdApi.showToast("Unable to compress video", {
-														type: "error"
-													});
-													try {
-														fs.rmSync(tempPath);
-													} catch (e) {}
-													try {
-														fs.rmSync(tempAudioPath);
-													} catch (e) {}
-													try {
-														fs.rmSync(tempVideoPath);
-													} catch (e) {}
-													reject(e);
-													return;
-												}
-												if (!fs.existsSync(tempVideoPath)) {
-													try {
-														fs.rmSync(tempPath);
-													} catch (e) {}
-													try {
-														fs.rmSync(tempAudioPath);
-													} catch (e) {
-														reject(e);
-													}
-													return;
-												}
-												try {
-													toasts.setToast(job.jobId, "Packaging 0%");
-													await ffmpeg.runWithArgs(["-y", "-i", tempAudioPath, "-i", tempVideoPath, "-c", "copy", compressedPathPre], str => {
-														return str.includes("time=")
-													}, str => {
-														try {
-															const timeStr = timeRegex.exec(str);
-															let elapsedTime = 0;
-															if (timeStr) {
-																const timeStrParts = timeStr[1].split(':');
-																const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
-																toasts.setToast(job.jobId, "Packaging " + Math.round((elapsedTime / duration) * 100) + "%");
-															}
-														} catch (e) {
-															Logger.err(config.info.name, e);
-														}
-													});
-												} catch (e) {
-													Logger.err(config.info.name, "Unable to run FFmpeg");
-													BdApi.showToast("Unable to compress video", {
-														type: "error"
-													});
-													try {
-														fs.rmSync(tempPath);
-													} catch (e) {}
-													try {
-														fs.rmSync(tempAudioPath);
-													} catch (e) {}
-													try {
-														fs.rmSync(tempVideoPath);
-													} catch (e) {}
-													try {
-														fs.rmSync(compressedPathPre);
-													} catch (e) {}
-													reject(e);
-													return;
-												}
-												if (fs.existsSync(compressedPathPre)) {
-													fs.renameSync(compressedPathPre, compressedPath);
-												} else {
-													Logger.err(config.info.name, "Unable to run FFmpeg");
-													BdApi.showToast("Unable to compress video", {
-														type: "error"
-													});
-													try {
-														fs.rmSync(tempPath);
-													} catch (e) {}
-													try {
-														fs.rmSync(tempAudioPath);
-													} catch (e) {}
-													try {
-														fs.rmSync(tempVideoPath);
-													} catch (e) {}
-													try {
-														fs.rmSync(compressedPathPre);
-													} catch (e) {
-														reject(e);
-													}
-													return;
-												}
-												if (fs.existsSync(compressedPath)) {
-													if (cache) {
-														cache.addToCache(compressedPath, name + ".webm", job.hash);
-													}
-													const retFile = new File([Uint8Array.from(Buffer.from(fs.readFileSync(compressedPath))).buffer], name + ".webm", {
-														type: job.file.type
-													});
-													try {
-														fs.rmSync(tempPath);
-													} catch (e) {}
-													try {
-														fs.rmSync(compressedPathPre);
-													} catch (e) {}
-													try {
-														fs.rmSync(tempAudioPath);
-													} catch (e) {}
-													try {
-														fs.rmSync(tempVideoPath);
-													} catch (e) {}
-													job.compressedFile = retFile;
-													resolve(job);
-													if (!cache) {
-														try {
-															fs.rmSync(compressedPath);
-														} catch (e) {}
-													}
+												const timeStr = timeRegex.exec(str);
+												if (timeStr) {
+													const timeStrParts = timeStr[1].split(':');
+													const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
+													toasts.setToast(job.jobId, "Compressing Audio " + Math.round((elapsedTime / duration) * 100) + "%");
 												}
 											} catch (e) {
 												Logger.err(config.info.name, e);
-												try {
-													fs.rmSync(tempPath);
-												} catch (e) {}
-												reject(e);
 											}
+										});
+									} catch (e) {
+										try {
+											fs.rmSync(tempPath);
+										} catch (e) {}
+										try {
+											fs.rmSync(tempAudioPath);
+										} catch (e) {}
+										throw e;
+									}
+									if (!fs.existsSync(tempAudioPath)) {
+										try {
+											fs.rmSync(tempPath);
+										} catch (e) {}
+										throw new Error("Cannot find FFmpeg output");
+									}
+									const audioStats = fs.statSync(tempAudioPath);
+									const audioSize = audioStats ? audioStats.size : 0;
+									const cappedFileSize = Math.floor((job.options.sizeCap.value && parseInt(job.options.sizeCap.value) < maxUploadSize ? parseInt(job.options.sizeCap.value) : maxUploadSize) - 250000);
+									let videoBitrate = Math.floor((((cappedFileSize - audioSize) * 8) / 1024) / duration);
+									videoBitrate = videoBitrate > 2 ? videoBitrate - 1 : videoBitrate;
+									let maxVideoHeight = job.options.maxHeight.value;
+									if (videoBitrate < 100)
+										maxVideoHeight = 144;
+									else if (videoBitrate < 200)
+										maxVideoHeight = 240;
+									else if (videoBitrate < 500)
+										maxVideoHeight = 360;
+									else if (videoBitrate < 850)
+										maxVideoHeight = 480;
+									else if (videoBitrate < 1250)
+										maxVideoHeight = 720;
+									else if (videoBitrate < 2500)
+										maxVideoHeight = 1080;
+									else if (videoBitrate < 6000)
+										maxVideoHeight = 1440;
+									else if (videoBitrate < 10000)
+										maxVideoHeight = 2160;
+									maxVideoHeight = (job.options.maxHeight.value && job.options.maxHeight.value < maxVideoHeight) ? job.options.maxHeight.value : maxVideoHeight;
+									try {
+										toasts.setToast(job.jobId, "Compressing 1st Pass 0%");
+										if (maxVideoHeight && originalHeight > maxVideoHeight)
+											await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-vf", "scale=-1:" + maxVideoHeight + ", scale=trunc(iw/2)*2:" + maxVideoHeight, "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "1", "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")], str => {
+												return str.includes("time=")
+											}, str => {
+												try {
+													const timeStr = timeRegex.exec(str);
+													if (timeStr) {
+														const timeStrParts = timeStr[1].split(':');
+														const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
+														toasts.setToast(job.jobId, "Compressing 1st Pass " + Math.round((elapsedTime / duration) * 100) + "%");
+													}
+												} catch (e) {
+													Logger.err(config.info.name, e);
+												}
+											});
+										else
+											await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "1", "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")], str => {
+												return str.includes("time=")
+											}, str => {
+												try {
+													const timeStr = timeRegex.exec(str);
+													if (timeStr) {
+														const timeStrParts = timeStr[1].split(':');
+														const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
+														toasts.setToast(job.jobId, "Compressing 1st Pass " + Math.round((elapsedTime / duration) * 100) + "%");
+													}
+												} catch (e) {
+													Logger.err(config.info.name, e);
+												}
+											});
+									} catch (e) {
+										try {
+											fs.rmSync(tempPath);
+										} catch (e) {}
+										try {
+											fs.rmSync(tempAudioPath);
+										} catch (e) {}
+										try {
+											fs.rmSync(tempVideoPath);
+										} catch (e) {}
+										throw e;
+									}
+									try {
+										toasts.setToast(job.jobId, "Compressing 2nd Pass 0%");
+										if (maxVideoHeight && originalHeight > maxVideoHeight)
+											await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-vf", "scale=-1:" + maxVideoHeight + ", scale=trunc(iw/2)*2:" + maxVideoHeight, "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "2", tempVideoPath], str => {
+												return str.includes("time=")
+											}, str => {
+												try {
+													const timeStr = timeRegex.exec(str);
+													if (timeStr) {
+														const timeStrParts = timeStr[1].split(':');
+														const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
+														toasts.setToast(job.jobId, "Compressing 2nd Pass " + Math.round((elapsedTime / duration) * 100) + "%");
+													}
+												} catch (e) {
+													Logger.err(config.info.name, e);
+												}
+											});
+										else
+											await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "2", tempVideoPath], str => {
+												return str.includes("time=")
+											}, str => {
+												try {
+													const timeStr = timeRegex.exec(str);
+													if (timeStr) {
+														const timeStrParts = timeStr[1].split(':');
+														const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
+														toasts.setToast(job.jobId, "Compressing 2nd Pass " + Math.round((elapsedTime / duration) * 100) + "%");
+													}
+												} catch (e) {
+													Logger.err(config.info.name, e);
+												}
+											});
+									} catch (e) {
+										try {
+											fs.rmSync(tempPath);
+										} catch (e) {}
+										try {
+											fs.rmSync(tempAudioPath);
+										} catch (e) {}
+										try {
+											fs.rmSync(tempVideoPath);
+										} catch (e) {}
+										throw e;
+									}
+									if (!fs.existsSync(tempVideoPath)) {
+										try {
+											fs.rmSync(tempPath);
+										} catch (e) {}
+										try {
+											fs.rmSync(tempAudioPath);
+										} catch (e) {
 										}
+										throw new Error("Cannot find FFmpeg output");
+									}
+									try {
+										toasts.setToast(job.jobId, "Packaging 0%");
+										await ffmpeg.runWithArgs(["-y", "-i", tempAudioPath, "-i", tempVideoPath, "-c", "copy", compressedPathPre], str => {
+											return str.includes("time=")
+										}, str => {
+											try {
+												const timeStr = timeRegex.exec(str);
+												if (timeStr) {
+													const timeStrParts = timeStr[1].split(':');
+													const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
+													toasts.setToast(job.jobId, "Packaging " + Math.round((elapsedTime / duration) * 100) + "%");
+												}
+											} catch (e) {
+												Logger.err(config.info.name, e);
+											}
+										});
+									} catch (e) {
+										try {
+											fs.rmSync(tempPath);
+										} catch (e) {}
+										try {
+											fs.rmSync(tempAudioPath);
+										} catch (e) {}
+										try {
+											fs.rmSync(tempVideoPath);
+										} catch (e) {}
+										try {
+											fs.rmSync(compressedPathPre);
+										} catch (e) {}
+										throw e;
+									}
+									if (fs.existsSync(compressedPathPre)) {
+										fs.renameSync(compressedPathPre, compressedPath);
+									} else {
+										try {
+											fs.rmSync(tempPath);
+										} catch (e) {}
+										try {
+											fs.rmSync(tempAudioPath);
+										} catch (e) {}
+										try {
+											fs.rmSync(tempVideoPath);
+										} catch (e) {}
+										try {
+											fs.rmSync(compressedPathPre);
+										} catch (e) {}
+										throw new Error("Cannot find FFmpeg output");
+									}
+									if (fs.existsSync(compressedPath)) {
+										if (cache) {
+											cache.addToCache(compressedPath, name + ".webm", job.hash);
+										}
+										const retFile = new File([Uint8Array.from(Buffer.from(fs.readFileSync(compressedPath))).buffer], name + ".webm", {
+											type: job.file.type
+										});
+										try {
+											fs.rmSync(tempPath);
+										} catch (e) {}
+										try {
+											fs.rmSync(compressedPathPre);
+										} catch (e) {}
+										try {
+											fs.rmSync(tempAudioPath);
+										} catch (e) {}
+										try {
+											fs.rmSync(tempVideoPath);
+										} catch (e) {}
+										job.compressedFile = retFile;
+										if (!cache) {
+											try {
+												fs.rmSync(compressedPath);
+											} catch (e) {}
+										}
+										return job;
+									} else {
+										try {
+											fs.rmSync(tempPath);
+										} catch (e) {}
+										try {
+											fs.rmSync(tempAudioPath);
+										} catch (e) {}
+										try {
+											fs.rmSync(tempVideoPath);
+										} catch (e) {}
+										try {
+											fs.rmSync(compressedPathPre);
+										} catch (e) {}
+										throw new Error("Cannot find FFmpeg output");
+									}
+								} catch (e) {
+									try {
+										fs.rmSync(tempPath);
 									} catch (e) {}
-								} else {
-									Logger.err(config.info.name, "Unable to access temp data directory");
-									BdApi.showToast("Unable to compress video", {
-										type: "error"
-									});
-									reject();
+									throw e;
 								}
+							} else {
+								throw new Error("Cannot read FFprobe output");
 							}
-							reject();
-						})();
-					});
+						} else {
+							throw new Error("Unable to access temp data directory");
+						}
+					} else {
+						throw new Error("Unable to run FFmpeg");
+					}
 				}
 
 				loadImageElement(img, src) {
