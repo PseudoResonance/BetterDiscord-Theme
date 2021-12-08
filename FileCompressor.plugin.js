@@ -784,7 +784,7 @@ module.exports = (() => {
 										[
 											DiscordModules.React.createElement(Markdown, {}, "To compress video/audio, " + config.info.name + " needs to use FFmpeg."),
 											DiscordModules.React.createElement("hr"),
-											DiscordModules.React.createElement(Markdown, {}, "If you would like to specify a custom FFmpeg installation, please press cancel and add setup FFmpeg in the " + config.info.name + " plugin settings. Otherwise, click  install to automatically download and install FFmpeg."),
+											DiscordModules.React.createElement(Markdown, {}, "If you would like to specify a custom FFmpeg installation, please press cancel and add setup FFmpeg in the " + config.info.name + " plugin settings. Otherwise, click install to automatically download and install FFmpeg."),
 											DiscordModules.React.createElement("hr"),
 											DiscordModules.React.createElement(Markdown, {}, "FFmpeg " + ffmpegVersion + " source code is available here: " + ffmpegSourceUrl),
 											DiscordModules.React.createElement(Markdown, {}, "FFmpeg is licensed under " + ffmpegLicense + ", available to read here: " + ffmpegLicenseUrl)
