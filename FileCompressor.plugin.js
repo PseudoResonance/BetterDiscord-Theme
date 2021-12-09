@@ -15,7 +15,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.3.5",
+			version: "1.3.6",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -26,7 +26,8 @@ module.exports = (() => {
 				items: [
 					"Simplified encoder selection",
 					"Fixed automatic download of FFmpeg",
-					"Fixed audio files from being converted to mono"
+					"Fixed audio files from being converted to mono",
+					"Fix improper reading of FFprobe output data"
 				]
 			}, {
 				title: "Added",
@@ -211,7 +212,10 @@ module.exports = (() => {
 					fileType: "webm"
 				}
 			};
-			const timeRegex = /time=(\d+:\d+:\d+.\d+)/g;
+			const regexPatternTime = /time=(\d+:\d+:\d+.\d+)/;
+			const regexPatternDuration = /duration=([\d.]+)/;
+			const regexPatternChannels = /channels=(\d+)/;
+			const regexPatternHeight = /height=(\d+)/;
 
 			// Persistent toasts container
 			let toasts = null;
@@ -1344,12 +1348,16 @@ module.exports = (() => {
 							});
 							writeStream.destroy();
 							toasts.setToast(job.jobId, "Calculating");
-							const data = await ffmpeg.runProbeWithArgs(["-v", "error", "-show_entries", "format=duration", "-show_entries", "stream=channels", "-of", "default=noprint_wrappers=1:nokey=1", tempPath]);
+							const data = await ffmpeg.runProbeWithArgs(["-v", "error", "-show_entries", "format=duration", "-show_entries", "stream=channels", "-of", "default=noprint_wrappers=1", tempPath]);
 							if (data) {
+								const outputStr = data.data;
 								try {
-									const dataSplit = data.data.split(/\r?\n/);
-									const numChannels = parseInt(dataSplit[1]);
-									const duration = Math.ceil(dataSplit[0]);
+									const durationMatches = regexPatternDuration.exec(outputStr);
+									const channelsMatches = regexPatternChannels.exec(outputStr);
+									const duration = Math.ceil(durationMatches[1]);
+									const numChannels = parseInt(channelsMatches[1]);
+									if (duration == 0)
+										throw new Error("Invalid file duration");
 									const cappedFileSize = Math.floor((job.options.sizeCap.value && parseInt(job.options.sizeCap.value) < maxUploadSize ? parseInt(job.options.sizeCap.value) : maxUploadSize) - 500000);
 									let audioBitrate = Math.floor((cappedFileSize * 8) / duration);
 									if (audioBitrate > 256000)
@@ -1369,7 +1377,7 @@ module.exports = (() => {
 											return str.includes("time=")
 										}, str => {
 											try {
-												const timeStr = timeRegex.exec(str);
+												const timeStr = regexPatternTime.exec(str);
 												if (timeStr) {
 													const timeStrParts = timeStr[1].split(':');
 													const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
@@ -1500,12 +1508,15 @@ module.exports = (() => {
 							});
 							writeStream.destroy();
 							toasts.setToast(job.jobId, "Calculating");
-							const data = await ffmpeg.runProbeWithArgs(["-v", "error", "-show_entries", "format=duration", "-show_entries", "stream=height", "-of", "default=noprint_wrappers=1:nokey=1", tempPath]);
+							const data = await ffmpeg.runProbeWithArgs(["-v", "error", "-show_entries", "format=duration", "-show_entries", "stream=height", "-of", "default=noprint_wrappers=1", tempPath]);
 							if (data) {
 								try {
-									const dataSplit = data.data.split(/\r?\n/);
-									const originalHeight = parseInt(dataSplit[0]);
-									const duration = Math.ceil(dataSplit[1]);
+									const durationMatches = regexPatternDuration.exec(data.data);
+									const heightMatches = regexPatternHeight.exec(data.data);
+									const duration = Math.ceil(durationMatches[1]);
+									const originalHeight = parseInt(heightMatches[1]);
+									if (duration == 0)
+										throw new Error("Invalid file duration");
 									let audioBitrate = 1320000 / duration + 10000;
 									if (audioBitrate > 32768)
 										audioBitrate = 32768;
@@ -1517,7 +1528,7 @@ module.exports = (() => {
 											return str.includes("time=")
 										}, str => {
 											try {
-												const timeStr = timeRegex.exec(str);
+												const timeStr = regexPatternTime.exec(str);
 												if (timeStr) {
 													const timeStrParts = timeStr[1].split(':');
 													const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
@@ -1572,7 +1583,7 @@ module.exports = (() => {
 												return str.includes("time=")
 											}, str => {
 												try {
-													const timeStr = timeRegex.exec(str);
+													const timeStr = regexPatternTime.exec(str);
 													if (timeStr) {
 														const timeStrParts = timeStr[1].split(':');
 														const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
@@ -1587,7 +1598,7 @@ module.exports = (() => {
 												return str.includes("time=")
 											}, str => {
 												try {
-													const timeStr = timeRegex.exec(str);
+													const timeStr = regexPatternTime.exec(str);
 													if (timeStr) {
 														const timeStrParts = timeStr[1].split(':');
 														const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
@@ -1616,7 +1627,7 @@ module.exports = (() => {
 												return str.includes("time=")
 											}, str => {
 												try {
-													const timeStr = timeRegex.exec(str);
+													const timeStr = regexPatternTime.exec(str);
 													if (timeStr) {
 														const timeStrParts = timeStr[1].split(':');
 														const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
@@ -1631,7 +1642,7 @@ module.exports = (() => {
 												return str.includes("time=")
 											}, str => {
 												try {
-													const timeStr = timeRegex.exec(str);
+													const timeStr = regexPatternTime.exec(str);
 													if (timeStr) {
 														const timeStrParts = timeStr[1].split(':');
 														const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
@@ -1668,7 +1679,7 @@ module.exports = (() => {
 											return str.includes("time=")
 										}, str => {
 											try {
-												const timeStr = timeRegex.exec(str);
+												const timeStr = regexPatternTime.exec(str);
 												if (timeStr) {
 													const timeStrParts = timeStr[1].split(':');
 													const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
