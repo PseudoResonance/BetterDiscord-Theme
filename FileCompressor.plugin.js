@@ -15,7 +15,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.3.4",
+			version: "1.3.5",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -25,9 +25,10 @@ module.exports = (() => {
 				type: "fixed",
 				items: [
 					"Simplified encoder selection",
-					"Fixed automatic download of FFmpeg"
+					"Fixed automatic download of FFmpeg",
+					"Fixed audio files from being converted to mono"
 				]
-			},{
+			}, {
 				title: "Added",
 				type: "added",
 				items: [
@@ -1097,21 +1098,27 @@ module.exports = (() => {
 							description: "Max file size in bytes",
 							type: "textbox",
 							defaultValue: "",
-							validation: value => {return (!isNaN(value) && !isNaN(parseInt(value)));}
+							validation: value => {
+								return (!isNaN(value) && !isNaN(parseInt(value)));
+							}
 						};
 						job.options.sizeMultiplier = {
 							name: "Iterative Size Multiplier",
 							description: "Amount to multiply image size by with each attempt",
 							type: "textbox",
 							defaultValue: 0.9,
-							validation: value => {return (!isNaN(value) && !isNaN(parseFloat(value)));}
+							validation: value => {
+								return (!isNaN(value) && !isNaN(parseFloat(value)));
+							}
 						};
 						job.options.maxIterations = {
 							name: "Max Iterations",
 							description: "Maximum number of attempts to resize image",
 							type: "textbox",
 							defaultValue: 50,
-							validation: value => {return (!isNaN(value) && !isNaN(parseInt(value)));}
+							validation: value => {
+								return (!isNaN(value) && !isNaN(parseInt(value)));
+							}
 						};
 						if (!await this.showSettings("Image Compression Options", job.options))
 							return false;
@@ -1131,13 +1138,17 @@ module.exports = (() => {
 							description: "Max file size in bytes",
 							type: "textbox",
 							defaultValue: "",
-							validation: value => {return (!isNaN(value) && !isNaN(parseInt(value)));}
+							validation: value => {
+								return (!isNaN(value) && !isNaN(parseInt(value)));
+							}
 						};
 						job.options.maxHeight = {
 							name: "Max Video Height",
 							type: "textbox",
 							defaultValue: "",
-							validation: value => {return (!isNaN(value) && !isNaN(parseInt(value)));}
+							validation: value => {
+								return (!isNaN(value) && !isNaN(parseInt(value)));
+							}
 						};
 						if (!await this.showSettings("Video Compression Options", job.options))
 							return false;
@@ -1149,7 +1160,9 @@ module.exports = (() => {
 							description: "Max file size in bytes",
 							type: "textbox",
 							defaultValue: "",
-							validation: value => {return (!isNaN(value) && !isNaN(parseInt(value)));}
+							validation: value => {
+								return (!isNaN(value) && !isNaN(parseInt(value)));
+							}
 						};
 						if (!await this.showSettings("Audio Compression Options", job.options))
 							return false;
@@ -1176,7 +1189,10 @@ module.exports = (() => {
 							const settingsElements = [];
 							for (const setting in options) {
 								options[setting].value = options[setting].defaultValue;
-								settingsElements.push(this.createSettingField(options[setting].type, options[setting].name, options[setting].description, options[setting].defaultValue, value => {if (typeof(options[setting].validation) != "function" || options[setting].validation(value)) options[setting].value = value;}, options[setting].props));
+								settingsElements.push(this.createSettingField(options[setting].type, options[setting].name, options[setting].description, options[setting].defaultValue, value => {
+										if (typeof(options[setting].validation) != "function" || options[setting].validation(value))
+											options[setting].value = value;
+									}, options[setting].props));
 							}
 							const settingsPanel = Settings.SettingPanel.build(null, ...settingsElements);
 							BdApi.showConfirmationModal(title, ReactTools.createWrappedElement(settingsPanel), {
@@ -1195,7 +1211,7 @@ module.exports = (() => {
 						}
 					});
 				}
-				
+
 				createSettingField(type, name, description, defaultValue, onChange, props) {
 					switch (type) {
 					case "color":
@@ -1328,19 +1344,28 @@ module.exports = (() => {
 							});
 							writeStream.destroy();
 							toasts.setToast(job.jobId, "Calculating");
-							const data = await ffmpeg.runProbeWithArgs(["-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", tempPath]);
+							const data = await ffmpeg.runProbeWithArgs(["-v", "error", "-show_entries", "format=duration", "-show_entries", "stream=channels", "-of", "default=noprint_wrappers=1:nokey=1", tempPath]);
 							if (data) {
 								try {
-									const duration = Math.ceil(data.data);
+									const dataSplit = data.data.split(/\r?\n/);
+									const numChannels = parseInt(dataSplit[1]);
+									const duration = Math.ceil(dataSplit[0]);
 									const cappedFileSize = Math.floor((job.options.sizeCap.value && parseInt(job.options.sizeCap.value) < maxUploadSize ? parseInt(job.options.sizeCap.value) : maxUploadSize) - 500000);
 									let audioBitrate = Math.floor((cappedFileSize * 8) / duration);
 									if (audioBitrate > 256000)
 										audioBitrate = 256000;
 									if (audioBitrate < 500)
 										audioBitrate = 500;
+									let outputChannels = numChannels;
+									if (audioBitrate / numChannels < 50000) {
+										if (Math.floor(audioBitrate / 50000) > 2)
+											outputChannels = 2;
+										else
+											outputChannels = 1;
+									}
 									try {
 										toasts.setToast(job.jobId, "Compressing 0%");
-										await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-vn", "-c:a", "libopus", "-b:a", audioBitrate, "-ac", "1", "-sn", "-map_chapters", "-1", compressedPathPre], str => {
+										await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-vn", "-c:a", "libopus", "-b:a", audioBitrate, "-ac", outputChannels, "-sn", "-map_chapters", "-1", compressedPathPre], str => {
 											return str.includes("time=")
 										}, str => {
 											try {
@@ -1634,8 +1659,7 @@ module.exports = (() => {
 										} catch (e) {}
 										try {
 											fs.rmSync(tempAudioPath);
-										} catch (e) {
-										}
+										} catch (e) {}
 										throw new Error("Cannot find FFmpeg output");
 									}
 									try {
