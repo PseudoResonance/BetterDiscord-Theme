@@ -15,7 +15,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.3.6",
+			version: "1.3.7",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -34,7 +34,11 @@ module.exports = (() => {
 				type: "added",
 				items: [
 					"Added compression options modal to fine-tune compression",
-					"Hooks into message attachment menu + button"
+					"Hooks into message attachment menu + button",
+					"Global default for file size cap",
+					"Cap video framerates",
+					"Strip audio from video",
+					"Interlace video"
 				]
 			}, {
 				title: "Known Bugs",
@@ -63,6 +67,12 @@ module.exports = (() => {
 						id: 'immediateUpload',
 						type: 'switch',
 						value: false
+					}, {
+						name: 'Max File Size (bytes)',
+						note: 'Default to this maximum file size for slower networks.',
+						id: 'maxFileSize',
+						type: 'textbox',
+						value: 0
 					}
 				]
 			}, {
@@ -216,6 +226,7 @@ module.exports = (() => {
 			const regexPatternDuration = /duration=([\d.]+)/;
 			const regexPatternChannels = /channels=(\d+)/;
 			const regexPatternHeight = /height=(\d+)/;
+			const regexPatternFrameRate = /r_frame_rate=(\d+\/\d+)/;
 
 			// Persistent toasts container
 			let toasts = null;
@@ -1093,26 +1104,26 @@ module.exports = (() => {
 							defaultValue: true
 						};
 					}
+					job.options.sizeCap = {
+						name: "Size Cap (bytes)",
+						description: "Max file size in bytes",
+						type: "textbox",
+						defaultValue: (this.settings.upload.maxFileSize != 0 ? this.settings.upload.maxFileSize : ""),
+						validation: value => {
+							return (!isNaN(value) && !isNaN(parseInt(value)) && value > 0);
+						}
+					};
 					// If cached file exists, ask user if they want to use cached options
 					switch (job.type) {
 					case "image":
 						// Ask for compression settings
-						job.options.sizeCap = {
-							name: "Size Cap",
-							description: "Max file size in bytes",
-							type: "textbox",
-							defaultValue: "",
-							validation: value => {
-								return (!isNaN(value) && !isNaN(parseInt(value)));
-							}
-						};
 						job.options.sizeMultiplier = {
 							name: "Iterative Size Multiplier",
 							description: "Amount to multiply image size by with each attempt",
 							type: "textbox",
 							defaultValue: 0.9,
 							validation: value => {
-								return (!isNaN(value) && !isNaN(parseFloat(value)));
+								return (!isNaN(value) && !isNaN(parseFloat(value)) && value < 1 && value > 0);
 							}
 						};
 						job.options.maxIterations = {
@@ -1121,7 +1132,7 @@ module.exports = (() => {
 							type: "textbox",
 							defaultValue: 50,
 							validation: value => {
-								return (!isNaN(value) && !isNaN(parseInt(value)));
+								return (!isNaN(value) && !isNaN(parseInt(value)) && value > 0);
 							}
 						};
 						if (!await this.showSettings("Image Compression Options", job.options))
@@ -1137,37 +1148,39 @@ module.exports = (() => {
 								values: Object.getOwnPropertyNames(encoderSettings)
 							}
 						};
-						job.options.sizeCap = {
-							name: "Size Cap",
-							description: "Max file size in bytes",
-							type: "textbox",
-							defaultValue: "",
-							validation: value => {
-								return (!isNaN(value) && !isNaN(parseInt(value)));
-							}
-						};
 						job.options.maxHeight = {
 							name: "Max Video Height",
 							type: "textbox",
 							defaultValue: "",
 							validation: value => {
-								return (!isNaN(value) && !isNaN(parseInt(value)));
+								return (!isNaN(value) && !isNaN(parseInt(value)) && value > 0);
 							}
+						};
+						job.options.maxFps = {
+							name: "Max Video FPS",
+							type: "textbox",
+							defaultValue: "60",
+							validation: value => {
+								return (!isNaN(value) && !isNaN(parseFloat(value)) && value > 0);
+							}
+						};
+						job.options.interlace = {
+							name: "Interlace Video",
+							description: "Not recommended except for the largest videos",
+							type: "switch",
+							defaultValue: false
+						};
+						job.options.stripAudio = {
+							name: "Strip Audio",
+							description: "Remove all audio from the video.",
+							type: "switch",
+							defaultValue: false
 						};
 						if (!await this.showSettings("Video Compression Options", job.options))
 							return false;
 						break;
 					case "audio":
 						// Ask for compression settings
-						job.options.sizeCap = {
-							name: "Size Cap",
-							description: "Max file size in bytes",
-							type: "textbox",
-							defaultValue: "",
-							validation: value => {
-								return (!isNaN(value) && !isNaN(parseInt(value)));
-							}
-						};
 						if (!await this.showSettings("Audio Compression Options", job.options))
 							return false;
 						break;
@@ -1348,7 +1361,7 @@ module.exports = (() => {
 							});
 							writeStream.destroy();
 							toasts.setToast(job.jobId, "Calculating");
-							const data = await ffmpeg.runProbeWithArgs(["-v", "error", "-show_entries", "format=duration", "-show_entries", "stream=channels", "-of", "default=noprint_wrappers=1", tempPath]);
+							const data = await ffmpeg.runProbeWithArgs(["-v", "error", "-select_streams", "a", "-show_entries", "format=duration", "-show_entries", "stream=channels", "-of", "default=noprint_wrappers=1", tempPath]);
 							if (data) {
 								const outputStr = data.data;
 								try {
@@ -1508,53 +1521,62 @@ module.exports = (() => {
 							});
 							writeStream.destroy();
 							toasts.setToast(job.jobId, "Calculating");
-							const data = await ffmpeg.runProbeWithArgs(["-v", "error", "-show_entries", "format=duration", "-show_entries", "stream=height", "-of", "default=noprint_wrappers=1", tempPath]);
+							const data = await ffmpeg.runProbeWithArgs(["-v", "error", "-select_streams", "v", "-show_entries", "format=duration", "-show_entries", "stream=height", "-show_entries", "stream=r_frame_rate", "-of", "default=noprint_wrappers=1", tempPath]);
 							if (data) {
+								const outputStr = data.data;
 								try {
-									const durationMatches = regexPatternDuration.exec(data.data);
-									const heightMatches = regexPatternHeight.exec(data.data);
+									const durationMatches = regexPatternDuration.exec(outputStr);
+									const heightMatches = regexPatternHeight.exec(outputStr);
+									const frameRateMatches = regexPatternFrameRate.exec(outputStr);
 									const duration = Math.ceil(durationMatches[1]);
 									const originalHeight = parseInt(heightMatches[1]);
+									const frameRate = parseFloat(frameRateMatches[1]);
 									if (duration == 0)
 										throw new Error("Invalid file duration");
-									let audioBitrate = 1320000 / duration + 10000;
-									if (audioBitrate > 32768)
-										audioBitrate = 32768;
-									else if (audioBitrate < 10240)
-										audioBitrate = 10240;
-									try {
-										toasts.setToast(job.jobId, "Compressing Audio 0%");
-										await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-vn", "-c:a", "libopus", "-b:a", audioBitrate, "-ac", "1", "-sn", "-map_chapters", "-1", tempAudioPath], str => {
-											return str.includes("time=")
-										}, str => {
-											try {
-												const timeStr = regexPatternTime.exec(str);
-												if (timeStr) {
-													const timeStrParts = timeStr[1].split(':');
-													const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
-													toasts.setToast(job.jobId, "Compressing Audio " + Math.round((elapsedTime / duration) * 100) + "%");
+									let audioSize = 0;
+									if (!job.options.stripAudio.value) {
+										let audioBitrate = 1320000 / duration + 10000;
+										if (audioBitrate > 32768)
+											audioBitrate = 32768;
+										else if (audioBitrate < 10240)
+											audioBitrate = 10240;
+										try {
+											toasts.setToast(job.jobId, "Compressing Audio 0%");
+											await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-vn", "-c:a", "libopus", "-b:a", audioBitrate, "-ac", "1", "-sn", "-map_chapters", "-1", tempAudioPath], str => {
+												return str.includes("time=")
+											}, str => {
+												try {
+													const timeStr = regexPatternTime.exec(str);
+													if (timeStr) {
+														const timeStrParts = timeStr[1].split(':');
+														const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
+														toasts.setToast(job.jobId, "Compressing Audio " + Math.round((elapsedTime / duration) * 100) + "%");
+													}
+												} catch (e) {
+													Logger.err(config.info.name, e);
 												}
-											} catch (e) {
-												Logger.err(config.info.name, e);
-											}
-										});
-									} catch (e) {
-										try {
-											fs.rmSync(tempPath);
-										} catch (e) {}
-										try {
-											fs.rmSync(tempAudioPath);
-										} catch (e) {}
-										throw e;
+											});
+										} catch (e) {
+											try {
+												fs.rmSync(tempPath);
+											} catch (e) {}
+											try {
+												fs.rmSync(tempAudioPath);
+											} catch (e) {}
+											throw e;
+										}
+										if (!fs.existsSync(tempAudioPath)) {
+											try {
+												fs.rmSync(tempPath);
+											} catch (e) {}
+											throw new Error("Cannot find FFmpeg output");
+										}
+										const audioStats = fs.statSync(tempAudioPath);
+										audioSize = audioStats ? audioStats.size : 0;
 									}
-									if (!fs.existsSync(tempAudioPath)) {
-										try {
-											fs.rmSync(tempPath);
-										} catch (e) {}
-										throw new Error("Cannot find FFmpeg output");
-									}
-									const audioStats = fs.statSync(tempAudioPath);
-									const audioSize = audioStats ? audioStats.size : 0;
+									let maxFrameRate = frameRate;
+									if (job.options.maxFps.value && job.options.maxFps.value < frameRate)
+										maxFrameRate = job.options.maxFps.value;
 									const cappedFileSize = Math.floor((job.options.sizeCap.value && parseInt(job.options.sizeCap.value) < maxUploadSize ? parseInt(job.options.sizeCap.value) : maxUploadSize) - 250000);
 									let videoBitrate = Math.floor((((cappedFileSize - audioSize) * 8) / 1024) / duration);
 									videoBitrate = videoBitrate > 2 ? videoBitrate - 1 : videoBitrate;
@@ -1579,7 +1601,7 @@ module.exports = (() => {
 									try {
 										toasts.setToast(job.jobId, "Compressing 1st Pass 0%");
 										if (maxVideoHeight && originalHeight > maxVideoHeight)
-											await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-vf", "scale=-1:" + maxVideoHeight + ", scale=trunc(iw/2)*2:" + maxVideoHeight, "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "1", "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")], str => {
+											await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-vf", "fps=fps=" + maxFrameRate + "," + (job.options.interlace.value ? "interlace=lowpass=2," : "") + "scale=-1:" + maxVideoHeight + ", scale=trunc(iw/2)*2:" + maxVideoHeight, "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "1", "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")], str => {
 												return str.includes("time=")
 											}, str => {
 												try {
@@ -1594,7 +1616,7 @@ module.exports = (() => {
 												}
 											});
 										else
-											await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "1", "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")], str => {
+											await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-vf", "fps=fps=" + maxFrameRate + (job.options.interlace.value ? ",interlace=lowpass=2," : ""), "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "1", "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")], str => {
 												return str.includes("time=")
 											}, str => {
 												try {
@@ -1612,9 +1634,11 @@ module.exports = (() => {
 										try {
 											fs.rmSync(tempPath);
 										} catch (e) {}
-										try {
-											fs.rmSync(tempAudioPath);
-										} catch (e) {}
+										if (!job.options.stripAudio.value) {
+											try {
+												fs.rmSync(tempAudioPath);
+											} catch (e) {}
+										}
 										try {
 											fs.rmSync(tempVideoPath);
 										} catch (e) {}
@@ -1623,7 +1647,7 @@ module.exports = (() => {
 									try {
 										toasts.setToast(job.jobId, "Compressing 2nd Pass 0%");
 										if (maxVideoHeight && originalHeight > maxVideoHeight)
-											await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-vf", "scale=-1:" + maxVideoHeight + ", scale=trunc(iw/2)*2:" + maxVideoHeight, "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "2", tempVideoPath], str => {
+											await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-vf", "fps=fps=" + maxFrameRate + "," + (job.options.interlace.value ? "interlace=lowpass=2," : "") + "scale=-1:" + maxVideoHeight + ", scale=trunc(iw/2)*2:" + maxVideoHeight, "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "2", tempVideoPath], str => {
 												return str.includes("time=")
 											}, str => {
 												try {
@@ -1638,7 +1662,7 @@ module.exports = (() => {
 												}
 											});
 										else
-											await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "2", tempVideoPath], str => {
+											await ffmpeg.runWithArgs(["-y", "-i", tempPath, "-b:v", videoBitrate + "K", "-vf", "fps=fps=" + maxFrameRate + (job.options.interlace.value ? ",interlace=lowpass=2," : ""), "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "2", tempVideoPath], str => {
 												return str.includes("time=")
 											}, str => {
 												try {
@@ -1675,7 +1699,7 @@ module.exports = (() => {
 									}
 									try {
 										toasts.setToast(job.jobId, "Packaging 0%");
-										await ffmpeg.runWithArgs(["-y", "-i", tempAudioPath, "-i", tempVideoPath, "-c", "copy", compressedPathPre], str => {
+										await ffmpeg.runWithArgs(["-y", ...(!job.options.stripAudio.value ? ["-i", tempAudioPath] : []), "-i", tempVideoPath, "-c", "copy", compressedPathPre], str => {
 											return str.includes("time=")
 										}, str => {
 											try {
