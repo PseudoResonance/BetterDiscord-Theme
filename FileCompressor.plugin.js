@@ -15,7 +15,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.3.8",
+			version: "1.4.0",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -39,7 +39,8 @@ module.exports = (() => {
 					"Cap video framerates",
 					"Strip audio from video",
 					"Interlace video",
-					"Cut video to timestamps"
+					"Cut video to timestamps",
+					"Full localization in English and Japanese"
 				]
 			}, {
 				title: "Known Bugs",
@@ -53,24 +54,24 @@ module.exports = (() => {
 		defaultConfig: [{
 				type: 'category',
 				id: 'upload',
-				name: 'Upload Settings',
+				get name() {return i18n.MESSAGES.SETTINGS_UPLOAD_CATEGORY},
 				collapsible: true,
 				shown: false,
 				settings: [{
-						name: 'Auto Channel Switch',
-						note: 'Automatically switch to the required channel when a file is ready to be uploaded.',
+						get name() {return i18n.MESSAGES.SETTINGS_AUTO_CHANNEL_SWITCH},
+						get note() {return i18n.MESSAGES.SETTINGS_AUTO_CHANNEL_SWITCH_DESC},
 						id: 'autoChannelSwitch',
 						type: 'switch',
 						value: true
 					}, {
-						name: 'Immediate Upload',
-						note: 'Immediately upload files without showing a preview.',
+						get name() {return i18n.MESSAGES.SETTINGS_IMMEDIATE_UPLOAD},
+						get note() {return i18n.MESSAGES.SETTINGS_IMMEDIATE_UPLOAD_DESC},
 						id: 'immediateUpload',
 						type: 'switch',
 						value: false
 					}, {
-						name: 'Max File Size (bytes)',
-						note: 'Default to this maximum file size for slower networks.',
+						get name() {return i18n.MESSAGES.SETTINGS_MAX_FILE_SIZE},
+						get note() {return i18n.MESSAGES.SETTINGS_MAX_FILE_SIZE_DESC},
 						id: 'maxFileSize',
 						type: 'textbox',
 						value: 0
@@ -79,18 +80,18 @@ module.exports = (() => {
 			}, {
 				type: 'category',
 				id: 'compressor',
-				name: 'Compressor Settings',
+				get name() {return i18n.MESSAGES.SETTINGS_COMPRESSOR_CATEGORY},
 				collapsible: true,
 				shown: false,
 				settings: [{
-						name: 'Prompt for Options',
-						note: 'Prompt for compression options before compressing',
+						get name() {return i18n.MESSAGES.SETTINGS_PROMPT_FOR_OPTIONS},
+						get note() {return i18n.MESSAGES.SETTINGS_PROMPT_FOR_OPTIONS_DESC},
 						id: 'promptOptions',
 						type: 'switch',
 						value: true
 					}, {
-						name: 'Concurrent Compression Threads',
-						note: 'Number of compression jobs that can be processing simultaneously.',
+						get name() {return i18n.MESSAGES.SETTINGS_CONCURRENT_THREADS},
+						get note() {return i18n.MESSAGES.SETTINGS_CONCURRENT_THREADS_DESC},
 						id: 'concurrentThreads',
 						type: 'slider',
 						min: 1,
@@ -99,26 +100,26 @@ module.exports = (() => {
 						markers: [1, 2, 3, 4, 5],
 						stickToMarkers: true
 					}, {
-						name: 'Cache Location',
-						note: 'Custom file cache location to use (Leave empty to use default location).',
+						get name() {return i18n.MESSAGES.SETTINGS_CACHE_PATH},
+						get note() {return i18n.MESSAGES.SETTINGS_CACHE_PATH_DESC},
 						id: 'cachePath',
 						type: 'textbox',
 						value: ""
 					}, {
-						name: 'Use FFmpeg',
-						note: 'Enable the use of FFmpeg for compressing video and audio.',
+						get name() {return i18n.MESSAGES.SETTINGS_FFMPEG},
+						get note() {return i18n.MESSAGES.SETTINGS_FFMPEG_DESC},
 						id: 'ffmpeg',
 						type: 'switch',
 						value: false
 					}, {
-						name: 'Download FFmpeg',
-						note: 'Should FFmpeg be automatically downloaded? Disable this to use a custom installation.',
+						get name() {return i18n.MESSAGES.SETTINGS_FFMPEG_DOWNLOAD},
+						get note() {return i18n.MESSAGES.SETTINGS_FFMPEG_DOWNLOAD_DESC},
 						id: 'ffmpegDownload',
 						type: 'switch',
 						value: true
 					}, {
-						name: 'FFmpeg Install Location',
-						note: 'Custom FFmpeg install location to use (Leave empty to use default location).',
+						get name() {return i18n.MESSAGES.SETTINGS_IMMEDIATE_UPLOAD},
+						get note() {return i18n.MESSAGES.SETTINGS_IMMEDIATE_UPLOAD_DESC},
 						id: 'ffmpegPath',
 						type: 'textbox',
 						value: ""
@@ -127,6 +128,39 @@ module.exports = (() => {
 			}
 		]
 	};
+
+	const i18n = {
+		FORMAT: function(key, ...args) {
+			if (args.length > 0)
+				return this.MESSAGES[key].replace(/{\$([0-9]+)\$}/g, (_, p1) => {const val = args[p1]; return val ? val : "";});
+			return this.MESSAGES[key];
+		},
+		en: {SETTINGS_UPLOAD_CATEGORY:'Upload Settings',SETTINGS_AUTO_CHANNEL_SWITCH:'Auto Channel Switch',SETTINGS_AUTO_CHANNEL_SWITCH_DESC:'Automatically switch to the required channel when a file is ready to be uploaded.',SETTINGS_IMMEDIATE_UPLOAD:'Immediate Upload',SETTINGS_IMMEDIATE_UPLOAD_DESC:'Immediately upload files without showing a preview.',SETTINGS_MAX_FILE_SIZE:'Max File Size (bytes)',SETTINGS_MAX_FILE_SIZE_DESC:'Default to this maximum file size for slower networks.',SETTINGS_COMPRESSOR_CATEGORY:'Compressor Settings',SETTINGS_PROMPT_FOR_OPTIONS:'Prompt for Options',SETTINGS_PROMPT_FOR_OPTIONS_DESC:'Prompt for compression options before compressing.',SETTINGS_CONCURRENT_THREADS:'Concurrent Compression Jobs',SETTINGS_CONCURRENT_THREADS_DESC:'Number of compression jobs that can be processing simultaneously.',SETTINGS_CACHE_PATH:'Cache Location',SETTINGS_CACHE_PATH_DESC:'Custom file cache location to use (Leave empty to use default location).',SETTINGS_FFMPEG:'Use FFmpeg',SETTINGS_FFMPEG_DESC:'Enable the use of FFmpeg for compressing video and audio.',SETTINGS_FFMPEG_DOWNLOAD:'Download FFmpeg',SETTINGS_FFMPEG_DOWNLOAD_DESC:'Should FFmpeg be automatically downloaded? Disable this to use a custom installation.',SETTINGS_FFMPEG_PATH:'FFmpeg Install Location',SETTINGS_FFMPEG_PATH_DESC:'Custom FFmpeg install location to use (Leave empty to use default location).',COMPRESSION_OPTIONS_USE_CACHE:'Use Cache',COMPRESSION_OPTIONS_USE_CACHE_DESC:'Use the previously cached file.',COMPRESSION_OPTIONS_SIZE_CAP:'Size Cap (bytes)',COMPRESSION_OPTIONS_SIZE_CAP_DESC:'Max file size to compress under.',COMPRESSION_OPTIONS_SIZE_MULTIPLIER:'Iterative Size Multiplier',COMPRESSION_OPTIONS_SIZE_MULTIPLIER_DESC:'Amount to multiply image size by with each attempt.',COMPRESSION_OPTIONS_MAX_ITERATIONS:'Max Iterations',COMPRESSION_OPTIONS_MAX_ITERATIONS_DESC:'Maximum number of attempts to resize image.',COMPRESSION_OPTIONS_CATEGORY_IMAGE:'Image Compression Options',COMPRESSION_OPTIONS_ENCODER:'Encoder',COMPRESSION_OPTIONS_MAX_HEIGHT:'Max Video Height (pixels)',COMPRESSION_OPTIONS_MAX_FPS:'Max Video FPS',COMPRESSION_OPTIONS_INTERLACE_VIDEO:'Interlace Video',COMPRESSION_OPTIONS_INTERLACE_VIDEO_DESC:'Not recommended except for the largest videos.',COMPRESSION_OPTIONS_STRIP_AUDIO:'Strip Audio',COMPRESSION_OPTIONS_STRIP_AUDIO_DESC:'Remove all audio from the video.',COMPRESSION_OPTIONS_STARTING_TIMESTAMP:'Starting Timestamp',COMPRESSION_OPTIONS_ENDING_TIMESTAMP:'Ending Timestamp',COMPRESSION_OPTIONS_CATEGORY_VIDEO:'Video Compression Options',COMPRESSION_OPTIONS_CATEGORY_AUDIO:'Audio Compression Options',RUNNING_PROGRAM:'Running {$0$}',ERROR_CACHING:'Error caching file',ERROR_CACHE_SETUP:'Error setting up cache',ERROR_HOOKING_UPLOAD:'Unable to hook into Discord upload handler',FFMPEG_VERSION_REQUIRED:'FFmpeg {$0$} Required',FFMPEG_REQUIRED_COMPRESSION:'To compress video/audio, {$0$} needs to use FFmpeg.',FFMPEG_REQUIRED_CUSTOM_INSTALL:'If you would like to specify a custom FFmpeg installation, please press cancel and setup FFmpeg in the {$0$} plugin settings. Otherwise, by clicking "Install Automatically", you are agreeing to the licensing terms, and FFmpeg will be automatically installed.',FFMPEG_SOURCE_LOCATION:'FFmpeg {$0$} source code is available here: {$1$}',FFMPEG_LICENSE_INFO:'FFmpeg is licensed under {$0$}, available to read here: {$1$}',FFMPEG_CUSTOM_PATH_INVALID:'To compress video/audio, {$0$} needs to use FFmpeg. The path to FFmpeg specified in the {$0$} settings is invalid!\n\nPlease check the path and ensure "Use FFmpeg" is enabled.',ERROR_DOWNLOADING_PROGRAM:'Error downloading {$0$}',CANCEL:'Cancel',INSTALL_AUTOMATICALLY:'Install Automatically',BEGIN_COMPRESSION:'Begin Compression',DOWNLOADING_PROGRAM_PERCENT:'Downloading {$0$} {$1$}%',HASHING_PERCENT:'Hashing {$0$}%',INITIALIZING:'Initializing',COPYING_PERCENT:'Copying {$0$}%',CALCULATING:'Calculating',COMPRESSING_PERCENT:'Compressing {$0$}%',COMPRESSING_AUDIO_PERCENT:'Compressing Audio {$0$}%',COMPRESSING_PASS_1_PERCENT:'Compressing Pass 1 {$0$}%',COMPRESSING_PASS_2_PERCENT:'Compressing Pass 2 {$0$}%',COMPRESSING_TRY_NUMBER:'Compressing Attempt {$0$}',PACKAGING:'Packaging',ERROR_GETTING_ACCOUNT_INFO:'Error getting account info',FILES_TOO_LARGE_TO_UPLOAD:'Files too large to upload: {$0$}',UNABLE_TO_RETURN_TO_CHANNEL:'Unable to return to channel',ERROR_UPLOADING:'Error uploading file',ERROR_COMPRESSING:'Error compressing file',QUEUED_FILES_NUM:'Files to be compressed: {$0$}'},
+		ja: {SETTINGS_UPLOAD_CATEGORY:'アップロード設定',SETTINGS_AUTO_CHANNEL_SWITCH:'自動的でチャネルにジャンプ',SETTINGS_AUTO_CHANNEL_SWITCH_DESC:'ファイルアップロードの準備ができたら自動的でチャネルにジャンプ。',SETTINGS_IMMEDIATE_UPLOAD:'直接アップロード',SETTINGS_IMMEDIATE_UPLOAD_DESC:'プレビューなしで直接アップロード。',SETTINGS_MAX_FILE_SIZE:'最大ファイルサイズ（bytes）',SETTINGS_MAX_FILE_SIZE_DESC:'低速ネットワークの場合で最大ファイルサイズのデフォルト。',SETTINGS_COMPRESSOR_CATEGORY:'圧縮設定',SETTINGS_PROMPT_FOR_OPTIONS:'オプションのプロンプト',SETTINGS_PROMPT_FOR_OPTIONS_DESC:'圧縮を開始前にオプションのプロンプト。',SETTINGS_CONCURRENT_THREADS:'同時圧縮ジョブ',SETTINGS_CONCURRENT_THREADS_DESC:'同時で圧縮できるジョブの数。',SETTINGS_CACHE_PATH:'キャッシュの所在',SETTINGS_CACHE_PATH_DESC:'ファイルキャッシュの所在（デフォルト使うには空のまま）。',SETTINGS_FFMPEG:'FFmpegを使用',SETTINGS_FFMPEG_DESC:'動画と音声の圧縮にFFmpegを使用。',SETTINGS_FFMPEG_DOWNLOAD:'FFmpegをダウンロード',SETTINGS_FFMPEG_DOWNLOAD_DESC:'FFmpegを自動的にダウンロード？カスタムインストール所在使うには無効します。',SETTINGS_FFMPEG_PATH:'FFmpegのインストール所在',SETTINGS_FFMPEG_PATH_DESC:'FFmpegのインストール所在（デフォルト使うには空のまま）。',COMPRESSION_OPTIONS_USE_CACHE:'キャッシュを使用',COMPRESSION_OPTIONS_USE_CACHE_DESC:'以前にキャッシュされたファイルを使用する。',COMPRESSION_OPTIONS_SIZE_CAP:'最大ファイルサイズ（bytes）',COMPRESSION_OPTIONS_SIZE_CAP_DESC:'圧縮するときの最大なファイルサイズ。',COMPRESSION_OPTIONS_SIZE_MULTIPLIER:'試行ごとに画像のサイズ変更係数',COMPRESSION_OPTIONS_SIZE_MULTIPLIER_DESC:'試行ごとに画像のサイズがこの係数で乗算します。',COMPRESSION_OPTIONS_MAX_ITERATIONS:'最大試行回数',COMPRESSION_OPTIONS_MAX_ITERATIONS_DESC:'画像圧縮の最大試行回数。',COMPRESSION_OPTIONS_CATEGORY_IMAGE:'画像圧縮設定',COMPRESSION_OPTIONS_ENCODER:'エンコーダー',COMPRESSION_OPTIONS_MAX_HEIGHT:'最大動画の高さ（ピクセル）',COMPRESSION_OPTIONS_MAX_FPS:'最大動画のFPS',COMPRESSION_OPTIONS_INTERLACE_VIDEO:'動画をインターレース',COMPRESSION_OPTIONS_INTERLACE_VIDEO_DESC:'最大の動画以外に推奨されません。',COMPRESSION_OPTIONS_STRIP_AUDIO:'音声を消去する',COMPRESSION_OPTIONS_STRIP_AUDIO_DESC:'動画から全ての音声を消去する。',COMPRESSION_OPTIONS_STARTING_TIMESTAMP:'開始タイムスタンプ',COMPRESSION_OPTIONS_ENDING_TIMESTAMP:'終了タイムスタンプ',COMPRESSION_OPTIONS_CATEGORY_VIDEO:'動画圧縮設定',COMPRESSION_OPTIONS_CATEGORY_AUDIO:'音声圧縮設定',RUNNING_PROGRAM:'実行中 {$0$}',ERROR_CACHING:'ファイルキャッシュ中でエラー',ERROR_CACHE_SETUP:'キャッシュセットアップでエラー',ERROR_HOOKING_UPLOAD:'Discordのアップロードハンドラにフックできません',FFMPEG_VERSION_REQUIRED:'FFmpeg　{$0$}が必要です',FFMPEG_REQUIRED_COMPRESSION:'動画と音声の圧縮に{$0$}にはFFmpegが必要です。',FFMPEG_REQUIRED_CUSTOM_INSTALL:'カスタムなFFmpegのインストール使用するにはキャンセルを押して{$0$}プラグインの設定でFFmpegをセットアップしてください。それ以外、「自動的でインストール」を押すとライセンス条項に同意したことになりますので、FFmpegは自動的でインストールされます。',FFMPEG_SOURCE_LOCATION:'FFmpeg　{$0$}のソースコードはこちらです：　{$1$}',FFMPEG_LICENSE_INFO:'FFmpegは{$0$}の下でライセンスされています、こちらで読むことができます：　{$1$}',FFMPEG_CUSTOM_PATH_INVALID:'動画と音声の圧縮に{$0$}にはFFmpegが必要です。{$0$}プラグインの設定でFFmpegの所在は無効です！\n\n所在と「FFmpegを使用」が有効されているのを確認してください。',ERROR_DOWNLOADING_PROGRAM:'{$0$}のダウンロード中でエラー',CANCEL:'キャンセル',INSTALL_AUTOMATICALLY:'自動的でインストール',BEGIN_COMPRESSION:'圧縮を開始',DOWNLOADING_PROGRAM_PERCENT:'{$0$}ダウンロード中　{$1$}％',HASHING_PERCENT:'ハッシュ中　{$0$}％',INITIALIZING:'初期化中',COPYING_PERCENT:'コピー中　{$0$}％',CALCULATING:'計算中',COMPRESSING_PERCENT:'圧縮中　{$0$}％',COMPRESSING_AUDIO_PERCENT:'音声圧縮中　{$0$}％',COMPRESSING_PASS_1_PERCENT:'圧縮中１回目　{$0$}％',COMPRESSING_PASS_2_PERCENT:'圧縮中２回目　{$0$}％',COMPRESSING_TRY_NUMBER:'圧縮試行番　{$0$}',PACKAGING:'パッケージング中',ERROR_GETTING_ACCOUNT_INFO:'アカウント情報フェッチ中でエラー',FILES_TOO_LARGE_TO_UPLOAD:'アップロードするには大きすぎたファイル：　{$0$}',UNABLE_TO_RETURN_TO_CHANNEL:'チャネルに戻ることができません',ERROR_UPLOADING:'ファイルアップロード中でエラー',ERROR_COMPRESSING:'ファイル圧縮中でエラー',QUEUED_FILES_NUM:'圧縮するファイル：　{$0$}'},
+		DEFAULT_LOCALE: "en",
+		updateLocale: function(newLocale) {
+			newLocale = newLocale.toLowerCase();
+			if (this.locale != newLocale) {
+				this.locale = newLocale;
+				let localeMessages = this[this.locale];
+				if (!localeMessages) {
+					const localeShort = this.locale.substring(0, 2);
+					localeMessages = this[localeShort];
+					if (localeMessages) {
+						console.log(config.info.name + " Missing locale " + this.locale + ", falling back to " + localeShort);
+					} else {
+						console.log(config.info.name + " Missing locale " + this.locale);
+					}
+				}
+				this.MESSAGES = {...this.defaultMessages, ...localeMessages};
+			}
+		},
+		init: function() {
+			this.locale = this.DEFAULT_LOCALE;
+			this.MESSAGES = this.defaultMessages = this[this.DEFAULT_LOCALE];
+			return this;
+		}
+	}.init();
 
 	return !global.ZeresPluginLibrary ? class {
 		constructor() {
@@ -177,8 +211,6 @@ module.exports = (() => {
 			const uuidv4 = require('uuid/v4');
 			const cryptoModule = require('crypto');
 			const mime = require('mime-types');
-			// Real multithreading
-			// const { Worker } = require('worker_threads');
 
 			// Cache container
 			let cache = null;
@@ -314,22 +346,22 @@ module.exports = (() => {
 							}
 						}
 						if (fs.existsSync(this.ffmpeg) && fs.existsSync(this.ffprobe)) {
-							Logger.info(config.info.name, "Running FFmpeg -version");
+							Logger.info(config.info.name, i18n.FORMAT('RUNNING_PROGRAM', 'FFmpeg -version'));
 							Logger.debug(config.info.name, child_process.execFileSync(this.ffmpeg, ["-version"], {
 									timeout: 10000
 								}).toString());
 						} else {
-							throw new Error("Unable to find FFmpeg");
+							throw new Error("FFmpeg not found");
 						}
 					} else {
-						throw new Error("Unable to find FFmpeg");
+						throw new Error("FFmpeg not found");
 					}
 				}
 
-				runWithArgs(args, outputFilter, outputCallback) {
+				runWithArgs(args, outputFilter, processOutput) {
 					return new Promise((resolve, reject) => {
 						if (fs.existsSync(this.ffmpeg)) {
-							Logger.info(config.info.name, "Running FFmpeg with " + args.join(' '));
+							Logger.info(config.info.name, i18n.FORMAT('RUNNING_PROGRAM', 'FFmpeg ' + args.join(' ')));
 							const process = child_process.spawn(this.ffmpeg, args);
 							process.on('error', err => {
 								Logger.err(config.info.name, err);
@@ -350,13 +382,13 @@ module.exports = (() => {
 							});
 							process.stderr.on('data', data => {
 								const str = data.toString();
-								if (typeof(outputFilter) == "function" && typeof(outputCallback) == "function" && outputFilter(str)) {
-									outputCallback(str);
+								if (typeof(outputFilter) == "function" && typeof(processOutput) == "function" && outputFilter(str)) {
+									processOutput(str);
 								}
 							});
 							runningProcesses.push(process);
 						} else {
-							throw new Error("Unable to find FFmpeg");
+							throw new Error("FFmpeg not found");
 						}
 					});
 				}
@@ -364,7 +396,7 @@ module.exports = (() => {
 				runProbeWithArgs(args) {
 					return new Promise((resolve, reject) => {
 						if (fs.existsSync(this.ffprobe)) {
-							Logger.info(config.info.name, "Running FFprobe with " + args.join(' '));
+							Logger.info(config.info.name, i18n.FORMAT('RUNNING_PROGRAM', 'FFprobe ' + args.join(' ')));
 							const process = child_process.execFile(this.ffprobe, args, (err, stdout, stderr) => {
 								if (err) {
 									Logger.err(config.info.name, stderr);
@@ -385,7 +417,7 @@ module.exports = (() => {
 							});
 							runningProcesses.push(process);
 						} else {
-							throw new Error("Unable to find FFprobe");
+							throw new Error("FFprobe not found");
 						}
 					});
 				}
@@ -470,7 +502,6 @@ module.exports = (() => {
 				async saveAndCache(file, hash) {
 					try {
 						let nameSplit = file.name.split('.');
-						let name = nameSplit.slice(0, nameSplit.length - 1).join(".");
 						let extension = nameSplit[nameSplit.length - 1];
 						for (let i = 0; i < 5; i++) {
 							let filePath = path.join(this.cachePath, uuidv4().replace(/-/g, "") + "." + extension);
@@ -485,20 +516,20 @@ module.exports = (() => {
 								};
 								fr.onerror = e => {
 									Logger.err(config.info.name, fr.error);
-									BdApi.showToast("Error caching file!", {
+									BdApi.showToast(i18n.MESSAGES.ERROR_CACHING, {
 										type: "error"
 									});
 								};
 								return;
 							}
 						}
-						Logger.err(config.info.name, "Too many overlapping files in cache for " + file.name);
-						BdApi.showToast("Error caching file!", {
+						Logger.err(config.info.name, "Unable to find unused UUID for cache");
+						BdApi.showToast(i18n.MESSAGES.ERROR_CACHING, {
 							type: "error"
 						});
 					} catch (err) {
 						Logger.err(config.info.name, err);
-						BdApi.showToast("Error caching file!", {
+						BdApi.showToast(i18n.MESSAGES.ERROR_CACHING, {
 							type: "error"
 						});
 					}
@@ -632,6 +663,7 @@ module.exports = (() => {
 					this.updateCache();
 					// Setup toasts
 					toasts = new Toasts();
+					i18n.updateLocale(DiscordAPI.UserSettings.locale);
 					PluginUtilities.addStyle('FileCompressor-CSS', `
 						#pseudocompressor-toasts {
 							position:fixed;
@@ -729,7 +761,7 @@ module.exports = (() => {
 								}
 							};
 						} else {
-							BdApi.showToast("Unable to hook into Discord upload handler!", {
+							BdApi.showToast(i18n.MESSAGES.ERROR_HOOKING_UPLOAD, {
 								type: "error"
 							});
 							if (this.originalUploadFunction) {
@@ -741,7 +773,7 @@ module.exports = (() => {
 							this.originalUploadFunction = null;
 						}
 					} else {
-						BdApi.showToast("Unable to hook into Discord upload handler!", {
+						BdApi.showToast(i18n.MESSAGES.ERROR_HOOKING_UPLOAD, {
 							type: "error"
 						});
 						Logger.err(config.info.name, "Unable to hook into Discord upload handler! promptToUpload module doesn't exist!");
@@ -762,9 +794,9 @@ module.exports = (() => {
 					}
 					// Setup cache
 					try {
-						cache = new FileCache(this.settings.compressor.cachePath ? this.settings.compressor.cachePath : path.join(BdApi.Plugins.folder, "CompressorCache"));
+						cache = new FileCache(this.settings.compressor.cachePath ? this.settings.compressor.cachePath : path.join(BdApi.Plugins.folder, "compressorcache"));
 					} catch (err) {
-						BdApi.showToast("Error setting up cache!", {
+						BdApi.showToast(i18n.MESSAGES.ERROR_CACHE_SETUP, {
 							type: "error"
 						});
 					}
@@ -772,7 +804,7 @@ module.exports = (() => {
 
 				initFfmpeg() {
 					return new Promise((resolve, reject) => {
-						let ffmpegPath = this.settings.compressor.ffmpegPath ? this.settings.compressor.ffmpegPath : path.join(BdApi.Plugins.folder, "CompressorLibraries");
+						let ffmpegPath = this.settings.compressor.ffmpegPath ? this.settings.compressor.ffmpegPath : path.join(BdApi.Plugins.folder, "compressorlibraries");
 						let noFfmpeg = false;
 						let installedFfmpeg = BdApi.getData(config.info.name, "ffmpeg.version");
 						if (installedFfmpeg && installedFfmpeg != ffmpegVersion) {
@@ -796,15 +828,15 @@ module.exports = (() => {
 						}
 						if (noFfmpeg) {
 							if (this.settings.compressor.ffmpegDownload) {
-								BdApi.showConfirmationModal("FFmpeg " + ffmpegVersion + " Required",
+								BdApi.showConfirmationModal(i18n.FORMAT('FFMPEG_VERSION_REQUIRED', ffmpegVersion),
 									DiscordModules.React.createElement("div", {},
 										[
-											DiscordModules.React.createElement(Markdown, {}, "To compress video/audio, " + config.info.name + " needs to use FFmpeg."),
+											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('FFMPEG_REQUIRED_COMPRESSION', config.info.name)),
 											DiscordModules.React.createElement("hr"),
-											DiscordModules.React.createElement(Markdown, {}, "If you would like to specify a custom FFmpeg installation, please press cancel and add setup FFmpeg in the " + config.info.name + " plugin settings. Otherwise, click install to automatically download and install FFmpeg."),
+											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('FFMPEG_REQUIRED_CUSTOM_INSTALL', config.info.name)),
 											DiscordModules.React.createElement("hr"),
-											DiscordModules.React.createElement(Markdown, {}, "FFmpeg " + ffmpegVersion + " source code is available here: " + ffmpegSourceUrl),
-											DiscordModules.React.createElement(Markdown, {}, "FFmpeg is licensed under " + ffmpegLicense + ", available to read here: " + ffmpegLicenseUrl)
+											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('FFMPEG_SOURCE_LOCATION', ffmpegVersion, ffmpegSourceUrl)),
+											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('FFMPEG_LICENSE_INFO', ffmpegLicense, ffmpegLicenseUrl))
 										]), {
 									danger: false,
 									onConfirm: () => {
@@ -812,7 +844,7 @@ module.exports = (() => {
 										const ffmpegPromise = this.downloadLibrary(ffmpegPath, ffmpegDownloadUrls, "FFmpeg");
 										ffmpegPromise.catch(e => {
 											Logger.err(config.info.name, "Unable to download FFmpeg", e);
-											BdApi.showToast("Error downloading FFmpeg", {
+											BdApi.showToast(i18n.FORMAT('ERROR_DOWNLOADING_PROGRAM', 'FFmpeg'), {
 												type: "error"
 											});
 											reject(e);
@@ -820,7 +852,7 @@ module.exports = (() => {
 										const ffprobePromise = this.downloadLibrary(ffmpegPath, ffprobeDownloadUrls, "FFprobe");
 										ffprobePromise.catch(e => {
 											Logger.err(config.info.name, "Unable to download FFprobe", e);
-											BdApi.showToast("Error downloading FFprobe", {
+											BdApi.showToast(i18n.FORMAT('ERROR_DOWNLOADING_PROGRAM', 'FFprobe'), {
 												type: "error"
 											});
 											reject(e);
@@ -831,10 +863,12 @@ module.exports = (() => {
 									},
 									onCancel: () => {
 										reject();
-									}
+									},
+									confirmText: i18n.MESSAGES.INSTALL_AUTOMATICALLY,
+									cancelText: i18n.MESSAGES.CANCEL
 								});
 							} else {
-								Modals.showAlertModal("FFmpeg " + ffmpegVersion + " Required", "To compress video/audio, " + config.info.name + " needs to use FFmpeg. The path to FFmpeg specified in the " + config.info.name + " settings is invalid!\n\nPlease check the path and ensure FFmpeg use is enabled.");
+								Modals.showAlertModal(i18n.FORMAT('FFMPEG_VERSION_REQUIRED', ffmpegVersion), i18n.FORMAT('FFMPEG_CUSTOM_PATH_INVALID', config.info.name));
 								reject();
 							}
 						}
@@ -884,10 +918,10 @@ module.exports = (() => {
 								const totalLength = result.headers['content-length'];
 								let writtenLength = 0;
 								const fileStream = fs.createWriteStream(path.join(downloadPath, filename));
-								toastsModule.setToast(jobId, "Downloading " + name + " 0%");
+								toastsModule.setToast(jobId, i18n.FORMAT('DOWNLOADING_PROGRAM_PERCENT', name, '0'));
 								result.on('data', chunk => {
 									writtenLength += chunk.length;
-									toastsModule.setToast(jobId, "Downloading " + name + " " + Math.round((writtenLength / totalLength) * 100) + "%");
+									toastsModule.setToast(jobId, i18n.FORMAT('DOWNLOADING_PROGRAM_PERCENT', name, Math.round((writtenLength / totalLength) * 100)));
 								});
 								result.pipe(fileStream);
 								fileStream.on('error', function (e) {
@@ -953,7 +987,7 @@ module.exports = (() => {
 						maxUploadSize = DiscordModules.DiscordConstants.PremiumUserLimits[DiscordAPI.currentUser.discordObject.premiumType ? DiscordAPI.currentUser.discordObject.premiumType : 0].fileSize;
 					} catch (e) {
 						Logger.err(config.info.name, e);
-						BdApi.showToast("Error getting account info!", {
+						BdApi.showToast(i18n.MESSAGES.ERROR_GETTING_ACCOUNT_INFO, {
 							type: "error"
 						});
 						maxUploadSize = 8388608;
@@ -983,7 +1017,7 @@ module.exports = (() => {
 					// Show toast saying a file was too large to upload if some files are being uploaded, but not others
 					if (originalDt.files.length > 0 && files.length > (originalDt.files.length + queuedFiles)) {
 						const num = (files.length - (originalDt.files.length + queuedFiles));
-						BdApi.showToast(num + (num === 1 ? " file was " : " files were ") + "too large to upload!", {
+						BdApi.showToast(i18n.FORMAT('FILES_TOO_LARGE_TO_UPLOAD', num), {
 							type: "error"
 						});
 					}
@@ -1031,7 +1065,7 @@ module.exports = (() => {
 					if ((guildId ? DiscordAPI.currentChannel.discordObject.guild_id === guildId : !DiscordAPI.currentChannel.discordObject.guild_id) && (threadId ? ((DiscordAPI.currentChannel.discordObject.id === threadId && DiscordAPI.currentChannel.discordObject.parent_id === channelId) || DiscordAPI.currentChannel.discordObject.id === channelId && (sidebarThreadData ? sidebarThreadData.channelId : null) === threadId) : DiscordAPI.currentChannel.discordObject.id === channelId)) {
 						return true;
 					} else {
-						BdApi.showToast("Unable to return to channel to upload files!", {
+						BdApi.showToast(i18n.MESSAGES.UNABLE_TO_RETURN_TO_CHANNEL, {
 							type: "error"
 						});
 						if (originalThreadId)
@@ -1049,7 +1083,7 @@ module.exports = (() => {
 						BdApi.findModuleByProps("promptToUpload").promptToUpload(files, channelObj, 0, true, !(this.settings.upload.immediateUpload), false, false, true /*Special boolean to mark file as processed and prevent loops*/);
 					} catch (e) {
 						Logger.err(config.info.name, e);
-						BdApi.showToast("Error uploading files!", {
+						BdApi.showToast(i18n.MESSAGES.ERROR_UPLOADING, {
 							type: "error"
 						});
 					}
@@ -1086,9 +1120,9 @@ module.exports = (() => {
 				async compressFile(job) {
 					let cacheFile;
 					if (cache) {
-						toasts.setToast(job.jobId, "Hashing 0%");
+						toasts.setToast(job.jobId, i18n.FORMAT('HASHING_PERCENT', '0'));
 						job.hash = await cache.hash(job.file, percentage => {
-							toasts.setToast(job.jobId, "Hashing " + percentage + "%");
+							toasts.setToast(job.jobId, i18n.FORMAT('HASHING_PERCENT', percentage));
 						});
 						try {
 							cacheFile = cache.getFile(job.hash);
@@ -1100,15 +1134,15 @@ module.exports = (() => {
 					// If cached file exists, ask user if they want to use cached options
 					if (cacheFile) {
 						job.options.useCache = {
-							name: "Use Cache",
-							description: "Use the previously cached file if available",
+							name: i18n.MESSAGES.COMPRESSION_OPTIONS_USE_CACHE,
+							description: i18n.MESSAGES.COMPRESSION_OPTIONS_USE_CACHE_DESC,
 							type: "switch",
 							defaultValue: true
 						};
 					}
 					job.options.sizeCap = {
-						name: "Size Cap (bytes)",
-						description: "Max file size in bytes",
+						name: i18n.MESSAGES.COMPRESSION_OPTIONS_SIZE_CAP,
+						description: i18n.MESSAGES.COMPRESSION_OPTIONS_SIZE_CAP_DESC,
 						type: "textbox",
 						defaultValue: (this.settings.upload.maxFileSize != 0 ? this.settings.upload.maxFileSize : ""),
 						validation: value => {
@@ -1118,8 +1152,8 @@ module.exports = (() => {
 					switch (job.type) {
 					case "image":
 						job.options.sizeMultiplier = {
-							name: "Iterative Size Multiplier",
-							description: "Amount to multiply image size by with each attempt",
+							name: i18n.MESSAGES.COMPRESSION_OPTIONS_SIZE_MULTIPLIER,
+							description: i18n.MESSAGES.COMPRESSION_OPTIONS_SIZE_MULTIPLIER_DESC,
 							type: "textbox",
 							defaultValue: 0.9,
 							validation: value => {
@@ -1127,20 +1161,20 @@ module.exports = (() => {
 							}
 						};
 						job.options.maxIterations = {
-							name: "Max Iterations",
-							description: "Maximum number of attempts to resize image",
+							name: i18n.MESSAGES.COMPRESSION_OPTIONS_MAX_ITERATIONS,
+							description: i18n.MESSAGES.COMPRESSION_OPTIONS_MAX_ITERATIONS_DESC,
 							type: "textbox",
 							defaultValue: 50,
 							validation: value => {
 								return (!isNaN(value) && !isNaN(parseInt(value)) && value > 0);
 							}
 						};
-						if (!await this.showSettings("Image Compression Options", job.options))
+						if (!await this.showSettings(i18n.MESSAGES.COMPRESSION_OPTIONS_CATEGORY_IMAGE, job.options))
 							return false;
 						break;
 					case "video":
 						job.options.encoder = {
-							name: "Encoder",
+							name: i18n.MESSAGES.COMPRESSION_OPTIONS_ENCODER,
 							type: "dropdown",
 							defaultValue: "libx264",
 							props: {
@@ -1148,7 +1182,7 @@ module.exports = (() => {
 							}
 						};
 						job.options.maxHeight = {
-							name: "Max Video Height",
+							name: i18n.MESSAGES.COMPRESSION_OPTIONS_MAX_HEIGHT,
 							type: "textbox",
 							defaultValue: "",
 							validation: value => {
@@ -1156,7 +1190,7 @@ module.exports = (() => {
 							}
 						};
 						job.options.maxFps = {
-							name: "Max Video FPS",
+							name: i18n.MESSAGES.COMPRESSION_OPTIONS_MAX_FPS,
 							type: "textbox",
 							defaultValue: "60",
 							validation: value => {
@@ -1164,19 +1198,19 @@ module.exports = (() => {
 							}
 						};
 						job.options.interlace = {
-							name: "Interlace Video",
-							description: "Not recommended except for the largest videos",
+							name: i18n.MESSAGES.COMPRESSION_OPTIONS_INTERLACE_VIDEO,
+							description: i18n.MESSAGES.COMPRESSION_OPTIONS_INTERLACE_VIDEO_DESC,
 							type: "switch",
 							defaultValue: false
 						};
 						job.options.stripAudio = {
-							name: "Strip Audio",
-							description: "Remove all audio from the video.",
+							name: i18n.MESSAGES.COMPRESSION_OPTIONS_STRIP_AUDIO,
+							description: i18n.MESSAGES.COMPRESSION_OPTIONS_STRIP_AUDIO_DESC,
 							type: "switch",
 							defaultValue: false
 						};
 						job.options.startTimestamp = {
-							name: "Starting Timestamp",
+							name: i18n.MESSAGES.COMPRESSION_OPTIONS_STARTING_TIMESTAMP,
 							type: "textbox",
 							defaultValue: "",
 							validation: value => {
@@ -1187,7 +1221,7 @@ module.exports = (() => {
 							}
 						};
 						job.options.endTimestamp = {
-							name: "Ending Timestamp",
+							name: i18n.MESSAGES.COMPRESSION_OPTIONS_ENDING_TIMESTAMP,
 							type: "textbox",
 							defaultValue: "",
 							validation: value => {
@@ -1197,12 +1231,12 @@ module.exports = (() => {
 								return true;
 							}
 						};
-						if (!await this.showSettings("Video Compression Options", job.options))
+						if (!await this.showSettings(i18n.MESSAGES.COMPRESSION_OPTIONS_CATEGORY_VIDEO, job.options))
 							return false;
 						break;
 					case "audio":
 						job.options.startTimestamp = {
-							name: "Starting Timestamp",
+							name: i18n.MESSAGES.COMPRESSION_OPTIONS_STARTING_TIMESTAMP,
 							type: "textbox",
 							defaultValue: "",
 							validation: value => {
@@ -1213,7 +1247,7 @@ module.exports = (() => {
 							}
 						};
 						job.options.endTimestamp = {
-							name: "Ending Timestamp",
+							name: i18n.MESSAGES.COMPRESSION_OPTIONS_ENDING_TIMESTAMP,
 							type: "textbox",
 							defaultValue: "",
 							validation: value => {
@@ -1223,7 +1257,7 @@ module.exports = (() => {
 								return true;
 							}
 						};
-						if (!await this.showSettings("Audio Compression Options", job.options))
+						if (!await this.showSettings(i18n.MESSAGES.COMPRESSION_OPTIONS_CATEGORY_AUDIO, job.options))
 							return false;
 						break;
 					}
@@ -1232,12 +1266,12 @@ module.exports = (() => {
 						this.sendUploadFileList(this.wrapFileInList(cacheFile), job.guildId, job.channelId, job.threadId, job.isSidebar);
 					} else {
 						if (runningJobs.length < this.settings.compressor.concurrentThreads) {
-							toasts.setToast(job.jobId, "Initializing");
+							toasts.setToast(job.jobId, i18n.MESSAGES.INITIALIZING);
 							runningJobs.push(job);
 							this.compressFileType(job);
 						} else {
 							processingQueue.push(job);
-							toasts.setToast(0, (processingQueue.length === 1 ? " file" : " files") + " to be compressed");
+							toasts.setToast(0, i18n.FORMAT('QUEUED_FILES_NUM', processingQueue.length));
 						}
 					}
 				}
@@ -1260,7 +1294,9 @@ module.exports = (() => {
 								},
 								onCancel: () => {
 									resolve(false);
-								}
+								},
+								confirmText: i18n.MESSAGES.BEGIN_COMPRESSION,
+								cancelText: i18n.MESSAGES.CANCEL
 							});
 						} else {
 							for (const setting in options) {
@@ -1324,7 +1360,7 @@ module.exports = (() => {
 							runningJobs.splice(index, 1);
 						this.processNextFile();
 					}).catch(error => {
-						BdApi.showToast("Error compressing file!", {
+						BdApi.showToast(i18n.MESSAGES.ERROR_COMPRESSING, {
 							type: "error"
 						});
 						Logger.err(error);
@@ -1341,7 +1377,10 @@ module.exports = (() => {
 					if (processingQueue.length > 0) {
 						if (runningJobs.length <= this.settings.compressor.concurrentThreads) {
 							const job = processingQueue.shift();
-							toasts.setToast(0, (processingQueue.length === 1 ? " file" : " files") + " to be compressed");
+							if (processingQueue.length > 0)
+								toasts.setToast(0, i18n.FORMAT('QUEUED_FILES_NUM', processingQueue.length));
+							else
+								toasts.setToast(0);
 							runningJobs.push(job);
 							this.compressFileType(job);
 						}
@@ -1378,7 +1417,7 @@ module.exports = (() => {
 									try {
 										if (value) {
 											bytesWritten += value.byteLength;
-											toasts.setToast(job.jobId, Math.round((bytesWritten / totalBytes) * 100) + "% Copied");
+											toasts.setToast(job.jobId, i18n.FORMAT('COPYING_PERCENT', Math.round((bytesWritten / totalBytes) * 100)));
 										}
 										if (done) {
 											writeStream.destroy();
@@ -1402,7 +1441,7 @@ module.exports = (() => {
 								});
 							});
 							writeStream.destroy();
-							toasts.setToast(job.jobId, "Calculating");
+							toasts.setToast(job.jobId, i18n.MESSAGES.CALCULATING);
 							const data = await ffmpeg.runProbeWithArgs(["-v", "error", "-select_streams", "a", "-show_entries", "format=duration", "-show_entries", "stream=channels", "-of", "default=noprint_wrappers=1", tempPath]);
 							if (data) {
 								const outputStr = data.data;
@@ -1452,7 +1491,7 @@ module.exports = (() => {
 											outputChannels = 1;
 									}
 									try {
-										toasts.setToast(job.jobId, "Compressing 0%");
+										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PERCENT', '0'));
 										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", tempPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-vn", "-c:a", "libopus", "-b:a", audioBitrate, "-ac", outputChannels, "-sn", "-map_chapters", "-1", compressedPathPre], str => {
 											return str.includes("time=")
 										}, str => {
@@ -1461,7 +1500,7 @@ module.exports = (() => {
 												if (timeStr) {
 													const timeStrParts = timeStr[1].split(':');
 													const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
-													toasts.setToast(job.jobId, "Compressing " + Math.round((elapsedTime / duration) * 100) + "%");
+													toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PERCENT', Math.round((elapsedTime / duration) * 100)));
 												}
 											} catch (e) {
 												Logger.err(config.info.name, e);
@@ -1476,7 +1515,7 @@ module.exports = (() => {
 										} catch (e) {}
 										throw e;
 									}
-									toasts.setToast(job.jobId, "Packaging");
+									toasts.setToast(job.jobId, i18n.MESSAGES.PACKAGING);
 									if (fs.existsSync(compressedPathPre)) {
 										fs.renameSync(compressedPathPre, compressedPath);
 									} else {
@@ -1563,7 +1602,7 @@ module.exports = (() => {
 									try {
 										if (value) {
 											bytesWritten += value.byteLength;
-											toasts.setToast(job.jobId, Math.round((bytesWritten / totalBytes) * 100) + "% Copied");
+											toasts.setToast(job.jobId, i18n.FORMAT('COPYING_PERCENT', Math.round((bytesWritten / totalBytes) * 100)));
 										}
 										if (done) {
 											writeStream.destroy();
@@ -1587,7 +1626,7 @@ module.exports = (() => {
 								});
 							});
 							writeStream.destroy();
-							toasts.setToast(job.jobId, "Calculating");
+							toasts.setToast(job.jobId, i18n.MESSAGES.CALCULATING);
 							const data = await ffmpeg.runProbeWithArgs(["-v", "error", "-select_streams", "v", "-show_entries", "format=duration", "-show_entries", "stream=height", "-show_entries", "stream=r_frame_rate", "-of", "default=noprint_wrappers=1", tempPath]);
 							if (data) {
 								const outputStr = data.data;
@@ -1633,7 +1672,7 @@ module.exports = (() => {
 										else if (audioBitrate < 10240)
 											audioBitrate = 10240;
 										try {
-											toasts.setToast(job.jobId, "Compressing Audio 0%");
+											toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PERCENT', '0'));
 											await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", tempPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-vn", "-c:a", "libopus", "-b:a", audioBitrate, "-ac", "1", "-sn", "-map_chapters", "-1", tempAudioPath], str => {
 												return str.includes("time=")
 											}, str => {
@@ -1642,7 +1681,7 @@ module.exports = (() => {
 													if (timeStr) {
 														const timeStrParts = timeStr[1].split(':');
 														const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
-														toasts.setToast(job.jobId, "Compressing Audio " + Math.round((elapsedTime / duration) * 100) + "%");
+														toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PERCENT', Math.round((elapsedTime / duration) * 100)));
 													}
 												} catch (e) {
 													Logger.err(config.info.name, e);
@@ -1691,7 +1730,7 @@ module.exports = (() => {
 										maxVideoHeight = 2160;
 									maxVideoHeight = (job.options.maxHeight.value && job.options.maxHeight.value < maxVideoHeight) ? job.options.maxHeight.value : maxVideoHeight;
 									try {
-										toasts.setToast(job.jobId, "Compressing 1st Pass 0%");
+										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PASS_1_PERCENT', '0'));
 										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", tempPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate + "K", "-vf", "fps=fps=" + maxFrameRate + (job.options.interlace.value ? ",interlace=lowpass=2" : "") + ((maxVideoHeight && originalHeight > maxVideoHeight) ? ",scale=-1:" + maxVideoHeight + ",scale=trunc(iw/2)*2:" + maxVideoHeight : ""), "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "1", "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")], str => {
 											return str.includes("time=")
 										}, str => {
@@ -1700,7 +1739,7 @@ module.exports = (() => {
 												if (timeStr) {
 													const timeStrParts = timeStr[1].split(':');
 													const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
-													toasts.setToast(job.jobId, "Compressing 1st Pass " + Math.round((elapsedTime / duration) * 100) + "%");
+													toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PASS_1_PERCENT', Math.round((elapsedTime / duration) * 100)));
 												}
 											} catch (e) {
 												Logger.err(config.info.name, e);
@@ -1721,7 +1760,7 @@ module.exports = (() => {
 										throw e;
 									}
 									try {
-										toasts.setToast(job.jobId, "Compressing 2nd Pass 0%");
+										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PASS_2_PERCENT', '0'));
 										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", tempPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate + "K", "-vf", "fps=fps=" + maxFrameRate + (job.options.interlace.value ? ",interlace=lowpass=2" : "") + ((maxVideoHeight && originalHeight > maxVideoHeight) ? ",scale=-1:" + maxVideoHeight + ",scale=trunc(iw/2)*2:" + maxVideoHeight : ""), "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "2", tempVideoPath], str => {
 											return str.includes("time=")
 										}, str => {
@@ -1730,7 +1769,7 @@ module.exports = (() => {
 												if (timeStr) {
 													const timeStrParts = timeStr[1].split(':');
 													const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
-													toasts.setToast(job.jobId, "Compressing 2nd Pass " + Math.round((elapsedTime / duration) * 100) + "%");
+													toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PASS_2_PERCENT', Math.round((elapsedTime / duration) * 100)));
 												}
 											} catch (e) {
 												Logger.err(config.info.name, e);
@@ -1758,21 +1797,8 @@ module.exports = (() => {
 										throw new Error("Cannot find FFmpeg output");
 									}
 									try {
-										toasts.setToast(job.jobId, "Packaging 0%");
-										await ffmpeg.runWithArgs(["-y", ...(!job.options.stripAudio.value ? ["-i", tempAudioPath] : []), "-i", tempVideoPath, "-c", "copy", compressedPathPre], str => {
-											return str.includes("time=")
-										}, str => {
-											try {
-												const timeStr = regexPatternTime.exec(str);
-												if (timeStr) {
-													const timeStrParts = timeStr[1].split(':');
-													const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
-													toasts.setToast(job.jobId, "Packaging " + Math.round((elapsedTime / duration) * 100) + "%");
-												}
-											} catch (e) {
-												Logger.err(config.info.name, e);
-											}
-										});
+										toasts.setToast(job.jobId, i18n.MESSAGES.PACKAGING);
+										await ffmpeg.runWithArgs(["-y", ...(!job.options.stripAudio.value ? ["-i", tempAudioPath] : []), "-i", tempVideoPath, "-c", "copy", compressedPathPre]);
 									} catch (e) {
 										try {
 											fs.rmSync(tempPath);
@@ -1889,7 +1915,7 @@ module.exports = (() => {
 						iterations: 0
 					};
 					if (await this.compressImageLoop(job, image)) {
-						toasts.setToast(job.jobId, "Packaging");
+						toasts.setToast(job.jobId, i18n.MESSAGES.PACKAGING);
 						job.compressedFile = new File([image.outputData], image.file.name, {
 							type: image.file.type
 						});
@@ -1898,19 +1924,16 @@ module.exports = (() => {
 						}
 						return job;
 					}
-					return null;
+					throw new Error("Unable to compress image");
 				}
 
 				async compressImageLoop(job, image) {
 					image.iterations++;
-					toasts.setToast(job.jobId, "Compression Try " + image.iterations);
+					toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_TRY_NUMBER', image.iterations));
 					image.outputData = await this.compressImageCanvas(image, job.options);
 					if (image.outputData.size >= maxUploadSize) {
 						if (image.iterations >= job.options.maxIterations.value) {
-							BdApi.showToast("Unable to comress impage!", {
-								type: "error"
-							});
-							return null;
+							throw new Error("Max iterations reached while compressing image");
 						} else {
 							return await this.compressImageLoop(job, image);
 						}
@@ -1956,7 +1979,7 @@ module.exports = (() => {
 				}
 
 				async handleUserSettingsChange() {
-					// Update lang
+					i18n.updateLocale(DiscordAPI.UserSettings.locale);
 				}
 
 				listStartsWith(list, str) {
