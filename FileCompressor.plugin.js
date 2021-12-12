@@ -15,7 +15,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.4.1",
+			version: "1.4.2",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -24,6 +24,7 @@ module.exports = (() => {
 				title: "Fixed",
 				type: "fixed",
 				items: [
+					"Critical fix for compressed files being deleted"
 					"Fixed toasts sometimes not working properly",
 					"Fixed certain files not being detected as compressible properly"
 				]
@@ -312,7 +313,7 @@ module.exports = (() => {
 			if (args.length > 0)
 				return this.MESSAGES[key].replace(/{\$([0-9]+)\$}/g, (_, p1) => {
 					const val = args[p1];
-					return val ? String(val) : "";
+					return String(val);
 				});
 			return this.MESSAGES[key];
 		},
@@ -642,7 +643,8 @@ module.exports = (() => {
 							try {
 								if (typeof(percentageCallback) == "function" && value) {
 									bytesProcessed += value.byteLength;
-									percentageCallback(Math.round((bytesProcessed / totalBytes) * 100));
+									const percent = Math.round((bytesProcessed / totalBytes) * 100);
+									percentageCallback(percent ? percent : 0);
 								}
 								if (done) {
 									resolve(hash.digest('hex'));
@@ -1103,7 +1105,8 @@ module.exports = (() => {
 								toastsModule.setToast(jobId, i18n.FORMAT('DOWNLOADING_PROGRAM_PERCENT', name, '0'));
 								result.on('data', chunk => {
 									writtenLength += chunk.length;
-									toastsModule.setToast(jobId, i18n.FORMAT('DOWNLOADING_PROGRAM_PERCENT', name, Math.round((writtenLength / totalLength) * 100)));
+									const percent = Math.round((writtenLength / totalLength) * 100);
+									toastsModule.setToast(jobId, i18n.FORMAT('DOWNLOADING_PROGRAM_PERCENT', name, percent ? percent : 0));
 								});
 								result.pipe(fileStream);
 								fileStream.on('error', function (e) {
@@ -1582,7 +1585,9 @@ module.exports = (() => {
 							const name = nameSplit.slice(0, nameSplit.length - 1).join(".");
 							const extension = nameSplit[nameSplit.length - 1];
 							let originalPath = job.file.path;
+							let isOriginalTemporary = false;
 							if (!originalPath) {
+								isOriginalTemporary = true;
 								originalPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + "." + extension);
 								const fileStream = job.file.stream();
 								const fileStreamReader = fileStream.getReader();
@@ -1597,7 +1602,8 @@ module.exports = (() => {
 										try {
 											if (value) {
 												bytesWritten += value.byteLength;
-												toasts.setToast(job.jobId, i18n.FORMAT('COPYING_PERCENT', Math.round((bytesWritten / totalBytes) * 100)));
+												const percent = Math.round((bytesWritten / totalBytes) * 100);
+												toasts.setToast(job.jobId, i18n.FORMAT('COPYING_PERCENT', percent ? percent : 0));
 											}
 											if (done) {
 												writeStream.destroy();
@@ -1688,16 +1694,19 @@ module.exports = (() => {
 												if (timeStr) {
 													const timeStrParts = timeStr[1].split(':');
 													const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
-													toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PERCENT', Math.round((elapsedTime / duration) * 100)));
+													const percent = Math.round((elapsedTime / duration) * 100);
+													toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PERCENT', percent ? percent : 0));
 												}
 											} catch (e) {
 												Logger.err(config.info.name, e);
 											}
 										});
 									} catch (e) {
-										try {
-											fs.rmSync(originalPath);
-										} catch (e) {}
+										if (isOriginalTemporary) {
+											try {
+												fs.rmSync(originalPath);
+											} catch (e) {}
+										}
 										try {
 											fs.rmSync(compressedPathPre);
 										} catch (e) {}
@@ -1707,9 +1716,11 @@ module.exports = (() => {
 									if (fs.existsSync(compressedPathPre)) {
 										fs.renameSync(compressedPathPre, compressedPath);
 									} else {
-										try {
-											fs.rmSync(originalPath);
-										} catch (e) {}
+										if (isOriginalTemporary) {
+											try {
+												fs.rmSync(originalPath);
+											} catch (e) {}
+										}
 										throw new Error("Cannot find FFmpeg output");
 									}
 									if (fs.existsSync(compressedPath)) {
@@ -1719,9 +1730,11 @@ module.exports = (() => {
 										const retFile = new File([Uint8Array.from(Buffer.from(fs.readFileSync(compressedPath))).buffer], name + ".ogg", {
 											type: job.file.type
 										});
-										try {
-											fs.rmSync(originalPath);
-										} catch (e) {}
+										if (isOriginalTemporary) {
+											try {
+												fs.rmSync(originalPath);
+											} catch (e) {}
+										}
 										try {
 											fs.rmSync(compressedPathPre);
 										} catch (e) {}
@@ -1733,18 +1746,22 @@ module.exports = (() => {
 										}
 										return job;
 									} else {
-										try {
-											fs.rmSync(originalPath);
-										} catch (e) {}
+										if (isOriginalTemporary) {
+											try {
+												fs.rmSync(originalPath);
+											} catch (e) {}
+										}
 										try {
 											fs.rmSync(compressedPathPre);
 										} catch (e) {}
 										throw new Error("Cannot find FFmpeg output");
 									}
 								} catch (e) {
-									try {
-										fs.rmSync(originalPath);
-									} catch (e) {}
+									if (isOriginalTemporary) {
+										try {
+											fs.rmSync(originalPath);
+										} catch (e) {}
+									}
 									throw e;
 								}
 							} else {
@@ -1768,7 +1785,9 @@ module.exports = (() => {
 							const name = nameSplit.slice(0, nameSplit.length - 1).join(".");
 							const extension = nameSplit[nameSplit.length - 1];
 							let originalPath = job.file.path;
+							let isOriginalTemporary = false;
 							if (!originalPath) {
+								isOriginalTemporary = true;
 								originalPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + "." + extension);
 								const fileStream = job.file.stream();
 								const fileStreamReader = fileStream.getReader();
@@ -1783,7 +1802,8 @@ module.exports = (() => {
 										try {
 											if (value) {
 												bytesWritten += value.byteLength;
-												toasts.setToast(job.jobId, i18n.FORMAT('COPYING_PERCENT', Math.round((bytesWritten / totalBytes) * 100)));
+												const percent = Math.round((bytesWritten / totalBytes) * 100);
+												toasts.setToast(job.jobId, i18n.FORMAT('COPYING_PERCENT', percent ? percent : 0));
 											}
 											if (done) {
 												writeStream.destroy();
@@ -1872,25 +1892,30 @@ module.exports = (() => {
 													if (timeStr) {
 														const timeStrParts = timeStr[1].split(':');
 														const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
-														toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PERCENT', Math.round((elapsedTime / duration) * 100)));
+														const percent = Math.round((elapsedTime / duration) * 100);
+														toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PERCENT', percent ? percent : 0));
 													}
 												} catch (e) {
 													Logger.err(config.info.name, e);
 												}
 											});
 										} catch (e) {
-											try {
-												fs.rmSync(originalPath);
-											} catch (e) {}
+											if (isOriginalTemporary) {
+												try {
+													fs.rmSync(originalPath);
+												} catch (e) {}
+											}
 											try {
 												fs.rmSync(tempAudioPath);
 											} catch (e) {}
 											throw e;
 										}
 										if (!fs.existsSync(tempAudioPath)) {
-											try {
-												fs.rmSync(originalPath);
-											} catch (e) {}
+											if (isOriginalTemporary) {
+												try {
+													fs.rmSync(originalPath);
+												} catch (e) {}
+											}
 											throw new Error("Cannot find FFmpeg output");
 										}
 										const audioStats = fs.statSync(tempAudioPath);
@@ -1930,16 +1955,19 @@ module.exports = (() => {
 												if (timeStr) {
 													const timeStrParts = timeStr[1].split(':');
 													const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
-													toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PASS_1_PERCENT', Math.round((elapsedTime / duration) * 100)));
+													const percent = Math.round((elapsedTime / duration) * 100);
+													toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PASS_1_PERCENT', percent ? percent : 0));
 												}
 											} catch (e) {
 												Logger.err(config.info.name, e);
 											}
 										});
 									} catch (e) {
-										try {
-											fs.rmSync(originalPath);
-										} catch (e) {}
+										if (isOriginalTemporary) {
+											try {
+												fs.rmSync(originalPath);
+											} catch (e) {}
+										}
 										if (!job.options.stripAudio.value) {
 											try {
 												fs.rmSync(tempAudioPath);
@@ -1960,16 +1988,19 @@ module.exports = (() => {
 												if (timeStr) {
 													const timeStrParts = timeStr[1].split(':');
 													const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
-													toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PASS_2_PERCENT', Math.round((elapsedTime / duration) * 100)));
+													const percent = Math.round((elapsedTime / duration) * 100);
+													toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PASS_2_PERCENT', percent ? percent : 0));
 												}
 											} catch (e) {
 												Logger.err(config.info.name, e);
 											}
 										});
 									} catch (e) {
-										try {
-											fs.rmSync(originalPath);
-										} catch (e) {}
+										if (isOriginalTemporary) {
+											try {
+												fs.rmSync(originalPath);
+											} catch (e) {}
+										}
 										try {
 											fs.rmSync(tempAudioPath);
 										} catch (e) {}
@@ -1979,9 +2010,11 @@ module.exports = (() => {
 										throw e;
 									}
 									if (!fs.existsSync(tempVideoPath)) {
-										try {
-											fs.rmSync(originalPath);
-										} catch (e) {}
+										if (isOriginalTemporary) {
+											try {
+												fs.rmSync(originalPath);
+											} catch (e) {}
+										}
 										try {
 											fs.rmSync(tempAudioPath);
 										} catch (e) {}
@@ -1991,9 +2024,11 @@ module.exports = (() => {
 										toasts.setToast(job.jobId, i18n.MESSAGES.PACKAGING);
 										await ffmpeg.runWithArgs(["-y", ...(!job.options.stripAudio.value ? ["-i", tempAudioPath] : []), "-i", tempVideoPath, "-c", "copy", compressedPathPre]);
 									} catch (e) {
-										try {
-											fs.rmSync(originalPath);
-										} catch (e) {}
+										if (isOriginalTemporary) {
+											try {
+												fs.rmSync(originalPath);
+											} catch (e) {}
+										}
 										try {
 											fs.rmSync(tempAudioPath);
 										} catch (e) {}
@@ -2008,9 +2043,11 @@ module.exports = (() => {
 									if (fs.existsSync(compressedPathPre)) {
 										fs.renameSync(compressedPathPre, compressedPath);
 									} else {
-										try {
-											fs.rmSync(originalPath);
-										} catch (e) {}
+										if (isOriginalTemporary) {
+											try {
+												fs.rmSync(originalPath);
+											} catch (e) {}
+										}
 										try {
 											fs.rmSync(tempAudioPath);
 										} catch (e) {}
@@ -2029,9 +2066,11 @@ module.exports = (() => {
 										const retFile = new File([Uint8Array.from(Buffer.from(fs.readFileSync(compressedPath))).buffer], name + ".webm", {
 											type: job.file.type
 										});
-										try {
-											fs.rmSync(originalPath);
-										} catch (e) {}
+										if (isOriginalTemporary) {
+											try {
+												fs.rmSync(originalPath);
+											} catch (e) {}
+										}
 										try {
 											fs.rmSync(compressedPathPre);
 										} catch (e) {}
@@ -2049,9 +2088,11 @@ module.exports = (() => {
 										}
 										return job;
 									} else {
-										try {
-											fs.rmSync(originalPath);
-										} catch (e) {}
+										if (isOriginalTemporary) {
+											try {
+												fs.rmSync(originalPath);
+											} catch (e) {}
+										}
 										try {
 											fs.rmSync(tempAudioPath);
 										} catch (e) {}
@@ -2064,9 +2105,11 @@ module.exports = (() => {
 										throw new Error("Cannot find FFmpeg output");
 									}
 								} catch (e) {
-									try {
-										fs.rmSync(originalPath);
-									} catch (e) {}
+									if (isOriginalTemporary) {
+										try {
+											fs.rmSync(originalPath);
+										} catch (e) {}
+									}
 									throw e;
 								}
 							} else {
