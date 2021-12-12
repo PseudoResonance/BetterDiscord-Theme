@@ -24,7 +24,7 @@ module.exports = (() => {
 				title: "Fixed",
 				type: "fixed",
 				items: [
-					"Critical fix for compressed files being deleted"
+					"Critical fix for compressed files being deleted",
 					"Fixed toasts sometimes not working properly",
 					"Fixed certain files not being detected as compressible properly"
 				]
