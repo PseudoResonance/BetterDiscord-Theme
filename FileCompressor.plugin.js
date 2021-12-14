@@ -15,24 +15,23 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.4.2",
+			version: "1.4.3",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
 		},
 		changelog: [{
-				title: "Fixed",
-				type: "fixed",
+				title: "Added",
+				type: "added",
 				items: [
-					"Critical fix for compressed files being deleted",
-					"Fixed toasts sometimes not working properly",
-					"Fixed certain files not being detected as compressible properly"
+					"Added 2 debug options to help assess why a file ended up too big"
 				]
 			}, {
 				title: "Improved",
 				type: "improved",
 				items: [
-					"Removed need for copying file prior to compression"
+					"Adjusted localization of \"Use Cache\" to be more easily understood",
+					"Hide unnecessary options when \"Use Cache\" is enabled"
 				]
 			}, {
 				title: "Known Bugs",
@@ -155,6 +154,26 @@ module.exports = (() => {
 						id: 'ffmpegPath',
 						type: 'textbox',
 						value: ""
+					}, {
+						get name() {
+							return i18n.MESSAGES.SETTINGS_DEBUG
+						},
+						get note() {
+							return i18n.MESSAGES.SETTINGS_DEBUG_DESC
+						},
+						id: 'debug',
+						type: 'switch',
+						value: false
+					}, {
+						get name() {
+							return i18n.MESSAGES.SETTINGS_KEEP_TEMP
+						},
+						get note() {
+							return i18n.MESSAGES.SETTINGS_KEEP_TEMP_DESC
+						},
+						id: 'keepTemp',
+						type: 'switch',
+						value: false
 					}
 				]
 			}
@@ -183,7 +202,11 @@ module.exports = (() => {
 			SETTINGS_FFMPEG_DOWNLOAD_DESC: 'Should FFmpeg be automatically downloaded? Disable this to use a custom installation.',
 			SETTINGS_FFMPEG_PATH: 'FFmpeg Install Location',
 			SETTINGS_FFMPEG_PATH_DESC: 'Custom FFmpeg install location to use (Leave empty to use default location).',
-			COMPRESSION_OPTIONS_USE_CACHE: 'Use Cache',
+			SETTINGS_DEBUG: 'Debug Output',
+			SETTINGS_DEBUG_DESC: 'Outputs extra debug messages to the console during compression.',
+			SETTINGS_KEEP_TEMP: 'Keep Temp Files',
+			SETTINGS_KEEP_TEMP_DESC: 'Retain temporary files after compression.',
+			COMPRESSION_OPTIONS_USE_CACHE: 'Use Cached File',
 			COMPRESSION_OPTIONS_USE_CACHE_DESC: 'Use the previously cached file.',
 			COMPRESSION_OPTIONS_SIZE_CAP: 'Size Cap (bytes)',
 			COMPRESSION_OPTIONS_SIZE_CAP_DESC: 'Max file size to compress under.',
@@ -256,7 +279,11 @@ module.exports = (() => {
 			SETTINGS_FFMPEG_DOWNLOAD_DESC: 'FFmpegを自動的にダウンロード？カスタムインストール所在使うには無効します。',
 			SETTINGS_FFMPEG_PATH: 'FFmpegのインストール所在',
 			SETTINGS_FFMPEG_PATH_DESC: 'FFmpegのインストール所在（デフォルト使うには空のまま）。',
-			COMPRESSION_OPTIONS_USE_CACHE: 'キャッシュを使用',
+			SETTINGS_DEBUG: 'デバッグ出力',
+			SETTINGS_DEBUG_DESC: '圧縮中で追加のデバッグメッセージをコンソールに出力する。',
+			SETTINGS_KEEP_TEMP: '一時ファイルを保持',
+			SETTINGS_KEEP_TEMP_DESC: '圧縮後に一時ファイルを保持する。',
+			COMPRESSION_OPTIONS_USE_CACHE: 'キャッシュされたファイルュを使用',
 			COMPRESSION_OPTIONS_USE_CACHE_DESC: '以前にキャッシュされたファイルを使用する。',
 			COMPRESSION_OPTIONS_SIZE_CAP: '最大ファイルサイズ（bytes）',
 			COMPRESSION_OPTIONS_SIZE_CAP_DESC: '圧縮するときの最大なファイルサイズ。',
@@ -432,7 +459,7 @@ module.exports = (() => {
 			// Default encoder settings
 			const encoderSettings = {
 				"libx264": {
-					fileType: "mp4"
+					fileType: "mkv"
 				},
 				"libvpx-vp9": {
 					fileType: "webm"
@@ -1325,7 +1352,13 @@ module.exports = (() => {
 							name: i18n.MESSAGES.COMPRESSION_OPTIONS_USE_CACHE,
 							description: i18n.MESSAGES.COMPRESSION_OPTIONS_USE_CACHE_DESC,
 							type: "switch",
-							defaultValue: true
+							defaultValue: true,
+							category: "cache",
+							onChange: (value, allCategories) => {
+								const defaultCategory = allCategories["default"];
+								if (defaultCategory)
+									defaultCategory.style.display = (value ? "none" : null);
+							}
 						};
 					}
 					job.options.sizeCap = {
@@ -1466,17 +1499,44 @@ module.exports = (() => {
 
 				showSettings(title, options) {
 					return new Promise((resolve, reject) => {
+						// If options should be shown
 						if (this.settings.compressor.promptOptions) {
-							const settingsElements = [];
+							const settingsElements = new Map();
+							const settingsPanels = new Map();
+							const settingsPanelsReact = new Map();
 							for (const setting in options) {
+								// Set current value to default value
 								options[setting].value = options[setting].defaultValue;
-								settingsElements.push(this.createSettingField(options[setting].type, options[setting].name, options[setting].description, options[setting].defaultValue, value => {
-										if (typeof(options[setting].validation) != "function" || options[setting].validation(value))
+								// Get option category and store an array for each category
+								const category = options[setting].category ? options[setting].category : "default";
+								if (!settingsElements[category])
+									settingsElements[category] = [];
+								// Add setting object to array
+								settingsElements[category].push(this.createSettingField(options[setting].type, options[setting].name, options[setting].description, options[setting].defaultValue, value => {
+										// onChange function
+										// Only set value if validation function doesn't exist, or if function exists and returns true
+										if (typeof(options[setting].validation) != "function" || options[setting].validation(value)) {
+											// Set value
 											options[setting].value = value;
+											// Run custom onChange function when value is set
+											if (typeof(options[setting].onChange) == "function")
+												options[setting].onChange(value, settingsPanels);
+										}
 									}, options[setting].props));
 							}
-							const settingsPanel = Settings.SettingPanel.build(null, ...settingsElements);
-							BdApi.showConfirmationModal(title, ReactTools.createWrappedElement(settingsPanel), {
+							// Convert elements to HTML SettingPanel objects
+							for (const[key, value]of Object.entries(settingsElements))
+								settingsPanels[key] = Settings.SettingPanel.build(null, ...value);
+							// Convert HTML to React elements
+							for (const[key, value]of Object.entries(settingsPanels))
+								settingsPanelsReact[key] = ReactTools.createWrappedElement(value);
+							// Run all onChange functions with default values for setup
+							for (const setting in options) {
+								if (typeof(options[setting].onChange) == "function")
+									options[setting].onChange(options[setting].value, settingsPanels);
+							}
+							// Display modal with React elements
+							BdApi.showConfirmationModal(title, Object.values(settingsPanelsReact), {
 								onConfirm: () => {
 									resolve(true);
 								},
@@ -1488,6 +1548,7 @@ module.exports = (() => {
 							});
 						} else {
 							for (const setting in options) {
+								// Set current value to default value
 								options[setting].value = options[setting].defaultValue;
 							}
 							resolve(true);
@@ -1606,6 +1667,8 @@ module.exports = (() => {
 												toasts.setToast(job.jobId, i18n.FORMAT('COPYING_PERCENT', percent ? percent : 0));
 											}
 											if (done) {
+												if (this.settings.compressor.debug)
+													Logger.info(config.info.name, "[" + job.file.name + "] Copied " + bytesWritten + " bytes");
 												writeStream.destroy();
 												resolve1(true);
 												return;
@@ -1684,9 +1747,19 @@ module.exports = (() => {
 										else
 											outputChannels = 1;
 									}
+									if (this.settings.compressor.debug) {
+										const fileStats = fs.statSync(originalPath);
+										Logger.info(config.info.name, "[" + job.file.name + "] Original file size: " + (fileStats ? fileStats.size : 0) + " bytes");
+										Logger.info(config.info.name, "[" + job.file.name + "] Max file size: " + cappedFileSize + " bytes");
+										Logger.info(config.info.name, "[" + job.file.name + "] File length: " + originalDuration + " seconds");
+										Logger.info(config.info.name, "[" + job.file.name + "] Clipped length: " + duration + " seconds");
+										Logger.info(config.info.name, "[" + job.file.name + "] Target bitrate: " + audioBitrate + " bits/second");
+										Logger.info(config.info.name, "[" + job.file.name + "] Number of channels: " + numChannels + " channels");
+										Logger.info(config.info.name, "[" + job.file.name + "] Number of output channels: " + outputChannels + " channels");
+									}
 									try {
 										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PERCENT', '0'));
-										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-vn", "-c:a", "libopus", "-b:a", audioBitrate, "-ac", outputChannels, "-sn", "-map_chapters", "-1", compressedPathPre], str => {
+										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-vn", "-c:a", "libopus", "-map 0:a", "-b:a", audioBitrate, "-ac", outputChannels, "-sn", "-map_chapters", "-1", compressedPathPre], str => {
 											return str.includes("time=")
 										}, str => {
 											try {
@@ -1702,21 +1775,23 @@ module.exports = (() => {
 											}
 										});
 									} catch (e) {
-										if (isOriginalTemporary) {
+										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
 											try {
 												fs.rmSync(originalPath);
 											} catch (e) {}
 										}
-										try {
-											fs.rmSync(compressedPathPre);
-										} catch (e) {}
+										if (!this.settings.compressor.keepTemp) {
+											try {
+												fs.rmSync(compressedPathPre);
+											} catch (e) {}
+										}
 										throw e;
 									}
 									toasts.setToast(job.jobId, i18n.MESSAGES.PACKAGING);
 									if (fs.existsSync(compressedPathPre)) {
 										fs.renameSync(compressedPathPre, compressedPath);
 									} else {
-										if (isOriginalTemporary) {
+										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
 											try {
 												fs.rmSync(originalPath);
 											} catch (e) {}
@@ -1724,40 +1799,49 @@ module.exports = (() => {
 										throw new Error("Cannot find FFmpeg output");
 									}
 									if (fs.existsSync(compressedPath)) {
+										if (this.settings.compressor.debug) {
+											const fileStats = fs.statSync(compressedPath);
+											Logger.info(config.info.name, "[" + job.file.name + "] Expected audio size: " + (duration * (audioBitrate / 8)) + " bytes");
+											Logger.info(config.info.name, "[" + job.file.name + "] Final audio size: " + (fileStats ? fileStats.size : 0) + " bytes");
+										}
 										if (cache) {
 											cache.addToCache(compressedPath, name + ".ogg", job.hash);
 										}
 										const retFile = new File([Uint8Array.from(Buffer.from(fs.readFileSync(compressedPath))).buffer], name + ".ogg", {
 											type: job.file.type
 										});
-										if (isOriginalTemporary) {
+										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
 											try {
 												fs.rmSync(originalPath);
 											} catch (e) {}
 										}
-										try {
-											fs.rmSync(compressedPathPre);
-										} catch (e) {}
+										if (!this.settings.compressor.keepTemp) {
+											try {
+												fs.rmSync(compressedPathPre);
+											} catch (e) {}
+										}
 										job.compressedFile = retFile;
-										if (!cache) {
+										if (!cache && !this.settings.compressor.keepTemp) {
 											try {
 												fs.rmSync(compressedPath);
 											} catch (e) {}
 										}
 										return job;
 									} else {
-										if (isOriginalTemporary) {
+										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
 											try {
 												fs.rmSync(originalPath);
 											} catch (e) {}
 										}
-										try {
-											fs.rmSync(compressedPathPre);
-										} catch (e) {}
+										if (!this.settings.compressor.keepTemp) {
+											try {
+												fs.rmSync(compressedPathPre);
+											} catch (e) {}
+										}
 										throw new Error("Cannot find FFmpeg output");
 									}
 								} catch (e) {
-									if (isOriginalTemporary) {
+									if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
 										try {
 											fs.rmSync(originalPath);
 										} catch (e) {}
@@ -1806,6 +1890,8 @@ module.exports = (() => {
 												toasts.setToast(job.jobId, i18n.FORMAT('COPYING_PERCENT', percent ? percent : 0));
 											}
 											if (done) {
+												if (this.settings.compressor.debug)
+													Logger.info(config.info.name, "[" + job.file.name + "] Copied " + bytesWritten + " bytes");
 												writeStream.destroy();
 												resolve1(true);
 												return;
@@ -1842,6 +1928,7 @@ module.exports = (() => {
 							if (data) {
 								const outputStr = data.data;
 								try {
+									const cappedFileSize = Math.floor((job.options.sizeCap.value && parseInt(job.options.sizeCap.value) < maxUploadSize ? parseInt(job.options.sizeCap.value) : maxUploadSize) - 250000);
 									const durationMatches = regexPatternDuration.exec(outputStr);
 									const heightMatches = regexPatternHeight.exec(outputStr);
 									const frameRateMatches = regexPatternFrameRate.exec(outputStr);
@@ -1875,13 +1962,26 @@ module.exports = (() => {
 									duration = endSeconds > 0 ? endSeconds : originalDuration - startSeconds;
 									if (duration <= 0)
 										duration = originalDuration;
+									if (this.settings.compressor.debug) {
+										const fileStats = fs.statSync(originalPath);
+										Logger.info(config.info.name, "[" + job.file.name + "] Original file size: " + (fileStats ? fileStats.size : 0) + " bytes");
+										Logger.info(config.info.name, "[" + job.file.name + "] Max file size: " + cappedFileSize + " bytes");
+										Logger.info(config.info.name, "[" + job.file.name + "] File length: " + originalDuration + " seconds");
+										Logger.info(config.info.name, "[" + job.file.name + "] Clipped length: " + duration + " seconds");
+										Logger.info(config.info.name, "[" + job.file.name + "] Video height: " + originalHeight + " pixels");
+										Logger.info(config.info.name, "[" + job.file.name + "] Frame rate: " + frameRate + " fps");
+									}
 									let audioSize = 0;
+									let videoSize = 0;
 									if (!job.options.stripAudio.value) {
 										let audioBitrate = 1320000 / duration + 10000;
 										if (audioBitrate > 32768)
 											audioBitrate = 32768;
 										else if (audioBitrate < 10240)
 											audioBitrate = 10240;
+										if (this.settings.compressor.debug) {
+											Logger.info(config.info.name, "[" + job.file.name + "] Target audio bitrate: " + audioBitrate + " bits/second");
+										}
 										try {
 											toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PERCENT', '0'));
 											await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-vn", "-c:a", "libopus", "-b:a", audioBitrate, "-ac", "1", "-sn", "-map_chapters", "-1", tempAudioPath], str => {
@@ -1900,18 +2000,20 @@ module.exports = (() => {
 												}
 											});
 										} catch (e) {
-											if (isOriginalTemporary) {
+											if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
 												try {
 													fs.rmSync(originalPath);
 												} catch (e) {}
 											}
-											try {
-												fs.rmSync(tempAudioPath);
-											} catch (e) {}
+											if (!this.settings.compressor.keepTemp) {
+												try {
+													fs.rmSync(tempAudioPath);
+												} catch (e) {}
+											}
 											throw e;
 										}
 										if (!fs.existsSync(tempAudioPath)) {
-											if (isOriginalTemporary) {
+											if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
 												try {
 													fs.rmSync(originalPath);
 												} catch (e) {}
@@ -1920,34 +2022,43 @@ module.exports = (() => {
 										}
 										const audioStats = fs.statSync(tempAudioPath);
 										audioSize = audioStats ? audioStats.size : 0;
+										if (this.settings.compressor.debug) {
+											Logger.info(config.info.name, "[" + job.file.name + "] Expected audio size: " + (duration * (audioBitrate / 8)) + " bytes");
+											Logger.info(config.info.name, "[" + job.file.name + "] Final audio size: " + audioSize + " bytes");
+										}
 									}
 									let maxFrameRate = frameRate;
 									if (job.options.maxFps.value && job.options.maxFps.value < frameRate)
 										maxFrameRate = job.options.maxFps.value;
-									const cappedFileSize = Math.floor((job.options.sizeCap.value && parseInt(job.options.sizeCap.value) < maxUploadSize ? parseInt(job.options.sizeCap.value) : maxUploadSize) - 250000);
-									let videoBitrate = Math.floor((((cappedFileSize - audioSize) * 8) / 1024) / duration);
+									let videoBitrate = Math.floor(((cappedFileSize - audioSize) * 8) / duration) - 25000;
 									videoBitrate = videoBitrate > 2 ? videoBitrate - 1 : videoBitrate;
 									let maxVideoHeight = job.options.maxHeight.value;
-									if (videoBitrate < 100)
+									if (videoBitrate < 102400)
 										maxVideoHeight = 144;
-									else if (videoBitrate < 200)
+									else if (videoBitrate < 204800)
 										maxVideoHeight = 240;
-									else if (videoBitrate < 500)
+									else if (videoBitrate < 512000)
 										maxVideoHeight = 360;
-									else if (videoBitrate < 850)
+									else if (videoBitrate < 870400)
 										maxVideoHeight = 480;
-									else if (videoBitrate < 1250)
+									else if (videoBitrate < 1280000)
 										maxVideoHeight = 720;
-									else if (videoBitrate < 2500)
+									else if (videoBitrate < 2560000)
 										maxVideoHeight = 1080;
-									else if (videoBitrate < 6000)
+									else if (videoBitrate < 6144000)
 										maxVideoHeight = 1440;
-									else if (videoBitrate < 10000)
+									else if (videoBitrate < 10240000)
 										maxVideoHeight = 2160;
 									maxVideoHeight = (job.options.maxHeight.value && job.options.maxHeight.value < maxVideoHeight) ? job.options.maxHeight.value : maxVideoHeight;
+									if (this.settings.compressor.debug) {
+										Logger.info(config.info.name, "[" + job.file.name + "] Max frame rate: " + maxFrameRate + " fps");
+										Logger.info(config.info.name, "[" + job.file.name + "] Target video bitrate: " + videoBitrate + " bits/second");
+										Logger.info(config.info.name, "[" + job.file.name + "] Max frame height: " + maxVideoHeight + " pixels");
+										Logger.info(config.info.name, "[" + job.file.name + "] Capped frame height: " + (maxVideoHeight && originalHeight > maxVideoHeight ? maxVideoHeight : originalHeight) + " pixels");
+									}
 									try {
 										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PASS_1_PERCENT', '0'));
-										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate + "K", "-vf", "fps=fps=" + maxFrameRate + (job.options.interlace.value ? ",interlace=lowpass=2" : "") + ((maxVideoHeight && originalHeight > maxVideoHeight) ? ",scale=-1:" + maxVideoHeight + ",scale=trunc(iw/2)*2:" + maxVideoHeight : ""), "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "1", "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")], str => {
+										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-vf", "fps=fps=" + maxFrameRate + (job.options.interlace.value ? ",interlace=lowpass=2" : "") + ((maxVideoHeight && originalHeight > maxVideoHeight) ? ",scale=-1:" + maxVideoHeight + ",scale=trunc(iw/2)*2:" + maxVideoHeight : ""), "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "1", "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")], str => {
 											return str.includes("time=")
 										}, str => {
 											try {
@@ -1963,24 +2074,26 @@ module.exports = (() => {
 											}
 										});
 									} catch (e) {
-										if (isOriginalTemporary) {
+										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
 											try {
 												fs.rmSync(originalPath);
 											} catch (e) {}
 										}
-										if (!job.options.stripAudio.value) {
+										if (!job.options.stripAudio.value && !this.settings.compressor.keepTemp) {
 											try {
 												fs.rmSync(tempAudioPath);
 											} catch (e) {}
 										}
-										try {
-											fs.rmSync(tempVideoPath);
-										} catch (e) {}
+										if (!this.settings.compressor.keepTemp) {
+											try {
+												fs.rmSync(tempVideoPath);
+											} catch (e) {}
+										}
 										throw e;
 									}
 									try {
 										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PASS_2_PERCENT', '0'));
-										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate + "K", "-vf", "fps=fps=" + maxFrameRate + (job.options.interlace.value ? ",interlace=lowpass=2" : "") + ((maxVideoHeight && originalHeight > maxVideoHeight) ? ",scale=-1:" + maxVideoHeight + ",scale=trunc(iw/2)*2:" + maxVideoHeight : ""), "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "2", tempVideoPath], str => {
+										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-vf", "fps=fps=" + maxFrameRate + (job.options.interlace.value ? ",interlace=lowpass=2" : "") + ((maxVideoHeight && originalHeight > maxVideoHeight) ? ",scale=-1:" + maxVideoHeight + ",scale=trunc(iw/2)*2:" + maxVideoHeight : ""), "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "2", tempVideoPath], str => {
 											return str.includes("time=")
 										}, str => {
 											try {
@@ -1996,116 +2109,140 @@ module.exports = (() => {
 											}
 										});
 									} catch (e) {
-										if (isOriginalTemporary) {
+										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
 											try {
 												fs.rmSync(originalPath);
 											} catch (e) {}
 										}
-										try {
-											fs.rmSync(tempAudioPath);
-										} catch (e) {}
-										try {
-											fs.rmSync(tempVideoPath);
-										} catch (e) {}
+										if (!this.settings.compressor.keepTemp) {
+											try {
+												fs.rmSync(tempAudioPath);
+											} catch (e) {}
+											try {
+												fs.rmSync(tempVideoPath);
+											} catch (e) {}
+										}
 										throw e;
 									}
 									if (!fs.existsSync(tempVideoPath)) {
-										if (isOriginalTemporary) {
+										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
 											try {
 												fs.rmSync(originalPath);
 											} catch (e) {}
 										}
-										try {
-											fs.rmSync(tempAudioPath);
-										} catch (e) {}
+										if (!this.settings.compressor.keepTemp) {
+											try {
+												fs.rmSync(tempAudioPath);
+											} catch (e) {}
+										}
 										throw new Error("Cannot find FFmpeg output");
+									} else {
+										if (this.settings.compressor.debug) {
+											const fileStats = fs.statSync(tempVideoPath);
+											videoSize = fileStats ? fileStats.size : 0;
+											Logger.info(config.info.name, "[" + job.file.name + "] Expected video only size: " + (duration * (videoBitrate / 8)) + " bytes");
+											Logger.info(config.info.name, "[" + job.file.name + "] Final video only size: " + videoSize + " bytes");
+										}
 									}
 									try {
 										toasts.setToast(job.jobId, i18n.MESSAGES.PACKAGING);
 										await ffmpeg.runWithArgs(["-y", ...(!job.options.stripAudio.value ? ["-i", tempAudioPath] : []), "-i", tempVideoPath, "-c", "copy", compressedPathPre]);
 									} catch (e) {
-										if (isOriginalTemporary) {
+										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
 											try {
 												fs.rmSync(originalPath);
 											} catch (e) {}
 										}
-										try {
-											fs.rmSync(tempAudioPath);
-										} catch (e) {}
-										try {
-											fs.rmSync(tempVideoPath);
-										} catch (e) {}
-										try {
-											fs.rmSync(compressedPathPre);
-										} catch (e) {}
+										if (!this.settings.compressor.keepTemp) {
+											try {
+												fs.rmSync(tempAudioPath);
+											} catch (e) {}
+											try {
+												fs.rmSync(tempVideoPath);
+											} catch (e) {}
+											try {
+												fs.rmSync(compressedPathPre);
+											} catch (e) {}
+										}
 										throw e;
 									}
 									if (fs.existsSync(compressedPathPre)) {
 										fs.renameSync(compressedPathPre, compressedPath);
 									} else {
-										if (isOriginalTemporary) {
+										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
 											try {
 												fs.rmSync(originalPath);
 											} catch (e) {}
 										}
-										try {
-											fs.rmSync(tempAudioPath);
-										} catch (e) {}
-										try {
-											fs.rmSync(tempVideoPath);
-										} catch (e) {}
-										try {
-											fs.rmSync(compressedPathPre);
-										} catch (e) {}
+										if (!this.settings.compressor.keepTemp) {
+											try {
+												fs.rmSync(tempAudioPath);
+											} catch (e) {}
+											try {
+												fs.rmSync(tempVideoPath);
+											} catch (e) {}
+											try {
+												fs.rmSync(compressedPathPre);
+											} catch (e) {}
+										}
 										throw new Error("Cannot find FFmpeg output");
 									}
 									if (fs.existsSync(compressedPath)) {
+										if (this.settings.compressor.debug) {
+											const fileStats = fs.statSync(compressedPath);
+											Logger.info(config.info.name, "[" + job.file.name + "] Expected video size: " + (audioSize + videoSize) + " bytes");
+											Logger.info(config.info.name, "[" + job.file.name + "] Final video size: " + (fileStats ? fileStats.size : 0) + " bytes");
+										}
 										if (cache) {
 											cache.addToCache(compressedPath, name + ".webm", job.hash);
 										}
 										const retFile = new File([Uint8Array.from(Buffer.from(fs.readFileSync(compressedPath))).buffer], name + ".webm", {
 											type: job.file.type
 										});
-										if (isOriginalTemporary) {
+										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
 											try {
 												fs.rmSync(originalPath);
 											} catch (e) {}
 										}
-										try {
-											fs.rmSync(compressedPathPre);
-										} catch (e) {}
-										try {
-											fs.rmSync(tempAudioPath);
-										} catch (e) {}
-										try {
-											fs.rmSync(tempVideoPath);
-										} catch (e) {}
+										if (!this.settings.compressor.keepTemp) {
+											try {
+												fs.rmSync(compressedPathPre);
+											} catch (e) {}
+											try {
+												fs.rmSync(tempAudioPath);
+											} catch (e) {}
+											try {
+												fs.rmSync(tempVideoPath);
+											} catch (e) {}
+										}
 										job.compressedFile = retFile;
-										if (!cache) {
+										if (!cache && !this.settings.compressor.keepTemp) {
 											try {
 												fs.rmSync(compressedPath);
 											} catch (e) {}
 										}
 										return job;
 									} else {
-										if (isOriginalTemporary) {
+										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
 											try {
 												fs.rmSync(originalPath);
 											} catch (e) {}
 										}
-										try {
-											fs.rmSync(tempAudioPath);
-										} catch (e) {}
-										try {
-											fs.rmSync(tempVideoPath);
-										} catch (e) {}
-										try {
-											fs.rmSync(compressedPathPre);
-										} catch (e) {}
+										if (!this.settings.compressor.keepTemp) {
+											try {
+												fs.rmSync(tempAudioPath);
+											} catch (e) {}
+											try {
+												fs.rmSync(tempVideoPath);
+											} catch (e) {}
+											try {
+												fs.rmSync(compressedPathPre);
+											} catch (e) {}
+										}
 										throw new Error("Cannot find FFmpeg output");
 									}
 								} catch (e) {
-									if (isOriginalTemporary) {
+									if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
 										try {
 											fs.rmSync(originalPath);
 										} catch (e) {}
