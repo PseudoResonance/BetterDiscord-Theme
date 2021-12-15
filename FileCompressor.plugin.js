@@ -15,12 +15,18 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.4.4",
+			version: "1.4.5",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
 		},
 		changelog: [{
+				title: "Fixed",
+				type: "fixed",
+				items: [
+					"Fixed video FPS calculation"
+				]
+			}, {
 				title: "Added",
 				type: "added",
 				items: [
@@ -1929,9 +1935,10 @@ module.exports = (() => {
 									const durationMatches = regexPatternDuration.exec(outputStr);
 									const heightMatches = regexPatternHeight.exec(outputStr);
 									const frameRateMatches = regexPatternFrameRate.exec(outputStr);
+									const frameRateMatchesSplit = frameRateMatches[1].split('/');
 									const originalDuration = parseFloat(durationMatches[1]);
 									const originalHeight = parseInt(heightMatches[1]);
-									const frameRate = parseFloat(frameRateMatches[1]);
+									const frameRate = parseFloat(frameRateMatchesSplit[0]) / parseFloat(frameRateMatchesSplit[1]);
 									if (originalDuration == 0)
 										throw new Error("Invalid file duration");
 									let duration = originalDuration;
