@@ -15,7 +15,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.4.5",
+			version: "1.4.6",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -38,7 +38,8 @@ module.exports = (() => {
 				items: [
 					"Adjusted localization of \"Use Cache\" to be more easily understood",
 					"Hide unnecessary options when \"Use Cache\" is enabled",
-					"Files will almost never be too large to send"
+					"Files will almost never be too large to send",
+					"Show file name in compression options"
 				]
 			}, {
 				title: "Known Bugs",
@@ -212,6 +213,7 @@ module.exports = (() => {
 			SETTINGS_DEBUG_DESC: 'Outputs extra debug messages to the console during compression.',
 			SETTINGS_KEEP_TEMP: 'Keep Temp Files',
 			SETTINGS_KEEP_TEMP_DESC: 'Retain temporary files after compression.',
+			COMPRESSION_OPTIONS_TITLE: '{$0$} Compression Options',
 			COMPRESSION_OPTIONS_USE_CACHE: 'Use Cached File',
 			COMPRESSION_OPTIONS_USE_CACHE_DESC: 'Use the previously cached file.',
 			COMPRESSION_OPTIONS_SIZE_CAP: 'Size Cap (bytes)',
@@ -220,7 +222,6 @@ module.exports = (() => {
 			COMPRESSION_OPTIONS_SIZE_MULTIPLIER_DESC: 'Amount to multiply image size by with each attempt.',
 			COMPRESSION_OPTIONS_MAX_ITERATIONS: 'Max Iterations',
 			COMPRESSION_OPTIONS_MAX_ITERATIONS_DESC: 'Maximum number of attempts to resize image.',
-			COMPRESSION_OPTIONS_CATEGORY_IMAGE: 'Image Compression Options',
 			COMPRESSION_OPTIONS_ENCODER: 'Encoder',
 			COMPRESSION_OPTIONS_MAX_HEIGHT: 'Max Video Height (pixels)',
 			COMPRESSION_OPTIONS_MAX_FPS: 'Max Video FPS',
@@ -230,8 +231,6 @@ module.exports = (() => {
 			COMPRESSION_OPTIONS_STRIP_AUDIO_DESC: 'Remove all audio from the video.',
 			COMPRESSION_OPTIONS_STARTING_TIMESTAMP: 'Starting Timestamp',
 			COMPRESSION_OPTIONS_ENDING_TIMESTAMP: 'Ending Timestamp',
-			COMPRESSION_OPTIONS_CATEGORY_VIDEO: 'Video Compression Options',
-			COMPRESSION_OPTIONS_CATEGORY_AUDIO: 'Audio Compression Options',
 			ERROR_CACHING: 'Error caching file',
 			ERROR_CACHE_SETUP: 'Error setting up cache',
 			ERROR_HOOKING_UPLOAD: 'Unable to hook into Discord upload handler',
@@ -288,6 +287,7 @@ module.exports = (() => {
 			SETTINGS_DEBUG_DESC: '圧縮中で追加のデバッグメッセージをコンソールに出力する。',
 			SETTINGS_KEEP_TEMP: '一時ファイルを保持',
 			SETTINGS_KEEP_TEMP_DESC: '圧縮後に一時ファイルを保持する。',
+			COMPRESSION_OPTIONS_TITLE: '{$0$}　圧縮設定',
 			COMPRESSION_OPTIONS_USE_CACHE: 'キャッシュされたファイルュを使用',
 			COMPRESSION_OPTIONS_USE_CACHE_DESC: '以前にキャッシュされたファイルを使用する。',
 			COMPRESSION_OPTIONS_SIZE_CAP: '最大ファイルサイズ（bytes）',
@@ -296,7 +296,6 @@ module.exports = (() => {
 			COMPRESSION_OPTIONS_SIZE_MULTIPLIER_DESC: '試行ごとに画像のサイズがこの係数で乗算します。',
 			COMPRESSION_OPTIONS_MAX_ITERATIONS: '最大試行回数',
 			COMPRESSION_OPTIONS_MAX_ITERATIONS_DESC: '画像圧縮の最大試行回数。',
-			COMPRESSION_OPTIONS_CATEGORY_IMAGE: '画像圧縮設定',
 			COMPRESSION_OPTIONS_ENCODER: 'エンコーダー',
 			COMPRESSION_OPTIONS_MAX_HEIGHT: '最大動画の高さ（ピクセル）',
 			COMPRESSION_OPTIONS_MAX_FPS: '最大動画のFPS',
@@ -306,8 +305,6 @@ module.exports = (() => {
 			COMPRESSION_OPTIONS_STRIP_AUDIO_DESC: '動画から全ての音声を消去する。',
 			COMPRESSION_OPTIONS_STARTING_TIMESTAMP: '開始タイムスタンプ',
 			COMPRESSION_OPTIONS_ENDING_TIMESTAMP: '終了タイムスタンプ',
-			COMPRESSION_OPTIONS_CATEGORY_VIDEO: '動画圧縮設定',
-			COMPRESSION_OPTIONS_CATEGORY_AUDIO: '音声圧縮設定',
 			ERROR_CACHING: 'ファイルキャッシュ中でエラー',
 			ERROR_CACHE_SETUP: 'キャッシュセットアップでエラー',
 			ERROR_HOOKING_UPLOAD: 'Discordのアップロードハンドラにフックできません',
@@ -695,15 +692,15 @@ module.exports = (() => {
 					return;
 				}
 
-				getFile(hash) {
-					let entry = this.cacheLookup.get(hash);
+				getFile(fileKey) {
+					let entry = this.cacheLookup.get(fileKey);
 					if (entry) {
 						if (fs.existsSync(entry.path)) {
 							return new File([Uint8Array.from(Buffer.from(fs.readFileSync(entry.path))).buffer], entry.name, {
 								type: mime.contentType(entry.path)
 							});
 						} else {
-							this.removeFile(hash);
+							this.removeFile(fileKey);
 						}
 					}
 					return null;
@@ -713,7 +710,7 @@ module.exports = (() => {
 					return this.cachePath;
 				}
 
-				async saveAndCache(file, hash) {
+				async saveAndCache(file, fileKey) {
 					try {
 						let nameSplit = file.name.split('.');
 						let extension = nameSplit[nameSplit.length - 1];
@@ -726,7 +723,7 @@ module.exports = (() => {
 									fs.writeFileSync(filePath, fr.result, {
 										encoding: 'binary'
 									});
-									this.addToCache(filePath, file.name, hash);
+									this.addToCache(filePath, file.name, fileKey);
 								};
 								fr.onerror = e => {
 									Logger.err(config.info.name, fr.error);
@@ -749,21 +746,21 @@ module.exports = (() => {
 					}
 				}
 
-				addToCache(path, name, hash) {
+				addToCache(path, name, fileKey) {
 					let entry = {
 						path: path,
 						name: name,
 						expiry: Date.now() + 86400000,
-						hash: hash
+						fileKey: fileKey
 					};
 					this.cache.push(entry);
-					this.cacheLookup.set(hash, entry);
+					this.cacheLookup.set(fileKey, entry);
 				}
 
-				removeFile(hash) {
-					let entry = this.cacheLookup.get(hash);
+				removeFile(fileKey) {
+					let entry = this.cacheLookup.get(fileKey);
 					if (entry) {
-						this.cacheLookup.delete(hash);
+						this.cacheLookup.delete(fileKey);
 						let index = this.cache.indexOf(entry);
 						if (index >= 0) {
 							this.cache.splice(index, 1);
@@ -1393,7 +1390,7 @@ module.exports = (() => {
 								return (!isNaN(value) && !isNaN(parseInt(value)) && value > 0);
 							}
 						};
-						if (!await this.showSettings(i18n.MESSAGES.COMPRESSION_OPTIONS_CATEGORY_IMAGE, job.options))
+						if (!await this.showSettings(i18n.FORMAT('COMPRESSION_OPTIONS_TITLE', job.file.name), job.options))
 							return false;
 						break;
 					case "video":
@@ -1455,7 +1452,7 @@ module.exports = (() => {
 										return true;
 							}
 						};
-						if (!await this.showSettings(i18n.MESSAGES.COMPRESSION_OPTIONS_CATEGORY_VIDEO, job.options))
+						if (!await this.showSettings(i18n.FORMAT('COMPRESSION_OPTIONS_TITLE', job.file.name), job.options))
 							return false;
 						break;
 					case "audio":
@@ -1481,7 +1478,7 @@ module.exports = (() => {
 										return true;
 							}
 						};
-						if (!await this.showSettings(i18n.MESSAGES.COMPRESSION_OPTIONS_CATEGORY_AUDIO, job.options))
+						if (!await this.showSettings(i18n.FORMAT('COMPRESSION_OPTIONS_TITLE', job.file.name), job.options))
 							return false;
 						break;
 					}
