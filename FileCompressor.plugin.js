@@ -15,7 +15,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.4.7",
+			version: "1.4.8",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -658,7 +658,6 @@ module.exports = (() => {
 				}
 
 				async hash(file, percentageCallback) {
-					return 0;
 					const totalBytes = file.size;
 					let bytesProcessed = 0;
 					const hash = cryptoModule.createHash('md5');
