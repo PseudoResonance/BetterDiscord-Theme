@@ -15,22 +15,16 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.4.8",
+			version: "1.4.9",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
 		},
 		changelog: [{
-				title: "Added",
-				type: "added",
-				items: [
-					"Detects HDR video and tonemaps it to BT.709 for Discord"
-				]
-			}, {
 				title: "Improved",
 				type: "improved",
 				items: [
-					"Show file name in compression options"
+					"Slightly reduced max file size to account for headers"
 				]
 			}, {
 				title: "Known Bugs",
@@ -1174,23 +1168,30 @@ module.exports = (() => {
 				}
 
 				async handleUploadEvent(fileList, channel, draftType, instantBackdrop, requireConfirmation, showLargeMessageDialog, ignoreDraft) {
-					let guildId = null;
-					let channelId = null;
-					let threadId = null;
-					let sidebar = false;
-					if (channel.threadMetadata) {
-						// Thread
-						guildId = channel.guild_id;
-						channelId = channel.parent_id;
-						threadId = channel.id;
-						sidebar = DiscordAPI.currentChannel ? DiscordAPI.currentChannel.discordObject.id !== threadId : false;
+					if (typeof fileList[Symbol.iterator] === 'function' && channel) {
+						let guildId = null;
+						let channelId = null;
+						let threadId = null;
+						let sidebar = false;
+						if (channel.threadMetadata) {
+							// Thread
+							guildId = channel.guild_id;
+							channelId = channel.parent_id;
+							threadId = channel.id;
+							sidebar = DiscordAPI.currentChannel ? DiscordAPI.currentChannel.discordObject.id !== threadId : false;
+							} else {
+							// Normal channel
+							guildId = channel.guild_id;
+							channelId = channel.id;
+						}
+						this.processUploadFileList(fileList, guildId, channelId, threadId, sidebar);
+						return true;
 					} else {
-						// Normal channel
-						guildId = channel.guild_id;
-						channelId = channel.id;
+						Logger.err(config.info.name, "Invalid upload event: fileList:", fileList, "channel:", channel, "draftType:", draftType, "instantBackdrop:", instantBackdrop, "requireConfirmation", requireConfirmation, "showLargeMessageDialog", showLargeMessageDialog, "ignoreDraft", ignoreDraft);
+						BdApi.showToast(i18n.MESSAGES.ERROR_UPLOADING, {
+							type: "error"
+						});
 					}
-					this.processUploadFileList(fileList, guildId, channelId, threadId, sidebar);
-					return true;
 				}
 
 				processUploadFileList(files, guildId, channelId, threadId, sidebar) {
@@ -1210,12 +1211,12 @@ module.exports = (() => {
 					let queuedFiles = 0;
 					for (let i = 0; i < files.length; i++) {
 						const file = files[i];
-						if (file.size >= maxUploadSize) {
+						if (file.size > maxUploadSize) {
 							// If file is returned, it was incompressible
 							let type = file.type;
 							if (!type && file.path)
 								type = mime.contentType(file.path);
-							const tempFile = this.checkIsCompressible(file, type.split('/')[0], guildId, channelId, threadId, sidebar);
+							const tempFile = this.checkIsCompressible(file, type ? type.split('/')[0] : "", guildId, channelId, threadId, sidebar);
 							// Check if no files will be uploaded, and if so, trigger Discord's file too large modal by passing through large file
 							if (tempFile) {
 								if (i === files.length - 1 && originalDt.items.length === 0 && queuedFiles === 0) {
@@ -1734,7 +1735,7 @@ module.exports = (() => {
 									duration = endSeconds > 0 ? endSeconds : originalDuration - startSeconds;
 									if (duration <= 0)
 										duration = originalDuration;
-									const cappedFileSize = Math.floor((job.options.sizeCap.value && parseInt(job.options.sizeCap.value) < maxUploadSize ? parseInt(job.options.sizeCap.value) : maxUploadSize));
+									const cappedFileSize = Math.floor((job.options.sizeCap.value && parseInt(job.options.sizeCap.value) < maxUploadSize ? parseInt(job.options.sizeCap.value) : maxUploadSize)) - 10000;
 									let audioBitrate = Math.floor((cappedFileSize * 8) / duration);
 									if (audioBitrate > 256000)
 										audioBitrate = 256000;
@@ -1928,7 +1929,7 @@ module.exports = (() => {
 							if (data) {
 								const outputStr = data.data;
 								try {
-									const cappedFileSize = Math.floor((job.options.sizeCap.value && parseInt(job.options.sizeCap.value) < maxUploadSize ? parseInt(job.options.sizeCap.value) : maxUploadSize));
+									const cappedFileSize = Math.floor((job.options.sizeCap.value && parseInt(job.options.sizeCap.value) < maxUploadSize ? parseInt(job.options.sizeCap.value) : maxUploadSize)) - 150000;
 									const durationMatches = regexPatternDuration.exec(outputStr);
 									const heightMatches = regexPatternHeight.exec(outputStr);
 									const frameRateMatches = regexPatternFrameRate.exec(outputStr);
@@ -1974,7 +1975,7 @@ module.exports = (() => {
 										Logger.info(config.info.name, "[" + job.file.name + "] Clipped length: " + duration + " seconds");
 										Logger.info(config.info.name, "[" + job.file.name + "] Video height: " + originalHeight + " pixels");
 										Logger.info(config.info.name, "[" + job.file.name + "] Frame rate: " + frameRate + " fps");
-										Logger.info(config.info.name, "[" + job.file.name + "] Color Primaries: " + colorPrimaries + (isHDR ? " (HDR)" : " (SDR)"));
+										Logger.info(config.info.name, "[" + job.file.name + "] Color primaries: " + colorPrimaries + (isHDR ? " (HDR)" : " (SDR)"));
 									}
 									let audioSize = 0;
 									let videoSize = 0;
