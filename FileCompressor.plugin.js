@@ -15,7 +15,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.4.9",
+			version: "1.4.10",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -24,7 +24,8 @@ module.exports = (() => {
 				title: "Improved",
 				type: "improved",
 				items: [
-					"Slightly reduced max file size to account for headers"
+					"Slightly reduced max file size to account for headers",
+					"Uses file path, size and modify date to determine file equality instead of hashing where possible"
 				]
 			}, {
 				title: "Known Bugs",
@@ -396,7 +397,8 @@ module.exports = (() => {
 				PluginUtilities,
 				DiscordAPI,
 				Settings,
-				ReactTools
+				ReactTools,
+				WebpackModules
 			} = Api;
 
 			// Node modules
@@ -686,15 +688,26 @@ module.exports = (() => {
 					return;
 				}
 
+				getFileKey(file) {
+					if (file) {
+						if (file.path && file.size && file.lastModified) {
+							return file.size + file.lastModified + file.path;
+						}
+					}
+					return null;
+				}
+
 				getFile(fileKey) {
-					let entry = this.cacheLookup.get(fileKey);
-					if (entry) {
-						if (fs.existsSync(entry.path)) {
-							return new File([Uint8Array.from(Buffer.from(fs.readFileSync(entry.path))).buffer], entry.name, {
-								type: mime.contentType(entry.path)
-							});
-						} else {
-							this.removeFile(fileKey);
+					if (fileKey) {
+						let entry = this.cacheLookup.get(fileKey);
+						if (entry) {
+							if (fs.existsSync(entry.path)) {
+								return new File([Uint8Array.from(Buffer.from(fs.readFileSync(entry.path))).buffer], entry.name, {
+									type: mime.contentType(entry.path)
+								});
+							} else {
+								this.removeFile(fileKey);
+							}
 						}
 					}
 					return null;
@@ -705,59 +718,64 @@ module.exports = (() => {
 				}
 
 				async saveAndCache(file, fileKey) {
-					try {
-						let nameSplit = file.name.split('.');
-						let extension = nameSplit[nameSplit.length - 1];
-						for (let i = 0; i < 5; i++) {
-							let filePath = path.join(this.cachePath, uuidv4().replace(/-/g, "") + "." + extension);
-							if (!fs.existsSync(filePath)) {
-								let fr = new FileReader();
-								fr.readAsBinaryString(file);
-								fr.onloadend = e => {
-									fs.writeFileSync(filePath, fr.result, {
-										encoding: 'binary'
-									});
-									this.addToCache(filePath, file.name, fileKey);
-								};
-								fr.onerror = e => {
-									Logger.err(config.info.name, fr.error);
-									BdApi.showToast(i18n.MESSAGES.ERROR_CACHING, {
-										type: "error"
-									});
-								};
-								return;
+					if (fileKey) {
+						try {
+							let nameSplit = file.name.split('.');
+							let extension = nameSplit[nameSplit.length - 1];
+							for (let i = 0; i < 5; i++) {
+								let filePath = path.join(this.cachePath, uuidv4().replace(/-/g, "") + "." + extension);
+								if (!fs.existsSync(filePath)) {
+									let fr = new FileReader();
+									fr.readAsBinaryString(file);
+									fr.onloadend = e => {
+										fs.writeFileSync(filePath, fr.result, {
+											encoding: 'binary'
+										});
+										this.addToCache(filePath, file.name, fileKey);
+									};
+									fr.onerror = e => {
+										Logger.err(config.info.name, fr.error);
+										BdApi.showToast(i18n.MESSAGES.ERROR_CACHING, {
+											type: "error"
+										});
+									};
+									return;
+								}
 							}
+							Logger.err(config.info.name, "Unable to find unused UUID for cache");
+							BdApi.showToast(i18n.MESSAGES.ERROR_CACHING, {
+								type: "error"
+							});
+						} catch (err) {
+							Logger.err(config.info.name, err);
+							BdApi.showToast(i18n.MESSAGES.ERROR_CACHING, {
+								type: "error"
+							});
 						}
-						Logger.err(config.info.name, "Unable to find unused UUID for cache");
-						BdApi.showToast(i18n.MESSAGES.ERROR_CACHING, {
-							type: "error"
-						});
-					} catch (err) {
-						Logger.err(config.info.name, err);
-						BdApi.showToast(i18n.MESSAGES.ERROR_CACHING, {
-							type: "error"
-						});
 					}
 				}
 
 				addToCache(path, name, fileKey) {
-					let entry = {
-						path: path,
-						name: name,
-						expiry: Date.now() + 86400000,
-						fileKey: fileKey
-					};
-					this.cache.push(entry);
-					this.cacheLookup.set(fileKey, entry);
+					if (fileKey) {
+						let entry = {
+							path: path,
+							name: name,
+							fileKey: fileKey
+						};
+						this.cache.push(entry);
+						this.cacheLookup.set(fileKey, entry);
+					}
 				}
 
 				removeFile(fileKey) {
-					let entry = this.cacheLookup.get(fileKey);
-					if (entry) {
-						this.cacheLookup.delete(fileKey);
-						let index = this.cache.indexOf(entry);
-						if (index >= 0) {
-							this.cache.splice(index, 1);
+					if (fileKey) {
+						let entry = this.cacheLookup.get(fileKey);
+						if (entry) {
+							this.cacheLookup.delete(fileKey);
+							let index = this.cache.indexOf(entry);
+							if (index >= 0) {
+								this.cache.splice(index, 1);
+							}
 						}
 					}
 				}
@@ -829,6 +847,32 @@ module.exports = (() => {
 					});
 					this.currentToasts.clear();
 					this.toastNode.remove();
+					this.toastNode = null;
+				}
+			};
+
+			const FileSelector = {
+				remove: function () {
+					// Check for and remove existing file selector node
+					document.getElementById('pseudocompressor-file-selector')?.remove();
+				},
+				open: function () {
+					return new Promise((resolve, reject) => {
+						// Check for existing file selector node
+						let selectorNode = document.getElementById('pseudocompressor-file-selector');
+						if (selectorNode)
+							selectorNode.remove();
+						selectorNode = document.createElement('input');
+						selectorNode.type = 'file';
+						selectorNode.id = 'pseudocompressor-file-selector';
+						selectorNode.style.display = 'none';
+						document.getElementById('app-mount')?.appendChild(selectorNode);
+						selectorNode.onchange = function () {
+							resolve(this.files);
+							selectorNode.remove();
+						};
+						selectorNode.click();
+					});
 				}
 			};
 
@@ -928,10 +972,12 @@ module.exports = (() => {
 					}
 					// Remove event listeners
 					DiscordModules.UserSettingsStore.removeChangeListener(this.handleUserSettingsChange);
-					// Remove upload node
+					// Remove toasts module
 					if (toasts)
 						toasts.remove();
 					toasts = null;
+					// Remove file selector module
+					FileSelector.remove();
 					// Killing running processes
 					runningProcesses.filter(process => {
 						process.kill("SIGKILL");
@@ -983,9 +1029,18 @@ module.exports = (() => {
 						});
 						Logger.err(config.info.name, "Unable to hook into Discord upload handler! promptToUpload module doesn't exist!");
 					}
-					Patcher.before(BdApi.findModuleByDisplayName("FileInput").prototype, "render", (t, args) => {
-						// Bypass initial file size check
-						t.props.maxSize = Infinity;
+					Patcher.instead(WebpackModules.find(m => m.prototype.activateUploadDialogue && m.displayName === "FileInput").prototype, "activateUploadDialogue", (t, args, originalFunc) => {
+						// Run custom file selector
+						FileSelector.open().then(fileList => {
+							// If selector returns file list, run Discord's onChange
+							t.props.onChange({
+								currentTarget: {
+									files: [...fileList]
+								},
+								stopPropagation: () => {},
+								preventDefault: () => {}
+							});
+						});
 					});
 				}
 
@@ -1179,7 +1234,7 @@ module.exports = (() => {
 							channelId = channel.parent_id;
 							threadId = channel.id;
 							sidebar = DiscordAPI.currentChannel ? DiscordAPI.currentChannel.discordObject.id !== threadId : false;
-							} else {
+						} else {
 							// Normal channel
 							guildId = channel.guild_id;
 							channelId = channel.id;
@@ -1336,12 +1391,16 @@ module.exports = (() => {
 				async compressFile(job) {
 					let cacheFile;
 					if (cache) {
-						toasts.setToast(job.jobId, i18n.FORMAT('HASHING_PERCENT', '0'));
-						job.hash = await cache.hash(job.file, percentage => {
-							toasts.setToast(job.jobId, i18n.FORMAT('HASHING_PERCENT', percentage));
-						});
+						job.fileKey = cache.getFileKey(job.file);
+						if (!job.fileKey) {
+							// If unable to get key from path, size and modify date, hash file instead - generally used with screenshots and images in the clipboard
+							toasts.setToast(job.jobId, i18n.FORMAT('HASHING_PERCENT', '0'));
+							job.fileKey = await cache.hash(job.file, percentage => {
+								toasts.setToast(job.jobId, i18n.FORMAT('HASHING_PERCENT', percentage));
+							});
+						}
 						try {
-							cacheFile = cache.getFile(job.hash);
+							cacheFile = cache.getFile(job.fileKey);
 						} catch (err) {
 							Logger.err(config.info.name, err);
 						}
@@ -1806,7 +1865,7 @@ module.exports = (() => {
 											Logger.info(config.info.name, "[" + job.file.name + "] Final audio size: " + (fileStats ? fileStats.size : 0) + " bytes");
 										}
 										if (cache) {
-											cache.addToCache(compressedPath, name + ".ogg", job.hash);
+											cache.addToCache(compressedPath, name + ".ogg", job.fileKey);
 										}
 										const retFile = new File([Uint8Array.from(Buffer.from(fs.readFileSync(compressedPath))).buffer], name + ".ogg", {
 											type: job.file.type
@@ -2204,7 +2263,7 @@ module.exports = (() => {
 											Logger.info(config.info.name, "[" + job.file.name + "] Final video size: " + (fileStats ? fileStats.size : 0) + " bytes");
 										}
 										if (cache) {
-											cache.addToCache(compressedPath, name + ".webm", job.hash);
+											cache.addToCache(compressedPath, name + ".webm", job.fileKey);
 										}
 										const retFile = new File([Uint8Array.from(Buffer.from(fs.readFileSync(compressedPath))).buffer], name + ".webm", {
 											type: job.file.type
@@ -2301,7 +2360,7 @@ module.exports = (() => {
 							type: image.file.type
 						});
 						if (cache) {
-							cache.saveAndCache(job.compressedFile, job.hash);
+							cache.saveAndCache(job.compressedFile, job.fileKey);
 						}
 						return job;
 					}
