@@ -15,17 +15,25 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.4.10",
+			version: "1.4.11",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
 		},
 		changelog: [{
+				title: "Added",
+				type: "added",
+				items: [
+					"Added encoder presets",
+					"Added option to strip all video to send only audio"
+				]
+			}, {
 				title: "Improved",
 				type: "improved",
 				items: [
 					"Slightly reduced max file size to account for headers",
-					"Uses file path, size and modify date to determine file equality instead of hashing where possible"
+					"Uses file path, size and modify date to determine file equality instead of hashing where possible",
+					"Improved tuning for different encoders"
 				]
 			}, {
 				title: "Known Bugs",
@@ -209,12 +217,18 @@ module.exports = (() => {
 			COMPRESSION_OPTIONS_MAX_ITERATIONS: 'Max Iterations',
 			COMPRESSION_OPTIONS_MAX_ITERATIONS_DESC: 'Maximum number of attempts to resize image.',
 			COMPRESSION_OPTIONS_ENCODER: 'Encoder',
+			COMPRESSION_OPTIONS_ENCODER_PRESET: 'Encoder Preset',
+			COMPRESSION_OPTIONS_ENCODER_PRESET_PRESERVE_VIDEO: 'Preserve Video',
+			COMPRESSION_OPTIONS_ENCODER_PRESET_BALANCED: 'Balanced',
+			COMPRESSION_OPTIONS_ENCODER_PRESET_PRESERVE_AUDIO: 'Preserve Audio',
 			COMPRESSION_OPTIONS_MAX_HEIGHT: 'Max Video Height (pixels)',
 			COMPRESSION_OPTIONS_MAX_FPS: 'Max Video FPS',
 			COMPRESSION_OPTIONS_INTERLACE_VIDEO: 'Interlace Video',
 			COMPRESSION_OPTIONS_INTERLACE_VIDEO_DESC: 'Not recommended except for the largest videos.',
 			COMPRESSION_OPTIONS_STRIP_AUDIO: 'Strip Audio',
 			COMPRESSION_OPTIONS_STRIP_AUDIO_DESC: 'Remove all audio from the video.',
+			COMPRESSION_OPTIONS_STRIP_VIDEO: 'Strip Video',
+			COMPRESSION_OPTIONS_STRIP_VIDEO_DESC: 'Only send the audio from the video.',
 			COMPRESSION_OPTIONS_STARTING_TIMESTAMP: 'Starting Timestamp',
 			COMPRESSION_OPTIONS_ENDING_TIMESTAMP: 'Ending Timestamp',
 			ERROR_CACHING: 'Error caching file',
@@ -283,12 +297,18 @@ module.exports = (() => {
 			COMPRESSION_OPTIONS_MAX_ITERATIONS: '最大試行回数',
 			COMPRESSION_OPTIONS_MAX_ITERATIONS_DESC: '画像圧縮の最大試行回数。',
 			COMPRESSION_OPTIONS_ENCODER: 'エンコーダー',
+			COMPRESSION_OPTIONS_ENCODER_PRESET: 'エンコーダープリセット',
+			COMPRESSION_OPTIONS_ENCODER_PRESET_PRESERVE_VIDEO: '動画を保存',
+			COMPRESSION_OPTIONS_ENCODER_PRESET_BALANCED: 'バランス',
+			COMPRESSION_OPTIONS_ENCODER_PRESET_PRESERVE_AUDIO: '音声を保存',
 			COMPRESSION_OPTIONS_MAX_HEIGHT: '最大動画の高さ（ピクセル）',
 			COMPRESSION_OPTIONS_MAX_FPS: '最大動画のFPS',
 			COMPRESSION_OPTIONS_INTERLACE_VIDEO: '動画をインターレース',
 			COMPRESSION_OPTIONS_INTERLACE_VIDEO_DESC: '最大の動画以外に推奨されません。',
 			COMPRESSION_OPTIONS_STRIP_AUDIO: '音声を消去する',
 			COMPRESSION_OPTIONS_STRIP_AUDIO_DESC: '動画から全ての音声を消去する。',
+			COMPRESSION_OPTIONS_STRIP_VIDEO: '動画を消去する',
+			COMPRESSION_OPTIONS_STRIP_VIDEO_DESC: '動画の音声のみを保持。',
 			COMPRESSION_OPTIONS_STARTING_TIMESTAMP: '開始タイムスタンプ',
 			COMPRESSION_OPTIONS_ENDING_TIMESTAMP: '終了タイムスタンプ',
 			ERROR_CACHING: 'ファイルキャッシュ中でエラー',
@@ -444,13 +464,148 @@ module.exports = (() => {
 				i686: "-linux-i686"
 			};
 			// Default encoder settings
-			const encoderSettings = {
+			const videoEncoderSettings = {
 				"libx264": {
-					fileType: "mkv"
+					fileType: "mkv",
+					encoderPresets: {
+						"preserveVideo": {
+							audioFilePercent: 0.019,
+							videoHeightCapFunction: (bitrate) => {
+								if (bitrate < 102400)
+									return 144;
+								else if (bitrate < 204800)
+									return 240;
+								else if (bitrate < 512000)
+									return 360;
+								else if (bitrate < 870400)
+									return 480;
+								else if (bitrate < 1280000)
+									return 720;
+								else if (bitrate < 2560000)
+									return 1080;
+								else if (bitrate < 6144000)
+									return 1440;
+								else if (bitrate < 10240000)
+									return 2160;
+							}
+						},
+						"balanced": {
+							audioFilePercent: 0.032,
+							videoHeightCapFunction: (bitrate) => {
+								if (bitrate < 102400)
+									return 144;
+								else if (bitrate < 204800)
+									return 240;
+								else if (bitrate < 512000)
+									return 360;
+								else if (bitrate < 870400)
+									return 480;
+								else if (bitrate < 1280000)
+									return 720;
+								else if (bitrate < 2560000)
+									return 1080;
+								else if (bitrate < 6144000)
+									return 1440;
+								else if (bitrate < 10240000)
+									return 2160;
+							}
+						},
+						"preserveAudio": {
+							audioFilePercent: 0.044,
+							videoHeightCapFunction: (bitrate) => {
+								if (bitrate < 102400)
+									return 144;
+								else if (bitrate < 204800)
+									return 240;
+								else if (bitrate < 512000)
+									return 360;
+								else if (bitrate < 870400)
+									return 480;
+								else if (bitrate < 1280000)
+									return 720;
+								else if (bitrate < 2560000)
+									return 1080;
+								else if (bitrate < 6144000)
+									return 1440;
+								else if (bitrate < 10240000)
+									return 2160;
+							}
+						}
+					}
 				},
 				"libvpx-vp9": {
-					fileType: "webm"
+					fileType: "webm",
+					encoderPresets: {
+						"preserveVideo": {
+							audioFilePercent: 0.03,
+							videoHeightCapFunction: (bitrate) => {
+								if (bitrate < 102400)
+									return 144;
+								else if (bitrate < 204800)
+									return 240;
+								else if (bitrate < 512000)
+									return 360;
+								else if (bitrate < 870400)
+									return 480;
+								else if (bitrate < 1280000)
+									return 720;
+								else if (bitrate < 2560000)
+									return 1080;
+								else if (bitrate < 6144000)
+									return 1440;
+								else if (bitrate < 10240000)
+									return 2160;
+							}
+						},
+						"balanced": {
+							audioFilePercent: 0.05,
+							videoHeightCapFunction: (bitrate) => {
+								if (bitrate < 102400)
+									return 144;
+								else if (bitrate < 204800)
+									return 240;
+								else if (bitrate < 512000)
+									return 360;
+								else if (bitrate < 870400)
+									return 480;
+								else if (bitrate < 1280000)
+									return 720;
+								else if (bitrate < 2560000)
+									return 1080;
+								else if (bitrate < 6144000)
+									return 1440;
+								else if (bitrate < 10240000)
+									return 2160;
+							}
+						},
+						"preserveAudio": {
+							audioFilePercent: 0.1,
+							videoHeightCapFunction: (bitrate) => {
+								if (bitrate < 102400)
+									return 144;
+								else if (bitrate < 204800)
+									return 240;
+								else if (bitrate < 512000)
+									return 360;
+								else if (bitrate < 870400)
+									return 480;
+								else if (bitrate < 1280000)
+									return 720;
+								else if (bitrate < 2560000)
+									return 1080;
+								else if (bitrate < 6144000)
+									return 1440;
+								else if (bitrate < 10240000)
+									return 2160;
+							}
+						}
+					}
 				}
+			};
+			const videoEncoderPresets = {
+				"preserveVideo": "COMPRESSION_OPTIONS_ENCODER_PRESET_PRESERVE_VIDEO",
+				"balanced": "COMPRESSION_OPTIONS_ENCODER_PRESET_BALANCED",
+				"preserveAudio": "COMPRESSION_OPTIONS_ENCODER_PRESET_PRESERVE_AUDIO",
 			};
 			// Color primaries that will be detected as HDR and will be tonemapped
 			const hdrColorPrimaries = ["bt2020"];
@@ -1459,8 +1614,22 @@ module.exports = (() => {
 							type: "dropdown",
 							defaultValue: "libx264",
 							props: {
-								values: Object.getOwnPropertyNames(encoderSettings)
+								values: Object.getOwnPropertyNames(videoEncoderSettings)
 							}
+						};
+						const encoderPresetsArray = Object.getOwnPropertyNames(videoEncoderPresets);
+						const encoderPresetsValueMap = new Map();
+						for (const preset of encoderPresetsArray) {
+							encoderPresetsValueMap.set(i18n.MESSAGES[videoEncoderPresets[preset]], preset);
+						}
+						job.options.encoderPreset = {
+							name: i18n.MESSAGES.COMPRESSION_OPTIONS_ENCODER_PRESET,
+							type: "dropdown",
+							defaultValue: i18n.MESSAGES[videoEncoderPresets["balanced"]],
+							props: {
+								values: [...encoderPresetsValueMap.values()]
+							},
+							valueMappings: encoderPresetsValueMap
 						};
 						job.options.maxHeight = {
 							name: i18n.MESSAGES.COMPRESSION_OPTIONS_MAX_HEIGHT,
@@ -1473,7 +1642,7 @@ module.exports = (() => {
 						job.options.maxFps = {
 							name: i18n.MESSAGES.COMPRESSION_OPTIONS_MAX_FPS,
 							type: "textbox",
-							defaultValue: "60",
+							defaultValue: "",
 							validation: value => {
 								return (!isNaN(value) && !isNaN(parseFloat(value)) && value > 0);
 							}
@@ -1487,6 +1656,12 @@ module.exports = (() => {
 						job.options.stripAudio = {
 							name: i18n.MESSAGES.COMPRESSION_OPTIONS_STRIP_AUDIO,
 							description: i18n.MESSAGES.COMPRESSION_OPTIONS_STRIP_AUDIO_DESC,
+							type: "switch",
+							defaultValue: false
+						};
+						job.options.stripVideo = {
+							name: i18n.MESSAGES.COMPRESSION_OPTIONS_STRIP_VIDEO,
+							description: i18n.MESSAGES.COMPRESSION_OPTIONS_STRIP_VIDEO_DESC,
 							type: "switch",
 							defaultValue: false
 						};
@@ -1974,20 +2149,26 @@ module.exports = (() => {
 								});
 								writeStream.destroy();
 							}
+							const stripAudio = job.options.stripAudio.value && job.options.stripVideo.value ? false : job.options.stripAudio.value;
+							const stripVideo = job.options.stripAudio.value && job.options.stripVideo.value ? false : job.options.stripVideo.value;
 							const tempAudioPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".opus");
-							const tempVideoPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + "." + encoderSettings[job.options.encoder.value].fileType);
+							const tempVideoPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + "." + videoEncoderSettings[job.options.encoder.value].fileType);
 							const compressedPathPre = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".mkv");
 							let compressedPath = "";
 							if (cache) {
-								compressedPath = path.join(cache.getCachePath(), uuidv4().replace(/-/g, "") + ".webm");
+								compressedPath = path.join(cache.getCachePath(), uuidv4().replace(/-/g, "") + (!stripVideo ? ".webm" : ".ogg"));
 							} else {
-								compressedPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".webm");
+								compressedPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + (!stripVideo ? ".webm" : ".ogg"));
 							}
 							toasts.setToast(job.jobId, i18n.MESSAGES.CALCULATING);
 							const data = await ffmpeg.runProbeWithArgs(["-v", "error", "-select_streams", "v:0", "-show_entries", "format=duration:stream=height,r_frame_rate,color_primaries", "-of", "default=noprint_wrappers=1", originalPath]);
 							if (data) {
 								const outputStr = data.data;
 								try {
+									const videoFilters = [];
+									if (job.options.interlace.value) {
+										videoFilters.push("interlace=lowpass=2");
+									}
 									const cappedFileSize = Math.floor((job.options.sizeCap.value && parseInt(job.options.sizeCap.value) < maxUploadSize ? parseInt(job.options.sizeCap.value) : maxUploadSize)) - 150000;
 									const durationMatches = regexPatternDuration.exec(outputStr);
 									const heightMatches = regexPatternHeight.exec(outputStr);
@@ -1998,6 +2179,9 @@ module.exports = (() => {
 									const originalHeight = parseInt(heightMatches[1]);
 									const colorPrimaries = colorPrimariesMatches[1];
 									const isHDR = hdrColorPrimaries.includes(colorPrimaries);
+									if (isHDR) {
+										videoFilters.push("zscale=transfer=linear,tonemap=hable,zscale=transfer=bt709");
+									}
 									const frameRate = parseFloat(frameRateMatchesSplit[0]) / parseFloat(frameRateMatchesSplit[1]);
 									if (originalDuration == 0)
 										throw new Error("Invalid file duration");
@@ -2038,8 +2222,8 @@ module.exports = (() => {
 									}
 									let audioSize = 0;
 									let videoSize = 0;
-									if (!job.options.stripAudio.value) {
-										let audioBitrate = (cappedFileSize * 0.15) / duration;
+									if (!stripAudio) {
+										let audioBitrate = ((cappedFileSize * 8) * (stripVideo ? 1 : videoEncoderSettings[job.options.encoder.value].encoderPresets[job.options.encoderPreset.valueMappings.get(job.options.encoderPreset.value)].audioFilePercent)) / duration;
 										if (audioBitrate > 256000)
 											audioBitrate = 256000;
 										else if (audioBitrate < 10240)
@@ -2055,7 +2239,7 @@ module.exports = (() => {
 										try {
 											toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PERCENT', '0'));
 											await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-vn", "-c:a", "libopus", "-b:a", audioBitrate, "-ac", "1", "-sn", "-map_chapters", "-1", tempAudioPath], str => {
-												return str.includes("time=")
+												return str.includes("time=");
 											}, str => {
 												try {
 													const timeStr = regexPatternTime.exec(str);
@@ -2082,52 +2266,87 @@ module.exports = (() => {
 											}
 											throw e;
 										}
-										if (!fs.existsSync(tempAudioPath)) {
-											if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
-												try {
-													fs.rmSync(originalPath);
-												} catch (e) {}
-											}
-											throw new Error("Cannot find FFmpeg output");
-										}
 										const audioStats = fs.statSync(tempAudioPath);
 										audioSize = audioStats ? audioStats.size : 0;
 										if (this.settings.compressor.debug) {
 											Logger.info(config.info.name, "[" + job.file.name + "] Expected audio size: " + (duration * (audioBitrate / 8)) + " bytes");
 											Logger.info(config.info.name, "[" + job.file.name + "] Final audio size: " + audioSize + " bytes");
 										}
+										if (stripVideo) {
+											// Return early if video is to be stripped
+											toasts.setToast(job.jobId, i18n.MESSAGES.PACKAGING);
+											if (fs.existsSync(tempAudioPath)) {
+												fs.renameSync(tempAudioPath, compressedPath);
+											} else {
+												if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
+													try {
+														fs.rmSync(originalPath);
+													} catch (e) {}
+												}
+												throw new Error("Cannot find FFmpeg output");
+											}
+											if (fs.existsSync(compressedPath)) {
+												if (cache) {
+													cache.addToCache(compressedPath, name + ".ogg", job.fileKey);
+												}
+												const retFile = new File([Uint8Array.from(Buffer.from(fs.readFileSync(compressedPath))).buffer], name + ".ogg", {
+													type: job.file.type
+												});
+												if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
+													try {
+														fs.rmSync(originalPath);
+													} catch (e) {}
+												}
+												if (!this.settings.compressor.keepTemp) {
+													try {
+														fs.rmSync(tempAudioPath);
+													} catch (e) {}
+												}
+												job.compressedFile = retFile;
+												if (!cache && !this.settings.compressor.keepTemp) {
+													try {
+														fs.rmSync(compressedPath);
+													} catch (e) {}
+												}
+												return job;
+											} else {
+												if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
+													try {
+														fs.rmSync(originalPath);
+													} catch (e) {}
+												}
+												if (!this.settings.compressor.keepTemp) {
+													try {
+														fs.rmSync(tempAudioPath);
+													} catch (e) {}
+												}
+												throw new Error("Cannot find FFmpeg output");
+											}
+										}
 									}
 									let maxFrameRate = frameRate;
-									if (job.options.maxFps.value && job.options.maxFps.value < frameRate)
+									if (job.options.maxFps.value && job.options.maxFps.value < frameRate) {
 										maxFrameRate = job.options.maxFps.value;
+										videoFilters.push("fps=fps=" + maxFrameRate);
+									}
 									let videoBitrate = Math.floor(((cappedFileSize - audioSize) * 8) / duration);
-									let maxVideoHeight = job.options.maxHeight.value;
-									if (videoBitrate < 102400)
-										maxVideoHeight = 144;
-									else if (videoBitrate < 204800)
-										maxVideoHeight = 240;
-									else if (videoBitrate < 512000)
-										maxVideoHeight = 360;
-									else if (videoBitrate < 870400)
-										maxVideoHeight = 480;
-									else if (videoBitrate < 1280000)
-										maxVideoHeight = 720;
-									else if (videoBitrate < 2560000)
-										maxVideoHeight = 1080;
-									else if (videoBitrate < 6144000)
-										maxVideoHeight = 1440;
-									else if (videoBitrate < 10240000)
-										maxVideoHeight = 2160;
-									maxVideoHeight = (job.options.maxHeight.value && job.options.maxHeight.value < maxVideoHeight) ? job.options.maxHeight.value : maxVideoHeight;
+									let maxVideoHeight = videoEncoderSettings[job.options.encoder.value].encoderPresets[job.options.encoderPreset.valueMappings.get(job.options.encoderPreset.value)].videoHeightCapFunction(videoBitrate);
+									if (job.options.maxHeight.value && job.options.maxHeight.value < originalHeight) {
+										maxVideoHeight = job.options.maxHeight.value;
+									}
+									if (maxVideoHeight < originalHeight) {
+										videoFilters.push("scale=-1:" + maxVideoHeight + ",scale=trunc(iw/2)*2:" + maxVideoHeight);
+									}
 									if (this.settings.compressor.debug) {
 										Logger.info(config.info.name, "[" + job.file.name + "] Max frame rate: " + maxFrameRate + " fps");
 										Logger.info(config.info.name, "[" + job.file.name + "] Target video bitrate: " + videoBitrate + " bits/second");
 										Logger.info(config.info.name, "[" + job.file.name + "] Max frame height: " + maxVideoHeight + " pixels");
 										Logger.info(config.info.name, "[" + job.file.name + "] Capped frame height: " + (maxVideoHeight && originalHeight > maxVideoHeight ? maxVideoHeight : originalHeight) + " pixels");
 									}
+									const filters = [maxFrameRate ? "fps=fps=" + maxFrameRate : ""];
 									try {
 										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PASS_1_PERCENT', '0'));
-										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate, "-vf", "fps=fps=" + maxFrameRate + (isHDR ? ",zscale=transfer=linear,tonemap=hable,zscale=transfer=bt709" : "") + (job.options.interlace.value ? ",interlace=lowpass=2" : "") + ((maxVideoHeight && originalHeight > maxVideoHeight) ? ",scale=-1:" + maxVideoHeight + ",scale=trunc(iw/2)*2:" + maxVideoHeight : ""), "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "1", "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")], str => {
+										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate, ...(videoFilters.length > 0 ? ["-vf", videoFilters.join(",")] : []), "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "1", "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")], str => {
 											return str.includes("time=")
 										}, str => {
 											try {
@@ -2148,7 +2367,7 @@ module.exports = (() => {
 												fs.rmSync(originalPath);
 											} catch (e) {}
 										}
-										if (!job.options.stripAudio.value && !this.settings.compressor.keepTemp) {
+										if (!stripAudio && !this.settings.compressor.keepTemp) {
 											try {
 												fs.rmSync(tempAudioPath);
 											} catch (e) {}
@@ -2162,7 +2381,7 @@ module.exports = (() => {
 									}
 									try {
 										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PASS_2_PERCENT', '0'));
-										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate, "-vf", "fps=fps=" + maxFrameRate + (isHDR ? ",zscale=transfer=linear,tonemap=hable,zscale=transfer=bt709" : "") + (job.options.interlace.value ? ",interlace=lowpass=2" : "") + ((maxVideoHeight && originalHeight > maxVideoHeight) ? ",scale=-1:" + maxVideoHeight + ",scale=trunc(iw/2)*2:" + maxVideoHeight : ""), "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "2", tempVideoPath], str => {
+										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate, ...(videoFilters.length > 0 ? ["-vf", videoFilters.join(",")] : []), "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "2", tempVideoPath], str => {
 											return str.includes("time=")
 										}, str => {
 											try {
@@ -2215,7 +2434,7 @@ module.exports = (() => {
 									}
 									try {
 										toasts.setToast(job.jobId, i18n.MESSAGES.PACKAGING);
-										await ffmpeg.runWithArgs(["-y", ...(!job.options.stripAudio.value ? ["-i", tempAudioPath] : []), "-i", tempVideoPath, "-c", "copy", compressedPathPre]);
+										await ffmpeg.runWithArgs(["-y", ...(!stripAudio ? ["-i", tempAudioPath] : []), "-i", tempVideoPath, "-c", "copy", compressedPathPre]);
 									} catch (e) {
 										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
 											try {
