@@ -5,6 +5,11 @@
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js
  */
 
+//TODO Allow for the selection of different cached files from runs with different options
+//TODO Get file properties before asking for options to pre-populate fields with current settings and allow for additional options - which audio tracks to mix, which subtitle track to burn, which video track to use
+//TODO Add plugin settings for default options
+//TODO Add plugin settings for toast position on screen
+
 module.exports = (() => {
 	const config = {
 		info: {
@@ -15,7 +20,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.4.12",
+			version: "1.4.13",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -24,7 +29,8 @@ module.exports = (() => {
 				title: "Fixed",
 				type: "fixed",
 				items: [
-					"Fixed dropdown boxes"
+					"Fixed dropdown boxes",
+					"Chmod libraries after download for Linux/OSX"
 				]
 			}, {
 				title: "Added",
@@ -153,10 +159,10 @@ module.exports = (() => {
 						value: true
 					}, {
 						get name() {
-							return i18n.MESSAGES.SETTINGS_IMMEDIATE_UPLOAD
+							return i18n.MESSAGES.SETTINGS_FFMPEG_PATH
 						},
 						get note() {
-							return i18n.MESSAGES.SETTINGS_IMMEDIATE_UPLOAD_DESC
+							return i18n.MESSAGES.SETTINGS_FFMPEG_PATH_DESC
 						},
 						id: 'ffmpegPath',
 						type: 'textbox',
@@ -1298,7 +1304,9 @@ module.exports = (() => {
 									onConfirm: () => {
 										this.saveSettings("compressor", "ffmpeg", true);
 										const ffmpegPromise = this.downloadLibrary(ffmpegPath, ffmpegDownloadUrls, "FFmpeg");
-										ffmpegPromise.catch(e => {
+										ffmpegPromise.then(filePath => {
+											fs.chmodSync(filePath, 755);
+										}).catch(e => {
 											Logger.err(config.info.name, "Unable to download FFmpeg", e);
 											BdApi.showToast(i18n.FORMAT('ERROR_DOWNLOADING_PROGRAM', 'FFmpeg'), {
 												type: "error"
@@ -1306,7 +1314,9 @@ module.exports = (() => {
 											reject(e);
 										});
 										const ffprobePromise = this.downloadLibrary(ffmpegPath, ffprobeDownloadUrls, "FFprobe");
-										ffprobePromise.catch(e => {
+										ffprobePromise.then(filePath => {
+											fs.chmodSync(filePath, 755);
+										}).catch(e => {
 											Logger.err(config.info.name, "Unable to download FFprobe", e);
 											BdApi.showToast(i18n.FORMAT('ERROR_DOWNLOADING_PROGRAM', 'FFprobe'), {
 												type: "error"
@@ -1370,10 +1380,10 @@ module.exports = (() => {
 						req.on('response', result => {
 							if (result.statusCode === 200) {
 								const regexp = /filename=(.*?)(?=;|$)/gi;
-								const filename = regexp.exec(result.headers['content-disposition'])[1];
+								const originalFileName = regexp.exec(result.headers['content-disposition'])[1];
 								const totalLength = result.headers['content-length'];
 								let writtenLength = 0;
-								const fileStream = fs.createWriteStream(path.join(downloadPath, filename));
+								const fileStream = fs.createWriteStream(path.join(downloadPath, originalFileName));
 								toastsModule.setToast(jobId, i18n.FORMAT('DOWNLOADING_PROGRAM_PERCENT', name, '0'));
 								result.on('data', chunk => {
 									writtenLength += chunk.length;
@@ -1388,7 +1398,7 @@ module.exports = (() => {
 								fileStream.on('finish', function () {
 									// The file has been downloaded
 									toastsModule.setToast(jobId);
-									resolve(true);
+									resolve(path.join(downloadPath, originalFileName));
 								});
 							} else if (result.statusCode === 302) {
 								const location = result.headers['location'];
