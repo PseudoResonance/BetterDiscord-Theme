@@ -15,12 +15,18 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.4.11",
+			version: "1.4.12",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
 		},
 		changelog: [{
+				title: "Fixed",
+				type: "fixed",
+				items: [
+					"Fixed dropdown boxes"
+				]
+			}, {
 				title: "Added",
 				type: "added",
 				items: [
@@ -630,7 +636,9 @@ module.exports = (() => {
 			let runningProcesses = [];
 
 			// Discord related data
-			const Markdown = BdApi.findModule(m => m.displayName === "Markdown" && m.rules);
+			const Markdown = BdApi.findModule(m => m?.displayName === "Markdown" && m?.rules);
+			const DiscordDropdown = BdApi.findModuleByDisplayName('SelectTempWrapper');
+
 			// Toast icon SVGs
 			const loadingSvg = `<svg fill="currentColor" width="24" height="24" viewBox="0 0 24 24"><path d="M12,0v2C6.48,2,2,6.48,2,12c0,3.05,1.37,5.78,3.52,7.61l1.15-1.66C5.04,16.48,4,14.36,4,12c0-4.41,3.59-8,8-8v2l2.59-1.55l2.11-1.26L17,3L12,0z"/><path d="M18.48,4.39l-1.15,1.66C18.96,7.52,20,9.64,20,12c0,4.41-3.59,8-8,8v-2l-2.59,1.55L7.3,20.82L7,21l5,3v-2c5.52,0,10-4.48,10-10C22,8.95,20.63,6.22,18.48,4.39z"/></svg>`;
 			const queueSvg = `<svg fill="currentColor" width="24" height="24" viewBox="0 0 24 24"><path d="M21.84,1H2.16l7.15,11L2.16,23h19.68l-7.15-11L21.84,1z M11.69,12L5.84,3h12.31l-5.85,9H11.69z"/></svg>`;
@@ -1030,6 +1038,39 @@ module.exports = (() => {
 					});
 				}
 			};
+
+			const Dropdown = class extends Settings.SettingField {
+				/**
+				 * @param {string} name - name label of the setting
+				 * @param {string} note - help/note to show underneath or above the setting
+				 * @param {*} defaultValue - currently selected value
+				 * @param {Array<module:Settings~DropdownItem>} values - array of all options available
+				 * @param {callable} onChange - callback to perform on setting change, callback item value
+				 * @param {object} [options] - object of options to give to the setting
+				 * @param {boolean} [options.clearable=false] - should be able to empty the field value
+				 * @param {boolean} [options.searchable=false] - should user be able to search the dropdown
+				 * @param {boolean} [options.disabled=false] - should the setting be disabled
+				 */
+				constructor(name, note, defaultValue, values, onChange, options = {}) {
+					const {
+						clearable = false,
+						searchable = false,
+						disabled = false
+					} = options;
+					super(name, note, onChange, DiscordDropdown, {
+						clearable: clearable,
+						searchable: searchable,
+						disabled: disabled,
+						options: values,
+						onChange: dropdown => opt => {
+							dropdown.props.value = opt && opt.value;
+							dropdown.forceUpdate();
+							this.onChange(opt && opt.value);
+						},
+						value: defaultValue
+					});
+				}
+			}
 
 			return class FileCompressor extends Plugin {
 				constructor() {
@@ -1609,27 +1650,35 @@ module.exports = (() => {
 							return false;
 						break;
 					case "video":
+						const encoderValuesArray = [];
+						for (const name of Object.getOwnPropertyNames(videoEncoderSettings)) {
+							encoderValuesArray.push({
+								value: name,
+								label: name
+							});
+						}
 						job.options.encoder = {
 							name: i18n.MESSAGES.COMPRESSION_OPTIONS_ENCODER,
 							type: "dropdown",
 							defaultValue: "libx264",
 							props: {
-								values: Object.getOwnPropertyNames(videoEncoderSettings)
+								values: encoderValuesArray
 							}
 						};
-						const encoderPresetsArray = Object.getOwnPropertyNames(videoEncoderPresets);
-						const encoderPresetsValueMap = new Map();
-						for (const preset of encoderPresetsArray) {
-							encoderPresetsValueMap.set(i18n.MESSAGES[videoEncoderPresets[preset]], preset);
+						const encoderPresetsValuesArray = [];
+						for (const preset of Object.getOwnPropertyNames(videoEncoderPresets)) {
+							encoderPresetsValuesArray.push({
+								value: preset,
+								label: i18n.MESSAGES[videoEncoderPresets[preset]]
+							});
 						}
 						job.options.encoderPreset = {
 							name: i18n.MESSAGES.COMPRESSION_OPTIONS_ENCODER_PRESET,
 							type: "dropdown",
-							defaultValue: i18n.MESSAGES[videoEncoderPresets["balanced"]],
+							defaultValue: "balanced",
 							props: {
-								values: [...encoderPresetsValueMap.values()]
-							},
-							valueMappings: encoderPresetsValueMap
+								values: encoderPresetsValuesArray
+							}
 						};
 						job.options.maxHeight = {
 							name: i18n.MESSAGES.COMPRESSION_OPTIONS_MAX_HEIGHT,
@@ -1796,7 +1845,7 @@ module.exports = (() => {
 					case "color":
 						return new Settings.ColorPicker(name, description, defaultValue, onChange, props);
 					case "dropdown":
-						return new Settings.Dropdown(name, description, defaultValue, props.values, onChange, props);
+						return new Dropdown(name, description, defaultValue, props.values, onChange, props);
 					case "file":
 						return new Settings.FilePicker(name, description, onChange, props);
 					case "keybind":
@@ -2223,7 +2272,7 @@ module.exports = (() => {
 									let audioSize = 0;
 									let videoSize = 0;
 									if (!stripAudio) {
-										let audioBitrate = ((cappedFileSize * 8) * (stripVideo ? 1 : videoEncoderSettings[job.options.encoder.value].encoderPresets[job.options.encoderPreset.valueMappings.get(job.options.encoderPreset.value)].audioFilePercent)) / duration;
+										let audioBitrate = ((cappedFileSize * 8) * (stripVideo ? 1 : videoEncoderSettings[job.options.encoder.value].encoderPresets[job.options.encoderPreset.value].audioFilePercent)) / duration;
 										if (audioBitrate > 256000)
 											audioBitrate = 256000;
 										else if (audioBitrate < 10240)
@@ -2330,7 +2379,7 @@ module.exports = (() => {
 										videoFilters.push("fps=fps=" + maxFrameRate);
 									}
 									let videoBitrate = Math.floor(((cappedFileSize - audioSize) * 8) / duration);
-									let maxVideoHeight = videoEncoderSettings[job.options.encoder.value].encoderPresets[job.options.encoderPreset.valueMappings.get(job.options.encoderPreset.value)].videoHeightCapFunction(videoBitrate);
+									let maxVideoHeight = videoEncoderSettings[job.options.encoder.value].encoderPresets[job.options.encoderPreset.value].videoHeightCapFunction(videoBitrate);
 									if (job.options.maxHeight.value && job.options.maxHeight.value < originalHeight) {
 										maxVideoHeight = job.options.maxHeight.value;
 									}
