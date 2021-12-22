@@ -20,7 +20,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.4.14",
+			version: "1.4.15",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -34,19 +34,10 @@ module.exports = (() => {
 					"Fixed video compression on OSX"
 				]
 			}, {
-				title: "Added",
-				type: "added",
-				items: [
-					"Added encoder presets",
-					"Added option to strip all video to send only audio"
-				]
-			}, {
 				title: "Improved",
 				type: "improved",
 				items: [
-					"Slightly reduced max file size to account for headers",
-					"Uses file path, size and modify date to determine file equality instead of hashing where possible",
-					"Improved tuning for different encoders"
+					"Always prompt to compress when file size is less than maximum in settings"
 				]
 			}, {
 				title: "Known Bugs",
@@ -1458,6 +1449,7 @@ module.exports = (() => {
 
 				processUploadFileList(files, guildId, channelId, threadId, sidebar) {
 					// Check account status and update max file upload size
+					const settingsMaxSize = this.settings.upload.maxFileSize != 0 ? this.settings.upload.maxFileSize : 0;
 					try {
 						maxUploadSize = DiscordModules.DiscordConstants.PremiumUserLimits[DiscordAPI.currentUser.discordObject.premiumType ? DiscordAPI.currentUser.discordObject.premiumType : 0].fileSize;
 					} catch (e) {
@@ -1467,6 +1459,8 @@ module.exports = (() => {
 						});
 						maxUploadSize = 8388608;
 					}
+					if (settingsMaxSize > 0 && settingsMaxSize < maxUploadSize)
+						maxUploadSize = settingsMaxSize;
 					// Synthetic DataTransfer to generate FileList
 					const originalDt = new DataTransfer();
 					const tempFiles = [];
