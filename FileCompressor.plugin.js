@@ -20,12 +20,18 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.4.15",
+			version: "1.5.0",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
 		},
 		changelog: [{
+				title: "Added",
+				type: "added",
+				items: [
+					"Added MKVmerge for merging completed video files - greatly reduces file size over FFmpeg"
+				]
+			}, {
 				title: "Fixed",
 				type: "fixed",
 				items: [
@@ -161,6 +167,36 @@ module.exports = (() => {
 						value: ""
 					}, {
 						get name() {
+							return i18n.MESSAGES.SETTINGS_MKVMERGE
+						},
+						get note() {
+							return i18n.MESSAGES.SETTINGS_MKVMERGE_DESC
+						},
+						id: 'mkvmerge',
+						type: 'switch',
+						value: false
+					}, {
+						get name() {
+							return i18n.MESSAGES.SETTINGS_MKVMERGE_DOWNLOAD
+						},
+						get note() {
+							return i18n.MESSAGES.SETTINGS_MKVMERGE_DOWNLOAD_DESC
+						},
+						id: 'mkvmergeDownload',
+						type: 'switch',
+						value: true
+					}, {
+						get name() {
+							return i18n.MESSAGES.SETTINGS_MKVMERGE_PATH
+						},
+						get note() {
+							return i18n.MESSAGES.SETTINGS_MKVMERGE_PATH_DESC
+						},
+						id: 'mkvmergePath',
+						type: 'textbox',
+						value: ""
+					}, {
+						get name() {
 							return i18n.MESSAGES.SETTINGS_DEBUG
 						},
 						get note() {
@@ -207,6 +243,12 @@ module.exports = (() => {
 			SETTINGS_FFMPEG_DOWNLOAD_DESC: 'Should FFmpeg be automatically downloaded? Disable this to use a custom installation.',
 			SETTINGS_FFMPEG_PATH: 'FFmpeg Install Location',
 			SETTINGS_FFMPEG_PATH_DESC: 'Custom FFmpeg install location to use (Leave empty to use default location).',
+			SETTINGS_MKVMERGE: 'Use MKVmerge',
+			SETTINGS_MKVMERGE_DESC: 'Enable the use of MKVmerge for compressing video.',
+			SETTINGS_MKVMERGE_DOWNLOAD: 'Download MKVmerge',
+			SETTINGS_MKVMERGE_DOWNLOAD_DESC: 'Should MKVmerge be automatically downloaded? Disable this to use a custom installation.',
+			SETTINGS_MKVMERGE_PATH: 'MKVmerge Install Location',
+			SETTINGS_MKVMERGE_PATH_DESC: 'Custom MKVmerge install location to use (Leave empty to use default location).',
 			SETTINGS_DEBUG: 'Debug Output',
 			SETTINGS_DEBUG_DESC: 'Outputs extra debug messages to the console during compression.',
 			SETTINGS_KEEP_TEMP: 'Keep Temp Files',
@@ -238,12 +280,12 @@ module.exports = (() => {
 			ERROR_CACHING: 'Error caching file',
 			ERROR_CACHE_SETUP: 'Error setting up cache',
 			ERROR_HOOKING_UPLOAD: 'Unable to hook into Discord upload handler',
-			FFMPEG_VERSION_REQUIRED: 'FFmpeg {$0$} Required',
-			FFMPEG_REQUIRED_COMPRESSION: 'To compress video/audio, {$0$} needs to use FFmpeg.',
-			FFMPEG_REQUIRED_CUSTOM_INSTALL: 'If you would like to specify a custom FFmpeg installation, please press cancel and setup FFmpeg in the {$0$} plugin settings. Otherwise, by clicking "Install Automatically", you are agreeing to the licensing terms, and FFmpeg will be automatically installed.',
-			FFMPEG_SOURCE_LOCATION: 'FFmpeg {$0$} source code is available here: {$1$}',
-			FFMPEG_LICENSE_INFO: 'FFmpeg is licensed under {$0$}, available to read here: {$1$}',
-			FFMPEG_CUSTOM_PATH_INVALID: 'To compress video/audio, {$0$} needs to use FFmpeg. The path to FFmpeg specified in the {$0$} settings is invalid!\n\nPlease check the path and ensure "Use FFmpeg" is enabled.',
+			LIBRARY_VERSION_REQUIRED: '{$0$} {$1$} Required',
+			LIBRARY_REQUIRED_COMPRESSION: 'To compress video/audio, {$0$} needs to use {$1$}.',
+			LIBRARY_REQUIRED_CUSTOM_INSTALL: 'If you would like to specify a custom {$1$} installation, please press cancel and setup {$1$} in the {$0$} plugin settings. Otherwise, by clicking "Install Automatically", you are agreeing to the licensing terms, and {$1$} will be automatically installed.',
+			LIBRARY_SOURCE_LOCATION: '{$0$} {$1$} source code is available here: {$2$}',
+			LIBRARY_LICENSE_INFO: '{$0$} is licensed under {$1$}, available to read here: {$2$}',
+			LIBRARY_CUSTOM_PATH_INVALID: 'To compress video/audio, {$0$} needs to use {$1$}. The path to {$1$} specified in the {$0$} settings is invalid!\n\nPlease check the path and ensure "Use {$1$}" is enabled.',
 			ERROR_DOWNLOADING_PROGRAM: 'Error downloading {$0$}',
 			CANCEL: 'Cancel',
 			INSTALL_AUTOMATICALLY: 'Install Automatically',
@@ -287,6 +329,12 @@ module.exports = (() => {
 			SETTINGS_FFMPEG_DOWNLOAD_DESC: 'FFmpegを自動的にダウンロード？カスタムインストール所在使うには無効します。',
 			SETTINGS_FFMPEG_PATH: 'FFmpegのインストール所在',
 			SETTINGS_FFMPEG_PATH_DESC: 'FFmpegのインストール所在（デフォルト使うには空のまま）。',
+			SETTINGS_MKVMERGE: 'MKVmergeを使用',
+			SETTINGS_MKVMERGE_DESC: '動画の圧縮にMKVmergeを使用。',
+			SETTINGS_MKVMERGE_DOWNLOAD: 'MKVmergeをダウンロード',
+			SETTINGS_MKVMERGE_DOWNLOAD_DESC: 'MKVmergeを自動的にダウンロード？カスタムインストール所在使うには無効します。',
+			SETTINGS_MKVMERGE_PATH: 'MKVmergeのインストール所在',
+			SETTINGS_MKVMERGE_PATH_DESC: 'MKVmergeのインストール所在（デフォルト使うには空のまま）。',
 			SETTINGS_DEBUG: 'デバッグ出力',
 			SETTINGS_DEBUG_DESC: '圧縮中で追加のデバッグメッセージをコンソールに出力する。',
 			SETTINGS_KEEP_TEMP: '一時ファイルを保持',
@@ -318,12 +366,12 @@ module.exports = (() => {
 			ERROR_CACHING: 'ファイルキャッシュ中でエラー',
 			ERROR_CACHE_SETUP: 'キャッシュセットアップでエラー',
 			ERROR_HOOKING_UPLOAD: 'Discordのアップロードハンドラにフックできません',
-			FFMPEG_VERSION_REQUIRED: 'FFmpeg　{$0$}が必要です',
-			FFMPEG_REQUIRED_COMPRESSION: '動画と音声の圧縮に{$0$}にはFFmpegが必要です。',
-			FFMPEG_REQUIRED_CUSTOM_INSTALL: 'カスタムなFFmpegのインストール使用するにはキャンセルを押して{$0$}プラグインの設定でFFmpegをセットアップしてください。それ以外、「自動的でインストール」を押すとライセンス条項に同意したことになりますので、FFmpegは自動的でインストールされます。',
-			FFMPEG_SOURCE_LOCATION: 'FFmpeg　{$0$}のソースコードはこちらです：　{$1$}',
-			FFMPEG_LICENSE_INFO: 'FFmpegは{$0$}の下でライセンスされています、こちらで読むことができます：　{$1$}',
-			FFMPEG_CUSTOM_PATH_INVALID: '動画と音声の圧縮に{$0$}にはFFmpegが必要です。{$0$}プラグインの設定でFFmpegの所在は無効です！\n\n所在と「FFmpegを使用」が有効されているのを確認してください。',
+			LIBRARY_VERSION_REQUIRED: '{$0$}　{$1$}が必要です',
+			LIBRARY_REQUIRED_COMPRESSION: '動画と音声の圧縮に{$0$}には{$1$}が必要です。',
+			LIBRARY_REQUIRED_CUSTOM_INSTALL: 'カスタムな{$1$}のインストール使用するにはキャンセルを押して{$0$}プラグインの設定で{$1$}をセットアップしてください。それ以外、「自動的でインストール」を押すとライセンス条項に同意したことになりますので、{$1$}は自動的でインストールされます。',
+			LIBRARY_SOURCE_LOCATION: '{$0$}　{$1$}のソースコードはこちらです：　{$2$}',
+			LIBRARY_LICENSE_INFO: '{$0$}は{$1$}の下でライセンスされています、こちらで読むことができます：　{$2$}',
+			LIBRARY_CUSTOM_PATH_INVALID: '動画と音声の圧縮に{$0$}には{$1$}が必要です。{$0$}プラグインの設定で{$1$}の所在は無効です！\n\n所在と「{$1$}を使用」が有効されているのを確認してください。',
 			ERROR_DOWNLOADING_PROGRAM: '{$0$}のダウンロード中でエラー',
 			CANCEL: 'キャンセル',
 			INSTALL_AUTOMATICALLY: '自動的でインストール',
@@ -440,7 +488,7 @@ module.exports = (() => {
 			let ffmpeg = null;
 			// FFmpeg constants
 			const ffmpegVersion = "4.4";
-			const ffmpegSourceUrl = "https://github.com/FFmpeg/FFmpeg/tree/n4.4";
+			const ffmpegSourceUrl = "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffmpeg-source.zip";
 			const ffmpegLicense = "GPL Version 2";
 			const ffmpegLicenseUrl = "https://www.gnu.org/licenses/old-licenses/gpl-2.0.html";
 			const ffmpegDownloadUrls = {
@@ -458,6 +506,21 @@ module.exports = (() => {
 				arm64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffprobe-linux-arm64",
 				armhf: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffprobe-linux-armhf",
 				i686: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffprobe-linux-i686"
+			};
+			// MKVmerge container
+			let mkvmerge = null;
+			// MKVmerge constants
+			const mkvmergeVersion = "63.0.0";
+			const mkvmergeSourceUrl = "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/63.0.0/mkvmerge-source.zip";
+			const mkvmergeLicense = "GPL Version 2";
+			const mkvmergeLicenseUrl = "https://www.gnu.org/licenses/old-licenses/gpl-2.0.html";
+			const mkvmergeDownloadUrls = {
+				win32: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/63.0.0/mkvmerge-win.exe",
+				darwin: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/63.0.0/mkvmerge-osx",
+				amd64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/63.0.0/mkvmerge-linux-amd64",
+				arm64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/63.0.0/mkvmerge-linux-arm64",
+				armhf: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/63.0.0/mkvmerge-linux-armhf",
+				i686: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/63.0.0/mkvmerge-linux-i686"
 			};
 			const librarySuffixes = {
 				win32: "-win.exe",
@@ -791,6 +854,98 @@ module.exports = (() => {
 
 				checkFFmpeg() {
 					return fs.existsSync(this.ffmpeg) && fs.existsSync(this.ffprobe);
+				}
+			};
+
+			const MKVmerge = class {
+				constructor(mkvmergeFolder) {
+					if (fs.existsSync(mkvmergeFolder)) {
+						this.mkvmerge = path.join(mkvmergeFolder, "mkvmerge");
+						if (process.platform == "win32") {
+							this.mkvmerge += ".exe";
+						}
+						if (!fs.existsSync(this.mkvmerge)) {
+							this.mkvmerge = path.join(mkvmergeFolder, "mkvmerge");
+							switch (process.platform) {
+							case "win32":
+							case "darwin":
+								this.mkvmerge += librarySuffixes[process.platform];
+								break;
+							default:
+								switch (process.arch) {
+								case "arm":
+									this.mkvmerge += librarySuffixes["armhf"];
+									break;
+								case "arm64":
+									this.mkvmerge += librarySuffixes["arm64"];
+									break;
+								case "x64":
+									this.mkvmerge += librarySuffixes["amd64"];
+									break;
+								case "ia32":
+								case "x32":
+								default:
+									this.mkvmerge += librarySuffixes["i686"];
+									break;
+								}
+							}
+						}
+						if (fs.existsSync(this.mkvmerge)) {
+							Logger.info(config.info.name, 'Running MKVmerge --version');
+							Logger.debug(config.info.name, child_process.execFileSync(this.mkvmerge, ["--version"], {
+									timeout: 10000
+								}).toString());
+						} else {
+							throw new Error("MKVmerge not found");
+						}
+					} else {
+						throw new Error("MKVmerge not found");
+					}
+				}
+
+				runWithArgs(args, outputFilter, processOutput) {
+					return new Promise((resolve, reject) => {
+						if (fs.existsSync(this.mkvmerge)) {
+							const rollingOutputBuffer = [];
+							Logger.info(config.info.name, 'Running MKVmerge ' + args.join(' '));
+							const process = child_process.spawn(this.mkvmerge, args);
+							process.on('error', err => {
+								Logger.err(config.info.name, err);
+								reject(err);
+								const index = runningProcesses.indexOf(process);
+								if (index > -1)
+									runningProcesses.splice(index, 1);
+							});
+							process.on('exit', (code, signal) => {
+								if (code == 0) {
+									resolve(true);
+								} else {
+									Logger.err(config.info.name, rollingOutputBuffer.join("\r\n"));
+									reject();
+								}
+								const index = runningProcesses.indexOf(process);
+								if (index > -1)
+									runningProcesses.splice(index, 1);
+							});
+							process.stderr.on('data', data => {
+								const str = data.toString();
+								// Keep rolling buffer of output strings to output errors if MKVmerge crashes
+								if (rollingOutputBuffer.length >= 10)
+									rollingOutputBuffer.shift();
+								rollingOutputBuffer.push(str);
+								if (typeof(outputFilter) == "function" && typeof(processOutput) == "function" && outputFilter(str)) {
+									processOutput(str);
+								}
+							});
+							runningProcesses.push(process);
+						} else {
+							throw new Error("MKVmerge not found");
+						}
+					});
+				}
+
+				checkMKVmerge() {
+					return fs.existsSync(this.mkvmerge);
 				}
 			};
 
@@ -1282,15 +1437,15 @@ module.exports = (() => {
 						}
 						if (noFfmpeg) {
 							if (this.settings.compressor.ffmpegDownload) {
-								BdApi.showConfirmationModal(i18n.FORMAT('FFMPEG_VERSION_REQUIRED', ffmpegVersion),
+								BdApi.showConfirmationModal(i18n.FORMAT('LIBRARY_VERSION_REQUIRED', "FFmpeg", ffmpegVersion),
 									DiscordModules.React.createElement("div", {},
 										[
-											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('FFMPEG_REQUIRED_COMPRESSION', config.info.name)),
+											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_REQUIRED_COMPRESSION', config.info.name, "FFmpeg")),
 											DiscordModules.React.createElement("hr"),
-											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('FFMPEG_REQUIRED_CUSTOM_INSTALL', config.info.name)),
+											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_REQUIRED_CUSTOM_INSTALL', config.info.name, "FFmpeg")),
 											DiscordModules.React.createElement("hr"),
-											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('FFMPEG_SOURCE_LOCATION', ffmpegVersion, ffmpegSourceUrl)),
-											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('FFMPEG_LICENSE_INFO', ffmpegLicense, ffmpegLicenseUrl))
+											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_SOURCE_LOCATION', "FFmpeg", ffmpegVersion, ffmpegSourceUrl)),
+											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_LICENSE_INFO', "FFmpeg", ffmpegLicense, ffmpegLicenseUrl))
 										]), {
 									danger: false,
 									onConfirm: () => {
@@ -1326,7 +1481,71 @@ module.exports = (() => {
 									cancelText: i18n.MESSAGES.CANCEL
 								});
 							} else {
-								Modals.showAlertModal(i18n.FORMAT('FFMPEG_VERSION_REQUIRED', ffmpegVersion), i18n.FORMAT('FFMPEG_CUSTOM_PATH_INVALID', config.info.name));
+								Modals.showAlertModal(i18n.FORMAT('LIBRARY_VERSION_REQUIRED', "FFmpeg", ffmpegVersion), i18n.FORMAT('LIBRARY_CUSTOM_PATH_INVALID', config.info.name, "FFmpeg"));
+								reject();
+							}
+						}
+					});
+				}
+
+				initMkvmerge() {
+					return new Promise((resolve, reject) => {
+						let mkvmergePath = this.settings.compressor.mkvmergePath ? this.settings.compressor.mkvmergePath : path.join(BdApi.Plugins.folder, "compressorlibraries");
+						let noMkvmerge = false;
+						let installedMkvmerge = BdApi.getData(config.info.name, "mkvmerge.version");
+						if (installedMkvmerge && installedMkvmerge != mkvmergeVersion) {
+							noMkvmerge = true;
+						} else {
+							if (this.settings.compressor.mkvmerge) {
+								if (!mkvmerge || !mkvmerge.checkMKVmerge()) {
+									try {
+										mkvmerge = new MKVmerge(mkvmergePath);
+										resolve(true);
+									} catch (err) {
+										Logger.err(config.info.name, err);
+										noMkvmerge = true;
+										mkvmerge = null;
+									}
+								}
+							} else {
+								noMkvmerge = true;
+								mkvmerge = null;
+							}
+						}
+						if (noMkvmerge) {
+							if (this.settings.compressor.mkvmergeDownload) {
+								BdApi.showConfirmationModal(i18n.FORMAT('LIBRARY_VERSION_REQUIRED', "MKVmerge", mkvmergeVersion),
+									DiscordModules.React.createElement("div", {},
+										[
+											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_REQUIRED_COMPRESSION', config.info.name, "MKVmerge")),
+											DiscordModules.React.createElement("hr"),
+											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_REQUIRED_CUSTOM_INSTALL', config.info.name, "MKVmerge")),
+											DiscordModules.React.createElement("hr"),
+											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_SOURCE_LOCATION', "MKVmerge", mkvmergeVersion, mkvmergeSourceUrl)),
+											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_LICENSE_INFO', "MKVmerge", mkvmergeLicense, mkvmergeLicenseUrl))
+										]), {
+									danger: false,
+									onConfirm: () => {
+										this.saveSettings("compressor", "mkvmerge", true);
+										this.downloadLibrary(mkvmergePath, mkvmergeDownloadUrls, "MKVmerge").then(filePath => {
+											fs.chmodSync(filePath, 755);
+											resolve(this.initMkvmerge());
+										}).catch(e => {
+											Logger.err(config.info.name, "Unable to download MKVmerge", e);
+											BdApi.showToast(i18n.FORMAT('ERROR_DOWNLOADING_PROGRAM', 'MKVmerge'), {
+												type: "error"
+											});
+											reject(e);
+										});
+									},
+									onCancel: () => {
+										reject();
+									},
+									confirmText: i18n.MESSAGES.INSTALL_AUTOMATICALLY,
+									cancelText: i18n.MESSAGES.CANCEL
+								});
+							} else {
+								Modals.showAlertModal(i18n.FORMAT('LIBRARY_VERSION_REQUIRED', "MKVmerge", mkvmergeVersion), i18n.FORMAT('LIBRARY_CUSTOM_PATH_INVALID', config.info.name, "MKVmerge"));
 								reject();
 							}
 						}
@@ -2152,149 +2371,261 @@ module.exports = (() => {
 					if (!ffmpeg || !ffmpeg.checkFFmpeg()) {
 						await this.initFfmpeg();
 					}
+					if (!mkvmerge || !mkvmerge.checkMKVmerge()) {
+						await this.initMkvmerge();
+					}
 					if (ffmpeg && ffmpeg.checkFFmpeg()) {
-						if (await this.initTempFolder()) {
-							const nameSplit = job.file.name.split('.');
-							const name = nameSplit.slice(0, nameSplit.length - 1).join(".");
-							const extension = nameSplit[nameSplit.length - 1];
-							let originalPath = job.file.path;
-							let isOriginalTemporary = false;
-							if (!originalPath) {
-								isOriginalTemporary = true;
-								originalPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + "." + extension);
-								const fileStream = job.file.stream();
-								const fileStreamReader = fileStream.getReader();
-								const writeStream = fs.createWriteStream(originalPath);
-								const totalBytes = job.file.size;
-								let bytesWritten = 0;
-								await new Promise((resolve1, reject1) => {
-									fileStreamReader.read().then(function processData({
-											done,
-											value
-										}) {
-										try {
-											if (value) {
-												bytesWritten += value.byteLength;
-												const percent = Math.round((bytesWritten / totalBytes) * 100);
-												toasts.setToast(job.jobId, i18n.FORMAT('COPYING_PERCENT', percent ? percent : 0));
+						if (mkvmerge && mkvmerge.checkMKVmerge()) {
+							if (await this.initTempFolder()) {
+								const nameSplit = job.file.name.split('.');
+								const name = nameSplit.slice(0, nameSplit.length - 1).join(".");
+								const extension = nameSplit[nameSplit.length - 1];
+								let originalPath = job.file.path;
+								let isOriginalTemporary = false;
+								if (!originalPath) {
+									isOriginalTemporary = true;
+									originalPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + "." + extension);
+									const fileStream = job.file.stream();
+									const fileStreamReader = fileStream.getReader();
+									const writeStream = fs.createWriteStream(originalPath);
+									const totalBytes = job.file.size;
+									let bytesWritten = 0;
+									await new Promise((resolve1, reject1) => {
+										fileStreamReader.read().then(function processData({
+												done,
+												value
+											}) {
+											try {
+												if (value) {
+													bytesWritten += value.byteLength;
+													const percent = Math.round((bytesWritten / totalBytes) * 100);
+													toasts.setToast(job.jobId, i18n.FORMAT('COPYING_PERCENT', percent ? percent : 0));
+												}
+												if (done) {
+													if (this.settings.compressor.debug)
+														Logger.info(config.info.name, "[" + job.file.name + "] Copied " + bytesWritten + " bytes");
+													writeStream.destroy();
+													resolve1(true);
+													return;
+												}
+												const writeReady = writeStream.write(value);
+												if (writeReady) {
+													return fileStreamReader.read().then(processData);
+												} else {
+													writeStream.once('drain', () => {
+														fileStreamReader.read().then(processData);
+													});
+													return true;
+												}
+											} catch (err) {
+												Logger.err(config.info.name, err);
+												reject1();
+												return false;
 											}
-											if (done) {
-												if (this.settings.compressor.debug)
-													Logger.info(config.info.name, "[" + job.file.name + "] Copied " + bytesWritten + " bytes");
-												writeStream.destroy();
-												resolve1(true);
-												return;
-											}
-											const writeReady = writeStream.write(value);
-											if (writeReady) {
-												return fileStreamReader.read().then(processData);
-											} else {
-												writeStream.once('drain', () => {
-													fileStreamReader.read().then(processData);
-												});
-												return true;
-											}
-										} catch (err) {
-											Logger.err(config.info.name, err);
-											reject1();
-											return false;
-										}
+										});
 									});
-								});
-								writeStream.destroy();
-							}
-							const stripAudio = job.options.stripAudio.value && job.options.stripVideo.value ? false : job.options.stripAudio.value;
-							const stripVideo = job.options.stripAudio.value && job.options.stripVideo.value ? false : job.options.stripVideo.value;
-							const tempAudioPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".opus");
-							const tempVideoPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + "." + videoEncoderSettings[job.options.encoder.value].fileType);
-							const tempVideoTwoPassPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, ""));
-							const compressedPathPre = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".mkv");
-							let compressedPath = "";
-							if (cache) {
-								compressedPath = path.join(cache.getCachePath(), uuidv4().replace(/-/g, "") + (!stripVideo ? ".webm" : ".ogg"));
-							} else {
-								compressedPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + (!stripVideo ? ".webm" : ".ogg"));
-							}
-							toasts.setToast(job.jobId, i18n.MESSAGES.CALCULATING);
-							const data = await ffmpeg.runProbeWithArgs(["-v", "error", "-select_streams", "v:0", "-show_entries", "format=duration:stream=height,r_frame_rate,color_primaries", "-of", "default=noprint_wrappers=1", originalPath]);
-							if (data) {
-								const outputStr = data.data;
-								try {
-									const videoFilters = [];
-									if (job.options.interlace.value) {
-										videoFilters.push("interlace=lowpass=2");
-									}
-									const cappedFileSize = Math.floor((job.options.sizeCap.value && parseInt(job.options.sizeCap.value) < maxUploadSize ? parseInt(job.options.sizeCap.value) : maxUploadSize)) - 150000;
-									const durationMatches = regexPatternDuration.exec(outputStr);
-									const heightMatches = regexPatternHeight.exec(outputStr);
-									const frameRateMatches = regexPatternFrameRate.exec(outputStr);
-									const colorPrimariesMatches = regexPatternColorPrimaries.exec(outputStr);
-									const frameRateMatchesSplit = frameRateMatches[1].split('/');
-									const originalDuration = parseFloat(durationMatches[1]);
-									const originalHeight = parseInt(heightMatches[1]);
-									const colorPrimaries = colorPrimariesMatches[1];
-									const isHDR = hdrColorPrimaries.includes(colorPrimaries);
-									if (isHDR) {
-										videoFilters.push("zscale=transfer=linear,tonemap=hable,zscale=transfer=bt709");
-									}
-									const frameRate = parseFloat(frameRateMatchesSplit[0]) / parseFloat(frameRateMatchesSplit[1]);
-									if (originalDuration == 0)
-										throw new Error("Invalid file duration");
-									let duration = originalDuration;
-									const startSecondsSplit = job.options.startTimestamp.value.split(':');
-									let startSeconds = 0;
-									for (const[index, val]of startSecondsSplit.entries()) {
-										if (index + 1 == startSecondsSplit.length)
-											startSeconds += Math.pow(60, (startSecondsSplit.length - (index + 1))) * parseFloat(val);
-										else
-											startSeconds += Math.pow(60, (startSecondsSplit.length - (index + 1))) * parseInt(val);
-									}
-									if (startSeconds < 0 || isNaN(startSeconds) || startSeconds >= duration)
-										startSeconds = 0;
-									const endSecondsSplit = job.options.endTimestamp.value.split(':');
-									let endSeconds = 0;
-									for (const[index, val]of endSecondsSplit.entries()) {
-										if (index + 1 == endSecondsSplit.length)
-											endSeconds += Math.pow(60, (endSecondsSplit.length - (index + 1))) * parseFloat(val);
-										else
-											endSeconds += Math.pow(60, (endSecondsSplit.length - (index + 1))) * parseInt(val);
-									}
-									endSeconds -= startSeconds;
-									if (endSeconds <= 0 || isNaN(endSeconds) == NaN || endSeconds > duration)
-										endSeconds = -1;
-									duration = endSeconds > 0 ? endSeconds : originalDuration - startSeconds;
-									if (duration <= 0)
-										duration = originalDuration;
-									if (this.settings.compressor.debug) {
-										const fileStats = fs.statSync(originalPath);
-										Logger.info(config.info.name, "[" + job.file.name + "] Original file size: " + (fileStats ? fileStats.size : 0) + " bytes");
-										Logger.info(config.info.name, "[" + job.file.name + "] Max file size: " + cappedFileSize + " bytes");
-										Logger.info(config.info.name, "[" + job.file.name + "] File length: " + originalDuration + " seconds");
-										Logger.info(config.info.name, "[" + job.file.name + "] Clipped length: " + duration + " seconds");
-										Logger.info(config.info.name, "[" + job.file.name + "] Video height: " + originalHeight + " pixels");
-										Logger.info(config.info.name, "[" + job.file.name + "] Frame rate: " + frameRate + " fps");
-										Logger.info(config.info.name, "[" + job.file.name + "] Color primaries: " + colorPrimaries + (isHDR ? " (HDR)" : " (SDR)"));
-									}
-									let audioSize = 0;
-									let videoSize = 0;
-									if (!stripAudio) {
-										let audioBitrate = ((cappedFileSize * 8) * (stripVideo ? 1 : videoEncoderSettings[job.options.encoder.value].encoderPresets[job.options.encoderPreset.value].audioFilePercent)) / duration;
-										if (audioBitrate > 256000)
-											audioBitrate = 256000;
-										else if (audioBitrate < 10240)
-											audioBitrate = 10240;
-										/*
-										TODO: Cap audio bitrate if video bitrate would be too low
-										if (audioBitrate > 32768)
-										audioBitrate = 32768;
-										 */
-										if (this.settings.compressor.debug) {
-											Logger.info(config.info.name, "[" + job.file.name + "] Target audio bitrate: " + audioBitrate + " bits/second");
+									writeStream.destroy();
+								}
+								const stripAudio = job.options.stripAudio.value && job.options.stripVideo.value ? false : job.options.stripAudio.value;
+								const stripVideo = job.options.stripAudio.value && job.options.stripVideo.value ? false : job.options.stripVideo.value;
+								const tempAudioPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".opus");
+								const tempVideoPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + "." + videoEncoderSettings[job.options.encoder.value].fileType);
+								const tempVideoTwoPassPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, ""));
+								const compressedPathPre = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".mkv");
+								let compressedPath = "";
+								if (cache) {
+									compressedPath = path.join(cache.getCachePath(), uuidv4().replace(/-/g, "") + (!stripVideo ? ".webm" : ".ogg"));
+								} else {
+									compressedPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + (!stripVideo ? ".webm" : ".ogg"));
+								}
+								toasts.setToast(job.jobId, i18n.MESSAGES.CALCULATING);
+								const data = await ffmpeg.runProbeWithArgs(["-v", "error", "-select_streams", "v:0", "-show_entries", "format=duration:stream=height,r_frame_rate,color_primaries", "-of", "default=noprint_wrappers=1", originalPath]);
+								if (data) {
+									const outputStr = data.data;
+									try {
+										const videoFilters = [];
+										if (job.options.interlace.value) {
+											videoFilters.push("interlace=lowpass=2");
 										}
+										const cappedFileSize = Math.floor((job.options.sizeCap.value && parseInt(job.options.sizeCap.value) < maxUploadSize ? parseInt(job.options.sizeCap.value) : maxUploadSize)) - 150000;
+										const durationMatches = regexPatternDuration.exec(outputStr);
+										const heightMatches = regexPatternHeight.exec(outputStr);
+										const frameRateMatches = regexPatternFrameRate.exec(outputStr);
+										const colorPrimariesMatches = regexPatternColorPrimaries.exec(outputStr);
+										const frameRateMatchesSplit = frameRateMatches[1].split('/');
+										const originalDuration = parseFloat(durationMatches[1]);
+										const originalHeight = parseInt(heightMatches[1]);
+										const colorPrimaries = colorPrimariesMatches[1];
+										const isHDR = hdrColorPrimaries.includes(colorPrimaries);
+										if (isHDR) {
+											videoFilters.push("zscale=transfer=linear,tonemap=hable,zscale=transfer=bt709");
+										}
+										const frameRate = parseFloat(frameRateMatchesSplit[0]) / parseFloat(frameRateMatchesSplit[1]);
+										if (originalDuration == 0)
+											throw new Error("Invalid file duration");
+										let duration = originalDuration;
+										const startSecondsSplit = job.options.startTimestamp.value.split(':');
+										let startSeconds = 0;
+										for (const[index, val]of startSecondsSplit.entries()) {
+											if (index + 1 == startSecondsSplit.length)
+												startSeconds += Math.pow(60, (startSecondsSplit.length - (index + 1))) * parseFloat(val);
+											else
+												startSeconds += Math.pow(60, (startSecondsSplit.length - (index + 1))) * parseInt(val);
+										}
+										if (startSeconds < 0 || isNaN(startSeconds) || startSeconds >= duration)
+											startSeconds = 0;
+										const endSecondsSplit = job.options.endTimestamp.value.split(':');
+										let endSeconds = 0;
+										for (const[index, val]of endSecondsSplit.entries()) {
+											if (index + 1 == endSecondsSplit.length)
+												endSeconds += Math.pow(60, (endSecondsSplit.length - (index + 1))) * parseFloat(val);
+											else
+												endSeconds += Math.pow(60, (endSecondsSplit.length - (index + 1))) * parseInt(val);
+										}
+										endSeconds -= startSeconds;
+										if (endSeconds <= 0 || isNaN(endSeconds) == NaN || endSeconds > duration)
+											endSeconds = -1;
+										duration = endSeconds > 0 ? endSeconds : originalDuration - startSeconds;
+										if (duration <= 0)
+											duration = originalDuration;
+										if (this.settings.compressor.debug) {
+											const fileStats = fs.statSync(originalPath);
+											Logger.info(config.info.name, "[" + job.file.name + "] Original file size: " + (fileStats ? fileStats.size : 0) + " bytes");
+											Logger.info(config.info.name, "[" + job.file.name + "] Max file size: " + cappedFileSize + " bytes");
+											Logger.info(config.info.name, "[" + job.file.name + "] File length: " + originalDuration + " seconds");
+											Logger.info(config.info.name, "[" + job.file.name + "] Clipped length: " + duration + " seconds");
+											Logger.info(config.info.name, "[" + job.file.name + "] Video height: " + originalHeight + " pixels");
+											Logger.info(config.info.name, "[" + job.file.name + "] Frame rate: " + frameRate + " fps");
+											Logger.info(config.info.name, "[" + job.file.name + "] Color primaries: " + colorPrimaries + (isHDR ? " (HDR)" : " (SDR)"));
+										}
+										let audioSize = 0;
+										let videoSize = 0;
+										if (!stripAudio) {
+											let audioBitrate = ((cappedFileSize * 8) * (stripVideo ? 1 : videoEncoderSettings[job.options.encoder.value].encoderPresets[job.options.encoderPreset.value].audioFilePercent)) / duration;
+											if (audioBitrate > 256000)
+												audioBitrate = 256000;
+											else if (audioBitrate < 10240)
+												audioBitrate = 10240;
+											/*
+											TODO: Cap audio bitrate if video bitrate would be too low
+											if (audioBitrate > 32768)
+											audioBitrate = 32768;
+											 */
+											if (this.settings.compressor.debug) {
+												Logger.info(config.info.name, "[" + job.file.name + "] Target audio bitrate: " + audioBitrate + " bits/second");
+											}
+											try {
+												toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PERCENT', '0'));
+												await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-vn", "-c:a", "libopus", "-b:a", audioBitrate, "-ac", "1", "-sn", "-map_chapters", "-1", tempAudioPath], str => {
+													return str.includes("time=");
+												}, str => {
+													try {
+														const timeStr = regexPatternTime.exec(str);
+														if (timeStr) {
+															const timeStrParts = timeStr[1].split(':');
+															const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
+															const percent = Math.round((elapsedTime / duration) * 100);
+															toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PERCENT', percent ? percent : 0));
+														}
+													} catch (e) {
+														Logger.err(config.info.name, e);
+													}
+												});
+											} catch (e) {
+												if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
+													try {
+														fs.rmSync(originalPath);
+													} catch (e) {}
+												}
+												if (!this.settings.compressor.keepTemp) {
+													try {
+														fs.rmSync(tempAudioPath);
+													} catch (e) {}
+												}
+												throw e;
+											}
+											const audioStats = fs.statSync(tempAudioPath);
+											audioSize = audioStats ? audioStats.size : 0;
+											if (this.settings.compressor.debug) {
+												Logger.info(config.info.name, "[" + job.file.name + "] Expected audio size: " + (duration * (audioBitrate / 8)) + " bytes");
+												Logger.info(config.info.name, "[" + job.file.name + "] Final audio size: " + audioSize + " bytes");
+											}
+											if (stripVideo) {
+												// Return early if video is to be stripped
+												toasts.setToast(job.jobId, i18n.MESSAGES.PACKAGING);
+												if (fs.existsSync(tempAudioPath)) {
+													fs.renameSync(tempAudioPath, compressedPath);
+												} else {
+													if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
+														try {
+															fs.rmSync(originalPath);
+														} catch (e) {}
+													}
+													throw new Error("Cannot find FFmpeg output");
+												}
+												if (fs.existsSync(compressedPath)) {
+													if (cache) {
+														cache.addToCache(compressedPath, name + ".ogg", job.fileKey);
+													}
+													const retFile = new File([Uint8Array.from(Buffer.from(fs.readFileSync(compressedPath))).buffer], name + ".ogg", {
+														type: job.file.type
+													});
+													if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
+														try {
+															fs.rmSync(originalPath);
+														} catch (e) {}
+													}
+													if (!this.settings.compressor.keepTemp) {
+														try {
+															fs.rmSync(tempAudioPath);
+														} catch (e) {}
+													}
+													job.compressedFile = retFile;
+													if (!cache && !this.settings.compressor.keepTemp) {
+														try {
+															fs.rmSync(compressedPath);
+														} catch (e) {}
+													}
+													return job;
+												} else {
+													if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
+														try {
+															fs.rmSync(originalPath);
+														} catch (e) {}
+													}
+													if (!this.settings.compressor.keepTemp) {
+														try {
+															fs.rmSync(tempAudioPath);
+														} catch (e) {}
+													}
+													throw new Error("Cannot find FFmpeg output");
+												}
+											}
+										}
+										let maxFrameRate = frameRate;
+										if (job.options.maxFps.value && job.options.maxFps.value < frameRate) {
+											maxFrameRate = job.options.maxFps.value;
+											videoFilters.push("fps=fps=" + maxFrameRate);
+										}
+										let videoBitrate = Math.floor(((cappedFileSize - audioSize) * 8) / duration);
+										let maxVideoHeight = videoEncoderSettings[job.options.encoder.value].encoderPresets[job.options.encoderPreset.value].videoHeightCapFunction(videoBitrate);
+										if (job.options.maxHeight.value && job.options.maxHeight.value < originalHeight) {
+											maxVideoHeight = job.options.maxHeight.value;
+										}
+										if (maxVideoHeight < originalHeight) {
+											videoFilters.push("scale=-1:" + maxVideoHeight + ",scale=trunc(iw/2)*2:" + maxVideoHeight);
+										}
+										if (this.settings.compressor.debug) {
+											Logger.info(config.info.name, "[" + job.file.name + "] Max frame rate: " + maxFrameRate + " fps");
+											Logger.info(config.info.name, "[" + job.file.name + "] Target video bitrate: " + videoBitrate + " bits/second");
+											Logger.info(config.info.name, "[" + job.file.name + "] Max frame height: " + maxVideoHeight + " pixels");
+											Logger.info(config.info.name, "[" + job.file.name + "] Capped frame height: " + (maxVideoHeight && originalHeight > maxVideoHeight ? maxVideoHeight : originalHeight) + " pixels");
+										}
+										const filters = [maxFrameRate ? "fps=fps=" + maxFrameRate : ""];
 										try {
-											toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PERCENT', '0'));
-											await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-vn", "-c:a", "libopus", "-b:a", audioBitrate, "-ac", "1", "-sn", "-map_chapters", "-1", tempAudioPath], str => {
-												return str.includes("time=");
+											toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PASS_1_PERCENT', '0'));
+											await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate, ...(videoFilters.length > 0 ? ["-vf", videoFilters.join(",")] : []), "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "1", "-passlogfile", tempVideoTwoPassPath, "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")], str => {
+												return str.includes("time=")
 											}, str => {
 												try {
 													const timeStr = regexPatternTime.exec(str);
@@ -2302,7 +2633,42 @@ module.exports = (() => {
 														const timeStrParts = timeStr[1].split(':');
 														const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
 														const percent = Math.round((elapsedTime / duration) * 100);
-														toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PERCENT', percent ? percent : 0));
+														toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PASS_1_PERCENT', percent ? percent : 0));
+													}
+												} catch (e) {
+													Logger.err(config.info.name, e);
+												}
+											});
+										} catch (e) {
+											if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
+												try {
+													fs.rmSync(originalPath);
+												} catch (e) {}
+											}
+											if (!stripAudio && !this.settings.compressor.keepTemp) {
+												try {
+													fs.rmSync(tempAudioPath);
+												} catch (e) {}
+											}
+											if (!this.settings.compressor.keepTemp) {
+												try {
+													fs.rmSync(tempVideoPath);
+												} catch (e) {}
+											}
+											throw e;
+										}
+										try {
+											toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PASS_2_PERCENT', '0'));
+											await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate, ...(videoFilters.length > 0 ? ["-vf", videoFilters.join(",")] : []), "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "2", "-passlogfile", tempVideoTwoPassPath, tempVideoPath], str => {
+												return str.includes("time=")
+											}, str => {
+												try {
+													const timeStr = regexPatternTime.exec(str);
+													if (timeStr) {
+														const timeStrParts = timeStr[1].split(':');
+														const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
+														const percent = Math.round((elapsedTime / duration) * 100);
+														toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PASS_2_PERCENT', percent ? percent : 0));
 													}
 												} catch (e) {
 													Logger.err(config.info.name, e);
@@ -2318,285 +2684,145 @@ module.exports = (() => {
 												try {
 													fs.rmSync(tempAudioPath);
 												} catch (e) {}
+												try {
+													fs.rmSync(tempVideoPath);
+												} catch (e) {}
 											}
 											throw e;
 										}
-										const audioStats = fs.statSync(tempAudioPath);
-										audioSize = audioStats ? audioStats.size : 0;
-										if (this.settings.compressor.debug) {
-											Logger.info(config.info.name, "[" + job.file.name + "] Expected audio size: " + (duration * (audioBitrate / 8)) + " bytes");
-											Logger.info(config.info.name, "[" + job.file.name + "] Final audio size: " + audioSize + " bytes");
-										}
-										if (stripVideo) {
-											// Return early if video is to be stripped
-											toasts.setToast(job.jobId, i18n.MESSAGES.PACKAGING);
-											if (fs.existsSync(tempAudioPath)) {
-												fs.renameSync(tempAudioPath, compressedPath);
-											} else {
-												if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
-													try {
-														fs.rmSync(originalPath);
-													} catch (e) {}
-												}
-												throw new Error("Cannot find FFmpeg output");
+										if (!fs.existsSync(tempVideoPath)) {
+											if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
+												try {
+													fs.rmSync(originalPath);
+												} catch (e) {}
 											}
-											if (fs.existsSync(compressedPath)) {
-												if (cache) {
-													cache.addToCache(compressedPath, name + ".ogg", job.fileKey);
-												}
-												const retFile = new File([Uint8Array.from(Buffer.from(fs.readFileSync(compressedPath))).buffer], name + ".ogg", {
-													type: job.file.type
-												});
-												if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
-													try {
-														fs.rmSync(originalPath);
-													} catch (e) {}
-												}
-												if (!this.settings.compressor.keepTemp) {
-													try {
-														fs.rmSync(tempAudioPath);
-													} catch (e) {}
-												}
-												job.compressedFile = retFile;
-												if (!cache && !this.settings.compressor.keepTemp) {
-													try {
-														fs.rmSync(compressedPath);
-													} catch (e) {}
-												}
-												return job;
-											} else {
-												if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
-													try {
-														fs.rmSync(originalPath);
-													} catch (e) {}
-												}
-												if (!this.settings.compressor.keepTemp) {
-													try {
-														fs.rmSync(tempAudioPath);
-													} catch (e) {}
-												}
-												throw new Error("Cannot find FFmpeg output");
+											if (!this.settings.compressor.keepTemp) {
+												try {
+													fs.rmSync(tempAudioPath);
+												} catch (e) {}
+											}
+											throw new Error("Cannot find FFmpeg output");
+										} else {
+											if (this.settings.compressor.debug) {
+												const fileStats = fs.statSync(tempVideoPath);
+												videoSize = fileStats ? fileStats.size : 0;
+												Logger.info(config.info.name, "[" + job.file.name + "] Expected video only size: " + (duration * (videoBitrate / 8)) + " bytes");
+												Logger.info(config.info.name, "[" + job.file.name + "] Final video only size: " + videoSize + " bytes");
 											}
 										}
-									}
-									let maxFrameRate = frameRate;
-									if (job.options.maxFps.value && job.options.maxFps.value < frameRate) {
-										maxFrameRate = job.options.maxFps.value;
-										videoFilters.push("fps=fps=" + maxFrameRate);
-									}
-									let videoBitrate = Math.floor(((cappedFileSize - audioSize) * 8) / duration);
-									let maxVideoHeight = videoEncoderSettings[job.options.encoder.value].encoderPresets[job.options.encoderPreset.value].videoHeightCapFunction(videoBitrate);
-									if (job.options.maxHeight.value && job.options.maxHeight.value < originalHeight) {
-										maxVideoHeight = job.options.maxHeight.value;
-									}
-									if (maxVideoHeight < originalHeight) {
-										videoFilters.push("scale=-1:" + maxVideoHeight + ",scale=trunc(iw/2)*2:" + maxVideoHeight);
-									}
-									if (this.settings.compressor.debug) {
-										Logger.info(config.info.name, "[" + job.file.name + "] Max frame rate: " + maxFrameRate + " fps");
-										Logger.info(config.info.name, "[" + job.file.name + "] Target video bitrate: " + videoBitrate + " bits/second");
-										Logger.info(config.info.name, "[" + job.file.name + "] Max frame height: " + maxVideoHeight + " pixels");
-										Logger.info(config.info.name, "[" + job.file.name + "] Capped frame height: " + (maxVideoHeight && originalHeight > maxVideoHeight ? maxVideoHeight : originalHeight) + " pixels");
-									}
-									const filters = [maxFrameRate ? "fps=fps=" + maxFrameRate : ""];
-									try {
-										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PASS_1_PERCENT', '0'));
-										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate, ...(videoFilters.length > 0 ? ["-vf", videoFilters.join(",")] : []), "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "1", "-passlogfile", tempVideoTwoPassPath, "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")], str => {
-											return str.includes("time=")
-										}, str => {
-											try {
-												const timeStr = regexPatternTime.exec(str);
-												if (timeStr) {
-													const timeStrParts = timeStr[1].split(':');
-													const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
-													const percent = Math.round((elapsedTime / duration) * 100);
-													toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PASS_1_PERCENT', percent ? percent : 0));
-												}
-											} catch (e) {
-												Logger.err(config.info.name, e);
-											}
-										});
-									} catch (e) {
-										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
-											try {
-												fs.rmSync(originalPath);
-											} catch (e) {}
-										}
-										if (!stripAudio && !this.settings.compressor.keepTemp) {
-											try {
-												fs.rmSync(tempAudioPath);
-											} catch (e) {}
-										}
-										if (!this.settings.compressor.keepTemp) {
-											try {
-												fs.rmSync(tempVideoPath);
-											} catch (e) {}
-										}
-										throw e;
-									}
-									try {
-										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PASS_2_PERCENT', '0'));
-										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate, ...(videoFilters.length > 0 ? ["-vf", videoFilters.join(",")] : []), "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "2", "-passlogfile", tempVideoTwoPassPath, tempVideoPath], str => {
-											return str.includes("time=")
-										}, str => {
-											try {
-												const timeStr = regexPatternTime.exec(str);
-												if (timeStr) {
-													const timeStrParts = timeStr[1].split(':');
-													const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
-													const percent = Math.round((elapsedTime / duration) * 100);
-													toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PASS_2_PERCENT', percent ? percent : 0));
-												}
-											} catch (e) {
-												Logger.err(config.info.name, e);
-											}
-										});
-									} catch (e) {
-										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
-											try {
-												fs.rmSync(originalPath);
-											} catch (e) {}
-										}
-										if (!this.settings.compressor.keepTemp) {
-											try {
-												fs.rmSync(tempAudioPath);
-											} catch (e) {}
-											try {
-												fs.rmSync(tempVideoPath);
-											} catch (e) {}
-										}
-										throw e;
-									}
-									if (!fs.existsSync(tempVideoPath)) {
-										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
-											try {
-												fs.rmSync(originalPath);
-											} catch (e) {}
-										}
-										if (!this.settings.compressor.keepTemp) {
-											try {
-												fs.rmSync(tempAudioPath);
-											} catch (e) {}
-										}
-										throw new Error("Cannot find FFmpeg output");
-									} else {
-										if (this.settings.compressor.debug) {
-											const fileStats = fs.statSync(tempVideoPath);
-											videoSize = fileStats ? fileStats.size : 0;
-											Logger.info(config.info.name, "[" + job.file.name + "] Expected video only size: " + (duration * (videoBitrate / 8)) + " bytes");
-											Logger.info(config.info.name, "[" + job.file.name + "] Final video only size: " + videoSize + " bytes");
-										}
-									}
-									try {
-										toasts.setToast(job.jobId, i18n.MESSAGES.PACKAGING);
-										await ffmpeg.runWithArgs(["-y", ...(!stripAudio ? ["-i", tempAudioPath] : []), "-i", tempVideoPath, "-c", "copy", compressedPathPre]);
-									} catch (e) {
-										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
-											try {
-												fs.rmSync(originalPath);
-											} catch (e) {}
-										}
-										if (!this.settings.compressor.keepTemp) {
-											try {
-												fs.rmSync(tempAudioPath);
-											} catch (e) {}
-											try {
-												fs.rmSync(tempVideoPath);
-											} catch (e) {}
-											try {
-												fs.rmSync(compressedPathPre);
-											} catch (e) {}
-										}
-										throw e;
-									}
-									if (fs.existsSync(compressedPathPre)) {
-										fs.renameSync(compressedPathPre, compressedPath);
-									} else {
-										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
-											try {
-												fs.rmSync(originalPath);
-											} catch (e) {}
-										}
-										if (!this.settings.compressor.keepTemp) {
-											try {
-												fs.rmSync(tempAudioPath);
-											} catch (e) {}
-											try {
-												fs.rmSync(tempVideoPath);
-											} catch (e) {}
-											try {
-												fs.rmSync(compressedPathPre);
-											} catch (e) {}
-										}
-										throw new Error("Cannot find FFmpeg output");
-									}
-									if (fs.existsSync(compressedPath)) {
-										if (this.settings.compressor.debug) {
-											const fileStats = fs.statSync(compressedPath);
-											Logger.info(config.info.name, "[" + job.file.name + "] Expected video size: " + (audioSize + videoSize) + " bytes");
-											Logger.info(config.info.name, "[" + job.file.name + "] Final video size: " + (fileStats ? fileStats.size : 0) + " bytes");
-										}
-										if (cache) {
-											cache.addToCache(compressedPath, name + ".webm", job.fileKey);
-										}
-										const retFile = new File([Uint8Array.from(Buffer.from(fs.readFileSync(compressedPath))).buffer], name + ".webm", {
-											type: job.file.type
-										});
-										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
-											try {
-												fs.rmSync(originalPath);
-											} catch (e) {}
-										}
-										if (!this.settings.compressor.keepTemp) {
-											try {
-												fs.rmSync(compressedPathPre);
-											} catch (e) {}
-											try {
-												fs.rmSync(tempAudioPath);
-											} catch (e) {}
-											try {
-												fs.rmSync(tempVideoPath);
-											} catch (e) {}
-										}
-										job.compressedFile = retFile;
-										if (!cache && !this.settings.compressor.keepTemp) {
-											try {
-												fs.rmSync(compressedPath);
-											} catch (e) {}
-										}
-										return job;
-									} else {
-										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
-											try {
-												fs.rmSync(originalPath);
-											} catch (e) {}
-										}
-										if (!this.settings.compressor.keepTemp) {
-											try {
-												fs.rmSync(tempAudioPath);
-											} catch (e) {}
-											try {
-												fs.rmSync(tempVideoPath);
-											} catch (e) {}
-											try {
-												fs.rmSync(compressedPathPre);
-											} catch (e) {}
-										}
-										throw new Error("Cannot find FFmpeg output");
-									}
-								} catch (e) {
-									if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
 										try {
-											fs.rmSync(originalPath);
-										} catch (e) {}
+											toasts.setToast(job.jobId, i18n.MESSAGES.PACKAGING);
+											await mkvmerge.runWithArgs(["-o", compressedPathPre, tempVideoPath, ...(!stripAudio ? [tempAudioPath] : [])]);
+										} catch (e) {
+											if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
+												try {
+													fs.rmSync(originalPath);
+												} catch (e) {}
+											}
+											if (!this.settings.compressor.keepTemp) {
+												try {
+													fs.rmSync(tempAudioPath);
+												} catch (e) {}
+												try {
+													fs.rmSync(tempVideoPath);
+												} catch (e) {}
+												try {
+													fs.rmSync(compressedPathPre);
+												} catch (e) {}
+											}
+											throw e;
+										}
+										if (fs.existsSync(compressedPathPre)) {
+											fs.renameSync(compressedPathPre, compressedPath);
+										} else {
+											if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
+												try {
+													fs.rmSync(originalPath);
+												} catch (e) {}
+											}
+											if (!this.settings.compressor.keepTemp) {
+												try {
+													fs.rmSync(tempAudioPath);
+												} catch (e) {}
+												try {
+													fs.rmSync(tempVideoPath);
+												} catch (e) {}
+												try {
+													fs.rmSync(compressedPathPre);
+												} catch (e) {}
+											}
+											throw new Error("Cannot find MKVmerge output");
+										}
+										if (fs.existsSync(compressedPath)) {
+											if (this.settings.compressor.debug) {
+												const fileStats = fs.statSync(compressedPath);
+												Logger.info(config.info.name, "[" + job.file.name + "] Expected video size: " + (audioSize + videoSize) + " bytes");
+												Logger.info(config.info.name, "[" + job.file.name + "] Final video size: " + (fileStats ? fileStats.size : 0) + " bytes");
+											}
+											if (cache) {
+												cache.addToCache(compressedPath, name + ".webm", job.fileKey);
+											}
+											const retFile = new File([Uint8Array.from(Buffer.from(fs.readFileSync(compressedPath))).buffer], name + ".webm", {
+												type: job.file.type
+											});
+											if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
+												try {
+													fs.rmSync(originalPath);
+												} catch (e) {}
+											}
+											if (!this.settings.compressor.keepTemp) {
+												try {
+													fs.rmSync(compressedPathPre);
+												} catch (e) {}
+												try {
+													fs.rmSync(tempAudioPath);
+												} catch (e) {}
+												try {
+													fs.rmSync(tempVideoPath);
+												} catch (e) {}
+											}
+											job.compressedFile = retFile;
+											if (!cache && !this.settings.compressor.keepTemp) {
+												try {
+													fs.rmSync(compressedPath);
+												} catch (e) {}
+											}
+											return job;
+										} else {
+											if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
+												try {
+													fs.rmSync(originalPath);
+												} catch (e) {}
+											}
+											if (!this.settings.compressor.keepTemp) {
+												try {
+													fs.rmSync(tempAudioPath);
+												} catch (e) {}
+												try {
+													fs.rmSync(tempVideoPath);
+												} catch (e) {}
+												try {
+													fs.rmSync(compressedPathPre);
+												} catch (e) {}
+											}
+											throw new Error("Cannot find MKVmerge output");
+										}
+									} catch (e) {
+										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
+											try {
+												fs.rmSync(originalPath);
+											} catch (e) {}
+										}
+										throw e;
 									}
-									throw e;
+								} else {
+									throw new Error("Cannot read FFprobe output");
 								}
 							} else {
-								throw new Error("Cannot read FFprobe output");
+								throw new Error("Unable to access temp data directory");
 							}
 						} else {
-							throw new Error("Unable to access temp data directory");
+							throw new Error("Unable to run MKVmerge");
 						}
 					} else {
 						throw new Error("Unable to run FFmpeg");
