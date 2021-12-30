@@ -20,7 +20,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.5.3",
+			version: "1.5.4",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -35,7 +35,8 @@ module.exports = (() => {
 				title: "Fixed",
 				type: "fixed",
 				items: [
-					"Added MKVmerge binaries for macOS and Linux"
+					"Added MKVmerge binaries for macOS and Linux",
+					"Hotfix for libraries not being recognized"
 				]
 			}, {
 				title: "Improved",
@@ -523,13 +524,13 @@ module.exports = (() => {
 				linux_arm64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-linux-arm64"
 			};
 			const librarySuffixes = {
-				win_amd64: "-win_amd64.exe",
-				darwin_amd64: "-darwin_amd64",
-				darwin_arm64: "-darwin_arm64",
-				linux_i686: "-linux_i686",
-				linux_amd64: "-linux_amd64",
-				linux_armhf: "-linux_armhf",
-				linux_arm64: "-linux_arm64"
+				win_amd64: "-win-amd64.exe",
+				darwin_amd64: "-darwin-amd64",
+				darwin_arm64: "-darwin-arm64",
+				linux_i686: "-linux-i686",
+				linux_amd64: "-linux-amd64",
+				linux_armhf: "-linux-armhf",
+				linux_arm64: "-linux-arm64"
 			};
 			// Default encoder settings
 			const videoEncoderSettings = {
@@ -875,6 +876,7 @@ module.exports = (() => {
 							switch (process.platform) {
 							case "win32":
 								this.mkvmerge += librarySuffixes["win_amd64"];
+								break;
 							case "darwin":
 								switch (process.arch) {
 								case "arm":
