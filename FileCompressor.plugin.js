@@ -20,7 +20,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.5.2",
+			version: "1.5.3",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -35,16 +35,12 @@ module.exports = (() => {
 				title: "Fixed",
 				type: "fixed",
 				items: [
-					"Fixed dropdown boxes",
-					"Chmod libraries after download for Linux/OSX",
-					"Fixed video compression on OSX",
-					"Temporary fallback for MKVmerge not working"
+					"Added MKVmerge binaries for macOS and Linux"
 				]
 			}, {
 				title: "Improved",
 				type: "improved",
 				items: [
-					"Always prompt to compress when file size is less than maximum in settings",
 					"Properly maximizes audio bitrate",
 					"Reduces audio bit depth to 16 bits if bitrate is low"
 				]
@@ -495,43 +491,45 @@ module.exports = (() => {
 			const ffmpegLicense = "GPL Version 2";
 			const ffmpegLicenseUrl = "https://www.gnu.org/licenses/old-licenses/gpl-2.0.html";
 			const ffmpegDownloadUrls = {
-				win32: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffmpeg-win.exe",
-				darwin: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffmpeg-osx",
-				amd64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffmpeg-linux-amd64",
-				arm64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffmpeg-linux-arm64",
-				armhf: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffmpeg-linux-armhf",
-				i686: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffmpeg-linux-i686"
+				win_amd64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffmpeg-win-amd64.exe",
+				darwin_amd64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffmpeg-darwin-amd64",
+				linux_i686: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffmpeg-linux-i686",
+				linux_amd64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffmpeg-linux-amd64",
+				linux_armhf: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffmpeg-linux-armhf",
+				linux_arm64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffmpeg-linux-arm64"
 			};
 			const ffprobeDownloadUrls = {
-				win32: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffprobe-win.exe",
-				darwin: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffprobe-osx",
-				amd64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffprobe-linux-amd64",
-				arm64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffprobe-linux-arm64",
-				armhf: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffprobe-linux-armhf",
-				i686: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffprobe-linux-i686"
+				win_amd64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffprobe-win-amd64.exe",
+				darwin_amd64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffprobe-darwin-amd64",
+				linux_i686: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffprobe-linux-i686",
+				linux_amd64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffprobe-linux-amd64",
+				linux_armhf: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffprobe-linux-armhf",
+				linux_arm64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffprobe-linux-arm64"
 			};
 			// MKVmerge container
 			let mkvmerge = null;
 			// MKVmerge constants
-			const mkvmergeVersion = "63.0.0";
-			const mkvmergeSourceUrl = "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/63.0.0/mkvmerge-source.zip";
+			const mkvmergeVersion = "58.0.0";
+			const mkvmergeSourceUrl = "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-source.tar.xz";
 			const mkvmergeLicense = "GPL Version 2";
 			const mkvmergeLicenseUrl = "https://www.gnu.org/licenses/old-licenses/gpl-2.0.html";
 			const mkvmergeDownloadUrls = {
-				win32: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/63.0.0/mkvmerge-win.exe",
-				darwin: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/63.0.0/mkvmerge-osx",
-				amd64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/63.0.0/mkvmerge-linux-amd64",
-				arm64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/63.0.0/mkvmerge-linux-arm64",
-				armhf: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/63.0.0/mkvmerge-linux-armhf",
-				i686: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/63.0.0/mkvmerge-linux-i686"
+				win_amd64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-win-amd64.exe",
+				darwin_amd64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-darwin-amd64",
+				darwin_arm64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-darwin-arm64",
+				linux_i686: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-linux-i686",
+				linux_amd64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-linux-amd64",
+				linux_armhf: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-linux-armhf",
+				linux_arm64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-linux-arm64"
 			};
 			const librarySuffixes = {
-				win32: "-win.exe",
-				darwin: "-osx",
-				amd64: "-linux-amd64",
-				arm64: "-linux-arm64",
-				armhf: "-linux-armhf",
-				i686: "-linux-i686"
+				win_amd64: "-win_amd64.exe",
+				darwin_amd64: "-darwin_amd64",
+				darwin_arm64: "-darwin_arm64",
+				linux_i686: "-linux_i686",
+				linux_amd64: "-linux_amd64",
+				linux_armhf: "-linux_armhf",
+				linux_arm64: "-linux_arm64"
 			};
 			// Default encoder settings
 			const videoEncoderSettings = {
@@ -727,48 +725,52 @@ module.exports = (() => {
 							this.ffmpeg = path.join(ffmpegFolder, "ffmpeg");
 							switch (process.platform) {
 							case "win32":
+								this.ffmpeg += librarySuffixes["win_amd64"];
+								break;
 							case "darwin":
-								this.ffmpeg += librarySuffixes[process.platform];
+								this.ffmpeg += librarySuffixes["darwin_amd64"];
 								break;
 							default:
 								switch (process.arch) {
 								case "arm":
-									this.ffmpeg += librarySuffixes["armhf"];
+									this.ffmpeg += librarySuffixes["linux_armhf"];
 									break;
 								case "arm64":
-									this.ffmpeg += librarySuffixes["arm64"];
+									this.ffmpeg += librarySuffixes["linux_arm64"];
 									break;
 								case "x64":
-									this.ffmpeg += librarySuffixes["amd64"];
+									this.ffmpeg += librarySuffixes["linux_amd64"];
 									break;
 								case "ia32":
 								case "x32":
 								default:
-									this.ffmpeg += librarySuffixes["i686"];
+									this.ffmpeg += librarySuffixes["linux_i686"];
 									break;
 								}
 							}
 							this.ffprobe = path.join(ffmpegFolder, "ffprobe");
 							switch (process.platform) {
 							case "win32":
+								this.ffprobe += librarySuffixes["win_amd64"];
+								break;
 							case "darwin":
-								this.ffprobe += librarySuffixes[process.platform];
+								this.ffprobe += librarySuffixes["darwin_amd64"];
 								break;
 							default:
 								switch (process.arch) {
 								case "arm":
-									this.ffprobe += librarySuffixes["armhf"];
+									this.ffprobe += librarySuffixes["linux_armhf"];
 									break;
 								case "arm64":
-									this.ffprobe += librarySuffixes["arm64"];
+									this.ffprobe += librarySuffixes["linux_arm64"];
 									break;
 								case "x64":
-									this.ffprobe += librarySuffixes["amd64"];
+									this.ffprobe += librarySuffixes["linux_amd64"];
 									break;
 								case "ia32":
 								case "x32":
 								default:
-									this.ffprobe += librarySuffixes["i686"];
+									this.ffprobe += librarySuffixes["linux_i686"];
 									break;
 								}
 							}
@@ -872,24 +874,33 @@ module.exports = (() => {
 							this.mkvmerge = path.join(mkvmergeFolder, "mkvmerge");
 							switch (process.platform) {
 							case "win32":
+								this.mkvmerge += librarySuffixes["win_amd64"];
 							case "darwin":
-								this.mkvmerge += librarySuffixes[process.platform];
-								break;
+								switch (process.arch) {
+								case "arm":
+								case "arm64":
+									this.mkvmerge += librarySuffixes["darwin_arm64"];
+									break;
+								case "x64":
+								default:
+									this.mkvmerge += librarySuffixes["darwin_amd64"];
+									break;
+								}
 							default:
 								switch (process.arch) {
 								case "arm":
-									this.mkvmerge += librarySuffixes["armhf"];
+									this.mkvmerge += librarySuffixes["linux_armhf"];
 									break;
 								case "arm64":
-									this.mkvmerge += librarySuffixes["arm64"];
+									this.mkvmerge += librarySuffixes["linux_arm64"];
 									break;
 								case "x64":
-									this.mkvmerge += librarySuffixes["amd64"];
+									this.mkvmerge += librarySuffixes["linux_amd64"];
 									break;
 								case "ia32":
 								case "x32":
 								default:
-									this.mkvmerge += librarySuffixes["i686"];
+									this.mkvmerge += librarySuffixes["linux_i686"];
 									break;
 								}
 							}
@@ -1544,8 +1555,7 @@ module.exports = (() => {
 										});
 									},
 									onCancel: () => {
-										//reject();
-										resolve();
+										reject();
 									},
 									confirmText: i18n.MESSAGES.INSTALL_AUTOMATICALLY,
 									cancelText: i18n.MESSAGES.CANCEL
@@ -1565,8 +1575,21 @@ module.exports = (() => {
 					let dlUrl = "";
 					switch (process.platform) {
 					case "win32":
+						dlUrl = downloadUrls["win_amd64"];
+						break;
 					case "darwin":
-						dlUrl = downloadUrls[process.platform];
+						switch (process.arch) {
+						case "arm":
+						case "arm64":
+							dlUrl = downloadUrls["darwin_arm64"];
+							if (!dlUrl)
+								dlUrl = downloadUrls["darwin_amd64"];
+							break;
+						case "x64":
+						default:
+							dlUrl = downloadUrls["darwin_amd64"];
+							break;
+						}
 						break;
 					default:
 						switch (process.arch) {
