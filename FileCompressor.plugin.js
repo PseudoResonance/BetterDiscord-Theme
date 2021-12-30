@@ -20,7 +20,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.5.5",
+			version: "1.5.6",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -36,7 +36,8 @@ module.exports = (() => {
 				type: "fixed",
 				items: [
 					"Added MKVmerge binaries for macOS and Linux",
-					"Second hotfix for libraries not being recognized"
+					"Second hotfix for libraries not being recognized",
+					"Hotfix for Linux being unable to download libraries"
 				]
 			}, {
 				title: "Improved",
@@ -1599,18 +1600,18 @@ module.exports = (() => {
 					default:
 						switch (process.arch) {
 						case "arm":
-							dlUrl = downloadUrls["armhf"];
+							dlUrl = downloadUrls["linux_armhf"];
 							break;
 						case "arm64":
-							dlUrl = downloadUrls["arm64"];
+							dlUrl = downloadUrls["linux_arm64"];
 							break;
 						case "x64":
-							dlUrl = downloadUrls["amd64"];
+							dlUrl = downloadUrls["linux_amd64"];
 							break;
 						case "ia32":
 						case "x32":
 						default:
-							dlUrl = downloadUrls["i686"];
+							dlUrl = downloadUrls["linux_i686"];
 							break;
 						}
 						break;
