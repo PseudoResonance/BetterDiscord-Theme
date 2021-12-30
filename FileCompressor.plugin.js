@@ -20,7 +20,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.5.4",
+			version: "1.5.5",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -36,7 +36,7 @@ module.exports = (() => {
 				type: "fixed",
 				items: [
 					"Added MKVmerge binaries for macOS and Linux",
-					"Hotfix for libraries not being recognized"
+					"Second hotfix for libraries not being recognized"
 				]
 			}, {
 				title: "Improved",
@@ -774,6 +774,7 @@ module.exports = (() => {
 									this.ffprobe += librarySuffixes["linux_i686"];
 									break;
 								}
+								break;
 							}
 						}
 						if (fs.existsSync(this.ffmpeg) && fs.existsSync(this.ffprobe)) {
@@ -888,6 +889,7 @@ module.exports = (() => {
 									this.mkvmerge += librarySuffixes["darwin_amd64"];
 									break;
 								}
+								break;
 							default:
 								switch (process.arch) {
 								case "arm":
@@ -905,6 +907,7 @@ module.exports = (() => {
 									this.mkvmerge += librarySuffixes["linux_i686"];
 									break;
 								}
+								break;
 							}
 						}
 						if (fs.existsSync(this.mkvmerge)) {
@@ -1610,6 +1613,7 @@ module.exports = (() => {
 							dlUrl = downloadUrls["i686"];
 							break;
 						}
+						break;
 					}
 					return this.downloadFile("-" + uuidv4().replace(/-/g, ""), dlUrl, downloadPath, name);
 				}
