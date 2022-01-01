@@ -2695,11 +2695,6 @@ module.exports = (() => {
 										videoFilters.push("fps=fps=" + maxFrameRate);
 									}
 									let videoBitrate = Math.floor(((cappedFileSize - audioSize) * 8) / duration);
-									console.log(videoEncoderSettings);
-									console.log(videoEncoderSettings[job.options.encoder.value]);
-									console.log(videoEncoderSettings[job.options.encoder.value].encoderPresets[job.options.encoderPreset.value]);
-									console.log(videoBitrate);
-									console.log(videoEncoderSettings[job.options.encoder.value].encoderPresets[job.options.encoderPreset.value].videoHeightCapFunction(videoBitrate));
 									let maxVideoHeight = videoEncoderSettings[job.options.encoder.value].encoderPresets[job.options.encoderPreset.value].videoHeightCapFunction(videoBitrate);
 									if (job.options.maxHeight.value && (job.options.maxHeight.value < originalHeight || !originalHeight)) {
 										maxVideoHeight = job.options.maxHeight.value;
