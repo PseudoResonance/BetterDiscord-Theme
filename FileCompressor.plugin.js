@@ -2492,8 +2492,6 @@ module.exports = (() => {
 							if (videoData && audioData) {
 								const videoOutputStr = videoData.data;
 								const audioOutputStr = audioData.data;
-								console.log(videoOutputStr);
-								console.log(audioOutputStr);
 								try {
 									const videoFilters = [];
 									if (job.options.interlace.value) {
