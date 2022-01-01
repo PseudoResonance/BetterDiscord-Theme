@@ -9,6 +9,7 @@
 //TODO Get file properties before asking for options to pre-populate fields with current settings and allow for additional options - which audio tracks to mix, which subtitle track to burn, which video track to use
 //TODO Add plugin settings for default options
 //TODO Add plugin settings for toast position on screen
+//TODO Add button to bypass compression
 
 module.exports = (() => {
 	const config = {
@@ -20,7 +21,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.5.6",
+			version: "1.5.7",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -29,22 +30,22 @@ module.exports = (() => {
 				title: "Added",
 				type: "added",
 				items: [
-					"Added MKVmerge for merging completed video files - greatly reduces file size over FFmpeg"
+					"Added MKVmerge for merging completed video files - greatly reduces file size over FFmpeg",
+					"Debug compression time output"
 				]
 			}, {
 				title: "Fixed",
 				type: "fixed",
 				items: [
-					"Added MKVmerge binaries for macOS and Linux",
-					"Second hotfix for libraries not being recognized",
-					"Hotfix for Linux being unable to download libraries"
+					"Don't fail compression when file headers are missing data",
+					"Don't forcefully cap compression size to value in settings"
 				]
 			}, {
 				title: "Improved",
 				type: "improved",
 				items: [
-					"Properly maximizes audio bitrate",
-					"Reduces audio bit depth to 16 bits if bitrate is low"
+					"Tuned VP9 bitrate to video size calculations",
+					"Maximize number of audio channels and bit depth in video compression"
 				]
 			}, {
 				title: "Known Bugs",
@@ -609,63 +610,63 @@ module.exports = (() => {
 						"preserveVideo": {
 							audioFilePercent: 0.03,
 							videoHeightCapFunction: (bitrate) => {
-								if (bitrate < 102400)
+								if (bitrate < 51200)
 									return 144;
-								else if (bitrate < 204800)
+								else if (bitrate < 102400)
 									return 240;
-								else if (bitrate < 512000)
+								else if (bitrate < 256000)
 									return 360;
-								else if (bitrate < 870400)
+								else if (bitrate < 435200)
 									return 480;
-								else if (bitrate < 1280000)
+								else if (bitrate < 640000)
 									return 720;
-								else if (bitrate < 2560000)
+								else if (bitrate < 1280000)
 									return 1080;
-								else if (bitrate < 6144000)
+								else if (bitrate < 3072000)
 									return 1440;
-								else if (bitrate < 10240000)
+								else if (bitrate < 5120000)
 									return 2160;
 							}
 						},
 						"balanced": {
 							audioFilePercent: 0.05,
 							videoHeightCapFunction: (bitrate) => {
-								if (bitrate < 102400)
+								if (bitrate < 51200)
 									return 144;
-								else if (bitrate < 204800)
+								else if (bitrate < 102400)
 									return 240;
-								else if (bitrate < 512000)
+								else if (bitrate < 256000)
 									return 360;
-								else if (bitrate < 870400)
+								else if (bitrate < 435200)
 									return 480;
-								else if (bitrate < 1280000)
+								else if (bitrate < 640000)
 									return 720;
-								else if (bitrate < 2560000)
+								else if (bitrate < 1280000)
 									return 1080;
-								else if (bitrate < 6144000)
+								else if (bitrate < 3072000)
 									return 1440;
-								else if (bitrate < 10240000)
+								else if (bitrate < 5120000)
 									return 2160;
 							}
 						},
 						"preserveAudio": {
 							audioFilePercent: 0.1,
 							videoHeightCapFunction: (bitrate) => {
-								if (bitrate < 102400)
+								if (bitrate < 51200)
 									return 144;
-								else if (bitrate < 204800)
+								else if (bitrate < 102400)
 									return 240;
-								else if (bitrate < 512000)
+								else if (bitrate < 256000)
 									return 360;
-								else if (bitrate < 870400)
+								else if (bitrate < 435200)
 									return 480;
-								else if (bitrate < 1280000)
+								else if (bitrate < 640000)
 									return 720;
-								else if (bitrate < 2560000)
+								else if (bitrate < 1280000)
 									return 1080;
-								else if (bitrate < 6144000)
+								else if (bitrate < 3072000)
 									return 1440;
-								else if (bitrate < 10240000)
+								else if (bitrate < 5120000)
 									return 2160;
 							}
 						}
@@ -1714,15 +1715,14 @@ module.exports = (() => {
 						});
 						maxUploadSize = 8388608;
 					}
-					if (settingsMaxSize > 0 && settingsMaxSize < maxUploadSize)
-						maxUploadSize = settingsMaxSize;
+					const uploadSizeCap = (settingsMaxSize > 0 && settingsMaxSize < maxUploadSize) ? settingsMaxSize : maxUploadSize
 					// Synthetic DataTransfer to generate FileList
 					const originalDt = new DataTransfer();
 					const tempFiles = [];
 					let queuedFiles = 0;
 					for (let i = 0; i < files.length; i++) {
 						const file = files[i];
-						if (file.size > maxUploadSize) {
+						if (file.size > uploadSizeCap) {
 							// If file is returned, it was incompressible
 							let type = file.type;
 							if (!type && file.path)
@@ -1883,7 +1883,7 @@ module.exports = (() => {
 						type: "textbox",
 						defaultValue: (this.settings.upload.maxFileSize != 0 ? this.settings.upload.maxFileSize : ""),
 						validation: value => {
-							return (!isNaN(value) && !isNaN(parseInt(value)) && value > 0);
+							return (!value || !isNaN(value) && !isNaN(parseInt(value)) && value > 0);
 						}
 					};
 					switch (job.type) {
@@ -2186,6 +2186,9 @@ module.exports = (() => {
 					}
 					if (ffmpeg && ffmpeg.checkFFmpeg()) {
 						if (await this.initTempFolder()) {
+							const startCompressionTime = new Date();
+							if (this.settings.compressor.debug)
+								Logger.info(config.info.name, "[" + job.file.name + "] Start time: " + startCompressionTime.toLocaleString());
 							const nameSplit = job.file.name.split('.');
 							const name = nameSplit.slice(0, nameSplit.length - 1).join(".");
 							const extension = nameSplit[nameSplit.length - 1];
@@ -2212,7 +2215,7 @@ module.exports = (() => {
 											}
 											if (done) {
 												if (this.settings.compressor.debug)
-													Logger.info(config.info.name, "[" + job.file.name + "] Copied " + bytesWritten + " bytes");
+													Logger.info(config.info.name, "[" + job.file.name + "] Copied: " + bytesWritten + " bytes");
 												writeStream.destroy();
 												resolve1(true);
 												return;
@@ -2243,16 +2246,16 @@ module.exports = (() => {
 								compressedPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".ogg");
 							}
 							toasts.setToast(job.jobId, i18n.MESSAGES.CALCULATING);
-							const data = await ffmpeg.runProbeWithArgs(["-v", "error", "-select_streams", "a", "-show_entries", "format=duration:stream=channels,bits_per_raw_sample", "-of", "default=noprint_wrappers=1", originalPath]);
-							if (data) {
-								const outputStr = data.data;
+							const audioData = await ffmpeg.runProbeWithArgs(["-v", "error", "-select_streams", "a", "-show_entries", "format=duration:stream=channels,bits_per_raw_sample", "-of", "default=noprint_wrappers=1", originalPath]);
+							if (audioData) {
+								const audioOutputStr = audioData.data;
 								try {
-									const durationMatches = regexPatternDuration.exec(outputStr);
-									const channelsMatches = regexPatternChannels.exec(outputStr);
-									const bitDepthMatches = regexPatternBitDepth.exec(outputStr);
-									const originalDuration = parseFloat(durationMatches[1]);
-									const bitDepth = parseInt(bitDepthMatches[1]);
-									const numChannels = parseInt(channelsMatches[1]);
+									const durationMatches = regexPatternDuration.exec(audioOutputStr);
+									const channelsMatches = regexPatternChannels.exec(audioOutputStr);
+									const bitDepthMatches = regexPatternBitDepth.exec(audioOutputStr);
+									const originalDuration = durationMatches?.length > 1 ? parseFloat(durationMatches[1]) : 0;
+									const bitDepth = bitDepthMatches?.length > 1 ? parseInt(bitDepthMatches[1]) : null;
+									const numChannels = channelsMatches?.length > 1 ? parseInt(channelsMatches[1]) : null;
 									if (originalDuration == 0)
 										throw new Error("Invalid file duration");
 									let duration = originalDuration;
@@ -2277,7 +2280,7 @@ module.exports = (() => {
 									if (audioBitrate < 500)
 										audioBitrate = 500;
 									let outputChannels = numChannels;
-									if (audioBitrate / numChannels < 50000) {
+									if (!numChannels || (audioBitrate / numChannels < 50000)) {
 										if (Math.floor(audioBitrate / 50000) > 2)
 											outputChannels = 2;
 										else
@@ -2286,7 +2289,7 @@ module.exports = (() => {
 									if (audioBitrate > (256000 * outputChannels))
 										audioBitrate = (256000 * outputChannels);
 									let outputBitDepth = bitDepth;
-									if (bitDepth > 16 && ((audioBitrate / outputChannels) < 96000))
+									if ((!bitDepth || bitDepth > 16) && ((audioBitrate / outputChannels) < 96000))
 										outputBitDepth = 16;
 									if (this.settings.compressor.debug) {
 										const fileStats = fs.statSync(originalPath);
@@ -2302,7 +2305,7 @@ module.exports = (() => {
 									}
 									try {
 										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PERCENT', '0'));
-										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-vn", "-c:a", "libopus", "-map", "0:a", "-b:a", audioBitrate, "-maxrate", audioBitrate, "-bufsize", audioBitrate, ...(outputBitDepth < bitDepth ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, "-sn", "-map_chapters", "-1", compressedPathPre], str => {
+										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-vn", "-c:a", "libopus", "-map", "0:a", "-b:a", audioBitrate, "-maxrate", audioBitrate, "-bufsize", audioBitrate, ...((outputBitDepth && (outputBitDepth < bitDepth || !bitDepth)) ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, "-sn", "-map_chapters", "-1", compressedPathPre], str => {
 											return str.includes("time=")
 										}, str => {
 											try {
@@ -2343,6 +2346,14 @@ module.exports = (() => {
 									}
 									if (fs.existsSync(compressedPath)) {
 										if (this.settings.compressor.debug) {
+											const endCompressionTime = new Date();
+											Logger.info(config.info.name, "[" + job.file.name + "] End time: " + endCompressionTime.toLocaleString());
+											let compressionTimeDiff = (endCompressionTime - startTime) / 1000;
+											const compressionTimeSeconds = compressionTimeDiff % 60;
+											compressionTimeDiff = (compressionTimeDiff - compressionTimeSeconds) / 60;
+											const compressionTimeMinutes = compressionTimeDiff % 60;
+											const compressionTimeHours = (compressionTimeDiff - compressionTimeMinutes) / 60;
+											Logger.info(config.info.name, "[" + job.file.name + "] Time to compress: " + (compressionTimeHours.toFixed(0) + ":" + compressionTimeMinutes.toFixed(0) + ":" + compressionTimeSeconds.toFixed(3)));
 											const fileStats = fs.statSync(compressedPath);
 											Logger.info(config.info.name, "[" + job.file.name + "] Expected audio size: " + (duration * (audioBitrate / 8)) + " bytes");
 											Logger.info(config.info.name, "[" + job.file.name + "] Final audio size: " + (fileStats ? fileStats.size : 0) + " bytes");
@@ -2411,6 +2422,9 @@ module.exports = (() => {
 					}
 					if (ffmpeg && ffmpeg.checkFFmpeg()) {
 						if (await this.initTempFolder()) {
+							const startCompressionTime = new Date();
+							if (this.settings.compressor.debug)
+								Logger.info(config.info.name, "[" + job.file.name + "] Start time: " + startCompressionTime.toLocaleString());
 							const nameSplit = job.file.name.split('.');
 							const name = nameSplit.slice(0, nameSplit.length - 1).join(".");
 							const extension = nameSplit[nameSplit.length - 1];
@@ -2437,7 +2451,7 @@ module.exports = (() => {
 											}
 											if (done) {
 												if (this.settings.compressor.debug)
-													Logger.info(config.info.name, "[" + job.file.name + "] Copied " + bytesWritten + " bytes");
+													Logger.info(config.info.name, "[" + job.file.name + "] Copied: " + bytesWritten + " bytes");
 												writeStream.destroy();
 												resolve1(true);
 												return;
@@ -2473,28 +2487,36 @@ module.exports = (() => {
 								compressedPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + (!stripVideo ? ".webm" : ".ogg"));
 							}
 							toasts.setToast(job.jobId, i18n.MESSAGES.CALCULATING);
-							const data = await ffmpeg.runProbeWithArgs(["-v", "error", "-select_streams", "v:0", "-show_entries", "format=duration:stream=height,r_frame_rate,color_primaries", "-of", "default=noprint_wrappers=1", originalPath]);
-							if (data) {
-								const outputStr = data.data;
+							const videoData = await ffmpeg.runProbeWithArgs(["-v", "error", "-select_streams", "v:0", "-show_entries", "format=duration:stream=height,r_frame_rate,color_primaries", "-of", "default=noprint_wrappers=1", originalPath]);
+							const audioData = await ffmpeg.runProbeWithArgs(["-v", "error", "-select_streams", "a:0", "-show_entries", "stream=channels,bits_per_raw_sample", "-of", "default=noprint_wrappers=1", originalPath]);
+							if (videoData && audioData) {
+								const videoOutputStr = videoData.data;
+								const audioOutputStr = audioData.data;
+								console.log(videoOutputStr);
+								console.log(audioOutputStr);
 								try {
 									const videoFilters = [];
 									if (job.options.interlace.value) {
 										videoFilters.push("interlace=lowpass=2");
 									}
 									const cappedFileSize = Math.floor((job.options.sizeCap.value && parseInt(job.options.sizeCap.value) < maxUploadSize ? parseInt(job.options.sizeCap.value) : maxUploadSize)) - 150000;
-									const durationMatches = regexPatternDuration.exec(outputStr);
-									const heightMatches = regexPatternHeight.exec(outputStr);
-									const frameRateMatches = regexPatternFrameRate.exec(outputStr);
-									const colorPrimariesMatches = regexPatternColorPrimaries.exec(outputStr);
-									const frameRateMatchesSplit = frameRateMatches[1].split('/');
-									const originalDuration = parseFloat(durationMatches[1]);
-									const originalHeight = parseInt(heightMatches[1]);
-									const colorPrimaries = colorPrimariesMatches[1];
+									const durationMatches = regexPatternDuration.exec(videoOutputStr);
+									const heightMatches = regexPatternHeight.exec(videoOutputStr);
+									const frameRateMatches = regexPatternFrameRate.exec(videoOutputStr);
+									const colorPrimariesMatches = regexPatternColorPrimaries.exec(videoOutputStr);
+									const channelsMatches = regexPatternChannels.exec(audioOutputStr);
+									const bitDepthMatches = regexPatternBitDepth.exec(audioOutputStr);
+									const frameRateMatchesSplit = frameRateMatches.length > 1 ? frameRateMatches[1].split('/') : null;
+									const originalDuration = durationMatches?.length > 1 ? parseFloat(durationMatches[1]) : 0;
+									const originalHeight = heightMatches?.length > 1 ? parseInt(heightMatches[1]) : null;
+									const colorPrimaries = colorPrimariesMatches?.length > 1 ? colorPrimariesMatches[1] : null;
+									const bitDepth = bitDepthMatches?.length > 1 ? parseInt(bitDepthMatches[1]) : null;
+									const numChannels = channelsMatches?.length > 1 ? parseInt(channelsMatches[1]) : null;
 									const isHDR = hdrColorPrimaries.includes(colorPrimaries);
 									if (isHDR) {
 										videoFilters.push("zscale=transfer=linear,tonemap=hable,zscale=transfer=bt709");
 									}
-									const frameRate = parseFloat(frameRateMatchesSplit[0]) / parseFloat(frameRateMatchesSplit[1]);
+									const frameRate = frameRateMatchesSplit?.length > 1 ? (parseFloat(frameRateMatchesSplit[0]) / parseFloat(frameRateMatchesSplit[1])) : null;
 									if (originalDuration == 0)
 										throw new Error("Invalid file duration");
 									let duration = originalDuration;
@@ -2529,10 +2551,36 @@ module.exports = (() => {
 									if (!stripAudio) {
 										//TODO check per-channel bitrate and keep as many audio channels as possible
 										let audioBitrate = ((cappedFileSize * 8) * (stripVideo ? 1 : videoEncoderSettings[job.options.encoder.value].encoderPresets[job.options.encoderPreset.value].audioFilePercent)) / duration;
-										if (audioBitrate > 256000)
-											audioBitrate = 256000;
-										else if (audioBitrate < 10240)
+										if (audioBitrate < 10240)
 											audioBitrate = 10240;
+										let outputChannels = numChannels;
+										if (!numChannels || (audioBitrate / numChannels < 50000)) {
+											if (Math.floor(audioBitrate / 50000) > 2)
+												outputChannels = 2;
+											else
+												outputChannels = 1;
+										}
+										if (outputChannels > 2) {
+											if ((audioBitrate / outputChannels) < 96000) {
+												const bitrateIdealOutputChannels = Math.floor(audioBitrate / 96000);
+												if (bitrateIdealOutputChannels < outputChannels) {
+													if (bitrateIdealOutputChannels >= 8) {
+														outputChannels = 8;
+													} else if (bitrateIdealOutputChannels >= 6) {
+														outputChannels = 6;
+													} else if (bitrateIdealOutputChannels >= 2) {
+														outputChannels = 2;
+													} else if (bitrateIdealOutputChannels == 1) {
+														outputChannels = 1;
+													}
+												}
+											}
+										}
+										if (audioBitrate > (256000 * outputChannels))
+											audioBitrate = (256000 * outputChannels);
+										let outputBitDepth = null;
+										if ((!bitDepth || bitDepth > 16) && ((audioBitrate / outputChannels) < 96000))
+											outputBitDepth = 16;
 										/*
 										TODO: Cap audio bitrate if video bitrate would be too low
 										if (audioBitrate > 32768)
@@ -2540,10 +2588,14 @@ module.exports = (() => {
 										 */
 										if (this.settings.compressor.debug) {
 											Logger.info(config.info.name, "[" + job.file.name + "] Target audio bitrate: " + audioBitrate + " bits/second");
+											Logger.info(config.info.name, "[" + job.file.name + "] Number of audio channels: " + numChannels + " channels");
+											Logger.info(config.info.name, "[" + job.file.name + "] Number of audio output channels: " + outputChannels + " channels");
+											Logger.info(config.info.name, "[" + job.file.name + "] Audio bit depth: " + bitDepth + " bits");
+											Logger.info(config.info.name, "[" + job.file.name + "] Output audio bit depth: " + outputBitDepth + " bits");
 										}
 										try {
 											toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PERCENT', '0'));
-											await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-vn", "-c:a", "libopus", "-b:a", audioBitrate, "-ac", "1", "-sn", "-map_chapters", "-1", tempAudioPath], str => {
+											await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-vn", "-c:a", "libopus", "-map", "0:a", "-b:a", audioBitrate, "-maxrate", audioBitrate, "-bufsize", audioBitrate, ...(outputBitDepth && (outputBitDepth < bitDepth || !bitDepth) ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, "-sn", "-map_chapters", "-1", tempAudioPath], str => {
 												return str.includes("time=");
 											}, str => {
 												try {
@@ -2591,6 +2643,16 @@ module.exports = (() => {
 												throw new Error("Cannot find FFmpeg output");
 											}
 											if (fs.existsSync(compressedPath)) {
+												if (this.settings.compressor.debug) {
+													const endCompressionTime = new Date();
+													Logger.info(config.info.name, "[" + job.file.name + "] End time: " + endCompressionTime.toLocaleString());
+													let compressionTimeDiff = (endCompressionTime - startCompressionTime) / 1000;
+													const compressionTimeSeconds = compressionTimeDiff % 60;
+													compressionTimeDiff = (compressionTimeDiff - compressionTimeSeconds) / 60;
+													const compressionTimeMinutes = compressionTimeDiff % 60;
+													const compressionTimeHours = (compressionTimeDiff - compressionTimeMinutes) / 60;
+													Logger.info(config.info.name, "[" + job.file.name + "] Time to compress: " + (compressionTimeHours.toFixed(0) + ":" + compressionTimeMinutes.toFixed(0) + ":" + compressionTimeSeconds.toFixed(3)));
+												}
 												if (cache) {
 													cache.addToCache(compressedPath, name + ".ogg", job.fileKey);
 												}
@@ -2630,25 +2692,29 @@ module.exports = (() => {
 										}
 									}
 									let maxFrameRate = frameRate;
-									if (job.options.maxFps.value && job.options.maxFps.value < frameRate) {
+									if (job.options.maxFps.value && (job.options.maxFps.value < frameRate || !frameRate)) {
 										maxFrameRate = job.options.maxFps.value;
 										videoFilters.push("fps=fps=" + maxFrameRate);
 									}
 									let videoBitrate = Math.floor(((cappedFileSize - audioSize) * 8) / duration);
+									console.log(videoEncoderSettings);
+									console.log(videoEncoderSettings[job.options.encoder.value]);
+									console.log(videoEncoderSettings[job.options.encoder.value].encoderPresets[job.options.encoderPreset.value]);
+									console.log(videoBitrate);
+									console.log(videoEncoderSettings[job.options.encoder.value].encoderPresets[job.options.encoderPreset.value].videoHeightCapFunction(videoBitrate));
 									let maxVideoHeight = videoEncoderSettings[job.options.encoder.value].encoderPresets[job.options.encoderPreset.value].videoHeightCapFunction(videoBitrate);
-									if (job.options.maxHeight.value && job.options.maxHeight.value < originalHeight) {
+									if (job.options.maxHeight.value && (job.options.maxHeight.value < originalHeight || !originalHeight)) {
 										maxVideoHeight = job.options.maxHeight.value;
 									}
-									if (maxVideoHeight < originalHeight) {
+									if (maxVideoHeight < originalHeight || !originalHeight) {
 										videoFilters.push("scale=-1:" + maxVideoHeight + ",scale=trunc(iw/2)*2:" + maxVideoHeight);
 									}
 									if (this.settings.compressor.debug) {
 										Logger.info(config.info.name, "[" + job.file.name + "] Max frame rate: " + maxFrameRate + " fps");
 										Logger.info(config.info.name, "[" + job.file.name + "] Target video bitrate: " + videoBitrate + " bits/second");
 										Logger.info(config.info.name, "[" + job.file.name + "] Max frame height: " + maxVideoHeight + " pixels");
-										Logger.info(config.info.name, "[" + job.file.name + "] Capped frame height: " + (maxVideoHeight && originalHeight > maxVideoHeight ? maxVideoHeight : originalHeight) + " pixels");
+										Logger.info(config.info.name, "[" + job.file.name + "] Capped frame height: " + ((maxVideoHeight && originalHeight > maxVideoHeight) || !originalHeight ? maxVideoHeight : originalHeight) + " pixels");
 									}
-									const filters = [maxFrameRate ? "fps=fps=" + maxFrameRate : ""];
 									try {
 										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PASS_1_PERCENT', '0'));
 										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate, ...(videoFilters.length > 0 ? ["-vf", videoFilters.join(",")] : []), "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "1", "-passlogfile", tempVideoTwoPassPath, "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")], str => {
@@ -2785,6 +2851,14 @@ module.exports = (() => {
 									}
 									if (fs.existsSync(compressedPath)) {
 										if (this.settings.compressor.debug) {
+											const endCompressionTime = new Date();
+											Logger.info(config.info.name, "[" + job.file.name + "] End time: " + endCompressionTime.toLocaleString());
+											let compressionTimeDiff = (endCompressionTime - startCompressionTime) / 1000;
+											const compressionTimeSeconds = compressionTimeDiff % 60;
+											compressionTimeDiff = (compressionTimeDiff - compressionTimeSeconds) / 60;
+											const compressionTimeMinutes = compressionTimeDiff % 60;
+											const compressionTimeHours = (compressionTimeDiff - compressionTimeMinutes) / 60;
+											Logger.info(config.info.name, "[" + job.file.name + "] Time to compress: " + (compressionTimeHours.toFixed(0) + ":" + compressionTimeMinutes.toFixed(0) + ":" + compressionTimeSeconds.toFixed(3)));
 											const fileStats = fs.statSync(compressedPath);
 											Logger.info(config.info.name, "[" + job.file.name + "] Expected video size: " + (audioSize + videoSize) + " bytes");
 											Logger.info(config.info.name, "[" + job.file.name + "] Final video size: " + (fileStats ? fileStats.size : 0) + " bytes");
@@ -2869,6 +2943,9 @@ module.exports = (() => {
 				}
 
 				async compressImage(job) {
+					const startCompressionTime = new Date();
+					if (this.settings.compressor.debug)
+						Logger.info(config.info.name, "[" + job.file.name + "] Start time: " + startCompressionTime.toLocaleString());
 					const objectUrl = URL.createObjectURL(job.file);
 					const img = new window.Image();
 					await this.loadImageElement(img, objectUrl);
@@ -2886,6 +2963,16 @@ module.exports = (() => {
 						job.compressedFile = new File([image.outputData], image.file.name, {
 							type: image.file.type
 						});
+						if (this.settings.compressor.debug) {
+							const endCompressionTime = new Date();
+							Logger.info(config.info.name, "[" + job.file.name + "] End time: " + endCompressionTime.toLocaleString());
+							let compressionTimeDiff = (endCompressionTime - startCompressionTime) / 1000;
+							const compressionTimeSeconds = compressionTimeDiff % 60;
+							compressionTimeDiff = (compressionTimeDiff - compressionTimeSeconds) / 60;
+							const compressionTimeMinutes = compressionTimeDiff % 60;
+							const compressionTimeHours = (compressionTimeDiff - compressionTimeMinutes) / 60;
+							Logger.info(config.info.name, "[" + job.file.name + "] Time to compress: " + (compressionTimeHours.toFixed(0) + ":" + compressionTimeMinutes.toFixed(0) + ":" + compressionTimeSeconds.toFixed(3)));
+						}
 						if (cache) {
 							cache.saveAndCache(job.compressedFile, job.fileKey);
 						}
