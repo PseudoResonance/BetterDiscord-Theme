@@ -21,7 +21,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.5.7",
+			version: "1.5.8",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -38,7 +38,8 @@ module.exports = (() => {
 				type: "fixed",
 				items: [
 					"Don't fail compression when file headers are missing data",
-					"Don't forcefully cap compression size to value in settings"
+					"Don't forcefully cap compression size to value in settings",
+					"Fixed debug compression time formatting"
 				]
 			}, {
 				title: "Improved",
@@ -2353,7 +2354,7 @@ module.exports = (() => {
 											compressionTimeDiff = (compressionTimeDiff - compressionTimeSeconds) / 60;
 											const compressionTimeMinutes = compressionTimeDiff % 60;
 											const compressionTimeHours = (compressionTimeDiff - compressionTimeMinutes) / 60;
-											Logger.info(config.info.name, "[" + job.file.name + "] Time to compress: " + (compressionTimeHours.toFixed(0) + ":" + compressionTimeMinutes.toFixed(0) + ":" + compressionTimeSeconds.toFixed(3)));
+											Logger.info(config.info.name, "[" + job.file.name + "] Time to compress: " + (compressionTimeHours.toFixed(0) + ":" + compressionTimeMinutes.toFixed(0).padStart(2, 0) + ":" + compressionTimeSeconds.toFixed(3).padStart(6, 0)));
 											const fileStats = fs.statSync(compressedPath);
 											Logger.info(config.info.name, "[" + job.file.name + "] Expected audio size: " + (duration * (audioBitrate / 8)) + " bytes");
 											Logger.info(config.info.name, "[" + job.file.name + "] Final audio size: " + (fileStats ? fileStats.size : 0) + " bytes");
@@ -2649,7 +2650,7 @@ module.exports = (() => {
 													compressionTimeDiff = (compressionTimeDiff - compressionTimeSeconds) / 60;
 													const compressionTimeMinutes = compressionTimeDiff % 60;
 													const compressionTimeHours = (compressionTimeDiff - compressionTimeMinutes) / 60;
-													Logger.info(config.info.name, "[" + job.file.name + "] Time to compress: " + (compressionTimeHours.toFixed(0) + ":" + compressionTimeMinutes.toFixed(0) + ":" + compressionTimeSeconds.toFixed(3)));
+													Logger.info(config.info.name, "[" + job.file.name + "] Time to compress: " + (compressionTimeHours.toFixed(0) + ":" + compressionTimeMinutes.toFixed(0).padStart(2, 0) + ":" + compressionTimeSeconds.toFixed(3).padStart(6, 0)));
 												}
 												if (cache) {
 													cache.addToCache(compressedPath, name + ".ogg", job.fileKey);
@@ -2851,7 +2852,7 @@ module.exports = (() => {
 											compressionTimeDiff = (compressionTimeDiff - compressionTimeSeconds) / 60;
 											const compressionTimeMinutes = compressionTimeDiff % 60;
 											const compressionTimeHours = (compressionTimeDiff - compressionTimeMinutes) / 60;
-											Logger.info(config.info.name, "[" + job.file.name + "] Time to compress: " + (compressionTimeHours.toFixed(0) + ":" + compressionTimeMinutes.toFixed(0) + ":" + compressionTimeSeconds.toFixed(3)));
+											Logger.info(config.info.name, "[" + job.file.name + "] Time to compress: " + (compressionTimeHours.toFixed(0) + ":" + compressionTimeMinutes.toFixed(0).padStart(2, 0) + ":" + compressionTimeSeconds.toFixed(3).padStart(6, 0)));
 											const fileStats = fs.statSync(compressedPath);
 											Logger.info(config.info.name, "[" + job.file.name + "] Expected video size: " + (audioSize + videoSize) + " bytes");
 											Logger.info(config.info.name, "[" + job.file.name + "] Final video size: " + (fileStats ? fileStats.size : 0) + " bytes");
@@ -2964,7 +2965,7 @@ module.exports = (() => {
 							compressionTimeDiff = (compressionTimeDiff - compressionTimeSeconds) / 60;
 							const compressionTimeMinutes = compressionTimeDiff % 60;
 							const compressionTimeHours = (compressionTimeDiff - compressionTimeMinutes) / 60;
-							Logger.info(config.info.name, "[" + job.file.name + "] Time to compress: " + (compressionTimeHours.toFixed(0) + ":" + compressionTimeMinutes.toFixed(0) + ":" + compressionTimeSeconds.toFixed(3)));
+							Logger.info(config.info.name, "[" + job.file.name + "] Time to compress: " + (compressionTimeHours.toFixed(0) + ":" + compressionTimeMinutes.toFixed(0).padStart(2, 0) + ":" + compressionTimeSeconds.toFixed(3).padStart(6, 0)));
 						}
 						if (cache) {
 							cache.saveAndCache(job.compressedFile, job.fileKey);
