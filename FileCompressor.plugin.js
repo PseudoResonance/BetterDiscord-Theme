@@ -21,7 +21,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.5.8",
+			version: "1.5.9",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -31,7 +31,8 @@ module.exports = (() => {
 				type: "added",
 				items: [
 					"Added MKVmerge for merging completed video files - greatly reduces file size over FFmpeg",
-					"Debug compression time output"
+					"Debug compression time output",
+					"Display packaging progress"
 				]
 			}, {
 				title: "Fixed",
@@ -46,7 +47,8 @@ module.exports = (() => {
 				type: "improved",
 				items: [
 					"Tuned VP9 bitrate to video size calculations",
-					"Maximize number of audio channels and bit depth in video compression"
+					"Maximize number of audio channels and bit depth in video compression",
+					"Lowered priority of FFmpeg/MKVmerge processes to reduce performance impact to Discord"
 				]
 			}, {
 				title: "Known Bugs",
@@ -304,6 +306,7 @@ module.exports = (() => {
 			COMPRESSING_PASS_2_PERCENT: 'Compressing Pass 2 {$0$}%',
 			COMPRESSING_TRY_NUMBER: 'Compressing Attempt {$0$}',
 			PACKAGING: 'Packaging',
+			PACKAGING_PERCENT: 'Packaging {$0$}%',
 			ERROR_GETTING_ACCOUNT_INFO: 'Error getting account info',
 			FILES_TOO_LARGE_TO_UPLOAD: 'Files too large to upload: {$0$}',
 			UNABLE_TO_RETURN_TO_CHANNEL: 'Unable to return to channel',
@@ -390,6 +393,7 @@ module.exports = (() => {
 			COMPRESSING_PASS_2_PERCENT: '圧縮中２回目　{$0$}％',
 			COMPRESSING_TRY_NUMBER: '圧縮試行番　{$0$}',
 			PACKAGING: 'パッケージング中',
+			PACKAGING_PERCENT: 'パッケージング中　{$0$}％',
 			ERROR_GETTING_ACCOUNT_INFO: 'アカウント情報フェッチ中でエラー',
 			FILES_TOO_LARGE_TO_UPLOAD: 'アップロードするには大きすぎたファイル：　{$0$}',
 			UNABLE_TO_RETURN_TO_CHANNEL: 'チャネルに戻ることができません',
@@ -483,6 +487,7 @@ module.exports = (() => {
 			const uuidv4 = require('uuid/v4');
 			const cryptoModule = require('crypto');
 			const mime = require('mime-types');
+			const osModule = require('os');
 
 			// Cache container
 			let cache = null;
@@ -682,6 +687,7 @@ module.exports = (() => {
 			// Color primaries that will be detected as HDR and will be tonemapped
 			const hdrColorPrimaries = ["bt2020"];
 			const regexPatternTime = /time=(\d+:\d+:\d+.\d+)/;
+			const regexPatternProgress = /Progress: (\d{1,3})%/;
 			const regexPatternDuration = /duration=([\d.]+)/;
 			const regexPatternChannels = /channels=(\d+)/;
 			const regexPatternBitDepth = /bits_per_raw_sample=(\d+)/;
@@ -799,6 +805,7 @@ module.exports = (() => {
 							const rollingOutputBuffer = [];
 							Logger.info(config.info.name, 'Running FFmpeg ' + args.join(' '));
 							const process = child_process.spawn(this.ffmpeg, args);
+							osModule.setPriority(process.pid, 10);
 							process.on('error', err => {
 								Logger.err(config.info.name, err);
 								reject(err);
@@ -856,6 +863,7 @@ module.exports = (() => {
 								if (index > -1)
 									runningProcesses.splice(index, 1);
 							});
+							osModule.setPriority(process.pid, 10);
 							runningProcesses.push(process);
 						} else {
 							throw new Error("FFprobe not found");
@@ -932,6 +940,7 @@ module.exports = (() => {
 							const rollingOutputBuffer = [];
 							Logger.info(config.info.name, 'Running MKVmerge ' + args.join(' '));
 							const process = child_process.spawn(this.mkvmerge, args);
+							osModule.setPriority(process.pid, 10);
 							process.on('error', err => {
 								Logger.err(config.info.name, err);
 								reject(err);
@@ -950,7 +959,7 @@ module.exports = (() => {
 								if (index > -1)
 									runningProcesses.splice(index, 1);
 							});
-							process.stderr.on('data', data => {
+							process.stdout.on('data', data => {
 								const str = data.toString();
 								// Keep rolling buffer of output strings to output errors if MKVmerge crashes
 								if (rollingOutputBuffer.length >= 10)
@@ -2307,11 +2316,11 @@ module.exports = (() => {
 									try {
 										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PERCENT', '0'));
 										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-vn", "-c:a", "libopus", "-map", "0:a", "-b:a", audioBitrate, "-maxrate", audioBitrate, "-bufsize", audioBitrate, ...((outputBitDepth && (outputBitDepth < bitDepth || !bitDepth)) ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, "-sn", "-map_chapters", "-1", compressedPathPre], str => {
-											return str.includes("time=")
+											return str.includes("time=");
 										}, str => {
 											try {
 												const timeStr = regexPatternTime.exec(str);
-												if (timeStr) {
+												if (timeStr?.length > 1) {
 													const timeStrParts = timeStr[1].split(':');
 													const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
 													const percent = Math.round((elapsedTime / duration) * 100);
@@ -2599,7 +2608,7 @@ module.exports = (() => {
 											}, str => {
 												try {
 													const timeStr = regexPatternTime.exec(str);
-													if (timeStr) {
+													if (timeStr?.length > 1) {
 														const timeStrParts = timeStr[1].split(':');
 														const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
 														const percent = Math.round((elapsedTime / duration) * 100);
@@ -2712,11 +2721,11 @@ module.exports = (() => {
 									try {
 										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PASS_1_PERCENT', '0'));
 										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate, ...(videoFilters.length > 0 ? ["-vf", videoFilters.join(",")] : []), "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "1", "-passlogfile", tempVideoTwoPassPath, "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")], str => {
-											return str.includes("time=")
+											return str.includes("time=");
 										}, str => {
 											try {
 												const timeStr = regexPatternTime.exec(str);
-												if (timeStr) {
+												if (timeStr?.length > 1) {
 													const timeStrParts = timeStr[1].split(':');
 													const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
 													const percent = Math.round((elapsedTime / duration) * 100);
@@ -2747,11 +2756,11 @@ module.exports = (() => {
 									try {
 										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PASS_2_PERCENT', '0'));
 										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate, ...(videoFilters.length > 0 ? ["-vf", videoFilters.join(",")] : []), "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "2", "-passlogfile", tempVideoTwoPassPath, tempVideoPath], str => {
-											return str.includes("time=")
+											return str.includes("time=");
 										}, str => {
 											try {
 												const timeStr = regexPatternTime.exec(str);
-												if (timeStr) {
+												if (timeStr?.length > 1) {
 													const timeStrParts = timeStr[1].split(':');
 													const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
 													const percent = Math.round((elapsedTime / duration) * 100);
@@ -2798,11 +2807,23 @@ module.exports = (() => {
 										}
 									}
 									try {
-										toasts.setToast(job.jobId, i18n.MESSAGES.PACKAGING);
-										if (!mkvmerge)
+										if (!mkvmerge) {
+											toasts.setToast(job.jobId, i18n.MESSAGES.PACKAGING);
 											await ffmpeg.runWithArgs(["-y", ...(!stripAudio ? ["-i", tempAudioPath] : []), "-i", tempVideoPath, "-c", "copy", compressedPathPre]);
-										else
-											await mkvmerge.runWithArgs(["-o", compressedPathPre, tempVideoPath, ...(!stripAudio ? [tempAudioPath] : [])]);
+										} else {
+											toasts.setToast(job.jobId, i18n.FORMAT('PACKAGING_PERCENT', '0'));
+											await mkvmerge.runWithArgs(["-o", compressedPathPre, tempVideoPath, ...(!stripAudio ? [tempAudioPath] : [])], str => {
+												return str.includes("Progress: ");
+											}, str => {
+												try {
+													const progressStr = regexPatternProgress.exec(str);
+													if (progressStr?.length > 1)
+														toasts.setToast(job.jobId, i18n.FORMAT('PACKAGING_PERCENT', progressStr[1]));
+												} catch (e) {
+													Logger.err(config.info.name, e);
+												}
+											});
+										}
 									} catch (e) {
 										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
 											try {
