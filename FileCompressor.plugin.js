@@ -21,7 +21,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.5.9",
+			version: "1.5.10",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -30,31 +30,20 @@ module.exports = (() => {
 				title: "Added",
 				type: "added",
 				items: [
-					"Added MKVmerge for merging completed video files - greatly reduces file size over FFmpeg",
-					"Debug compression time output",
-					"Display packaging progress"
-				]
-			}, {
-				title: "Fixed",
-				type: "fixed",
-				items: [
-					"Don't fail compression when file headers are missing data",
-					"Don't forcefully cap compression size to value in settings",
-					"Fixed debug compression time formatting"
+					"Option to automatically detect and crop out black bars"
 				]
 			}, {
 				title: "Improved",
 				type: "improved",
 				items: [
-					"Tuned VP9 bitrate to video size calculations",
-					"Maximize number of audio channels and bit depth in video compression",
 					"Lowered priority of FFmpeg/MKVmerge processes to reduce performance impact to Discord"
 				]
 			}, {
 				title: "Known Bugs",
 				type: "improved",
 				items: [
-					"FFmpeg 4.4 has a FLAC decoding bug"
+					"FFmpeg 4.4 has a FLAC decoding bug",
+					"Memory leak from uploading files - especially noticeable with Nitro"
 				]
 			}
 		],
@@ -282,6 +271,8 @@ module.exports = (() => {
 			COMPRESSION_OPTIONS_STRIP_VIDEO_DESC: 'Only send the audio from the video.',
 			COMPRESSION_OPTIONS_STARTING_TIMESTAMP: 'Starting Timestamp',
 			COMPRESSION_OPTIONS_ENDING_TIMESTAMP: 'Ending Timestamp',
+			COMPRESSION_OPTIONS_AUTO_CROP: 'Auto Crop',
+			COMPRESSION_OPTIONS_AUTO_CROP_DESC: 'Automatically detect and crop out black bars',
 			ERROR_CACHING: 'Error caching file',
 			ERROR_CACHE_SETUP: 'Error setting up cache',
 			ERROR_HOOKING_UPLOAD: 'Unable to hook into Discord upload handler',
@@ -369,6 +360,8 @@ module.exports = (() => {
 			COMPRESSION_OPTIONS_STRIP_VIDEO_DESC: '動画の音声のみを保持。',
 			COMPRESSION_OPTIONS_STARTING_TIMESTAMP: '開始タイムスタンプ',
 			COMPRESSION_OPTIONS_ENDING_TIMESTAMP: '終了タイムスタンプ',
+			COMPRESSION_OPTIONS_AUTO_CROP: '自動的クロッピング',
+			COMPRESSION_OPTIONS_AUTO_CROP_DESC: '黒いボーダーを自動的に検出して切り取る。',
 			ERROR_CACHING: 'ファイルキャッシュ中でエラー',
 			ERROR_CACHE_SETUP: 'キャッシュセットアップでエラー',
 			ERROR_HOOKING_UPLOAD: 'Discordのアップロードハンドラにフックできません',
@@ -687,6 +680,7 @@ module.exports = (() => {
 			// Color primaries that will be detected as HDR and will be tonemapped
 			const hdrColorPrimaries = ["bt2020"];
 			const regexPatternTime = /time=(\d+:\d+:\d+.\d+)/;
+			const regexPatternCrop = /crop=(\d+:\d+:\d+:\d+)/;
 			const regexPatternProgress = /Progress: (\d{1,3})%/;
 			const regexPatternDuration = /duration=([\d.]+)/;
 			const regexPatternChannels = /channels=(\d+)/;
@@ -799,8 +793,16 @@ module.exports = (() => {
 					}
 				}
 
-				runWithArgs(args, outputFilter, processOutput) {
+				runWithArgs(args, outputFilters) {
 					return new Promise((resolve, reject) => {
+						const filterArr = [];
+						const processArr = [];
+						for (const key in outputFilters) {
+							if (typeof(outputFilters[key].filter) == "function" && typeof(outputFilters[key].process) == "function") {
+								filterArr.push(outputFilters[key].filter);
+								processArr.push(outputFilters[key].process);
+							}
+						}
 						if (fs.existsSync(this.ffmpeg)) {
 							const rollingOutputBuffer = [];
 							Logger.info(config.info.name, 'Running FFmpeg ' + args.join(' '));
@@ -809,9 +811,9 @@ module.exports = (() => {
 							process.on('error', err => {
 								Logger.err(config.info.name, err);
 								reject(err);
-								const index = runningProcesses.indexOf(process);
+								const index = runningProcesses?.indexOf(process);
 								if (index > -1)
-									runningProcesses.splice(index, 1);
+									runningProcesses?.splice(index, 1);
 							});
 							process.on('exit', (code, signal) => {
 								if (code == 0) {
@@ -820,9 +822,9 @@ module.exports = (() => {
 									Logger.err(config.info.name, rollingOutputBuffer.join("\r\n"));
 									reject();
 								}
-								const index = runningProcesses.indexOf(process);
+								const index = runningProcesses?.indexOf(process);
 								if (index > -1)
-									runningProcesses.splice(index, 1);
+									runningProcesses?.splice(index, 1);
 							});
 							process.stderr.on('data', data => {
 								const str = data.toString();
@@ -830,11 +832,13 @@ module.exports = (() => {
 								if (rollingOutputBuffer.length >= 10)
 									rollingOutputBuffer.shift();
 								rollingOutputBuffer.push(str);
-								if (typeof(outputFilter) == "function" && typeof(processOutput) == "function" && outputFilter(str)) {
-									processOutput(str);
+								for (let index = 0; index < filterArr.length; index++) {
+									if (filterArr[index](str)) {
+										processArr[index](str);
+									}
 								}
 							});
-							runningProcesses.push(process);
+							runningProcesses?.push(process);
 						} else {
 							throw new Error("FFmpeg not found");
 						}
@@ -859,12 +863,12 @@ module.exports = (() => {
 									Logger.err(config.info.name, e);
 									reject(e);
 								}
-								const index = runningProcesses.indexOf(process);
+								const index = runningProcesses?.indexOf(process);
 								if (index > -1)
-									runningProcesses.splice(index, 1);
+									runningProcesses?.splice(index, 1);
 							});
 							osModule.setPriority(process.pid, 10);
-							runningProcesses.push(process);
+							runningProcesses?.push(process);
 						} else {
 							throw new Error("FFprobe not found");
 						}
@@ -934,8 +938,16 @@ module.exports = (() => {
 					}
 				}
 
-				runWithArgs(args, outputFilter, processOutput) {
+				runWithArgs(args, outputFilters) {
 					return new Promise((resolve, reject) => {
+						const filterArr = [];
+						const processArr = [];
+						for (const key in outputFilters) {
+							if (typeof(outputFilters[key].filter) == "function" && typeof(outputFilters[key].process) == "function") {
+								filterArr.push(outputFilters[key].filter);
+								processArr.push(outputFilters[key].process);
+							}
+						}
 						if (fs.existsSync(this.mkvmerge)) {
 							const rollingOutputBuffer = [];
 							Logger.info(config.info.name, 'Running MKVmerge ' + args.join(' '));
@@ -944,9 +956,9 @@ module.exports = (() => {
 							process.on('error', err => {
 								Logger.err(config.info.name, err);
 								reject(err);
-								const index = runningProcesses.indexOf(process);
+								const index = runningProcesses?.indexOf(process);
 								if (index > -1)
-									runningProcesses.splice(index, 1);
+									runningProcesses?.splice(index, 1);
 							});
 							process.on('exit', (code, signal) => {
 								if (code == 0) {
@@ -955,9 +967,9 @@ module.exports = (() => {
 									Logger.err(config.info.name, rollingOutputBuffer.join("\r\n"));
 									reject();
 								}
-								const index = runningProcesses.indexOf(process);
+								const index = runningProcesses?.indexOf(process);
 								if (index > -1)
-									runningProcesses.splice(index, 1);
+									runningProcesses?.splice(index, 1);
 							});
 							process.stdout.on('data', data => {
 								const str = data.toString();
@@ -965,11 +977,13 @@ module.exports = (() => {
 								if (rollingOutputBuffer.length >= 10)
 									rollingOutputBuffer.shift();
 								rollingOutputBuffer.push(str);
-								if (typeof(outputFilter) == "function" && typeof(processOutput) == "function" && outputFilter(str)) {
-									processOutput(str);
+								for (let index = 0; index < filterArr.length; index++) {
+									if (filterArr[index](str)) {
+										processArr[index](str);
+									}
 								}
 							});
-							runningProcesses.push(process);
+							runningProcesses?.push(process);
 						} else {
 							throw new Error("MKVmerge not found");
 						}
@@ -2006,6 +2020,12 @@ module.exports = (() => {
 										return true;
 							}
 						};
+						job.options.autoCrop = {
+							name: i18n.MESSAGES.COMPRESSION_OPTIONS_AUTO_CROP,
+							description: i18n.MESSAGES.COMPRESSION_OPTIONS_AUTO_CROP_DESC,
+							type: "switch",
+							defaultValue: false
+						};
 						if (!await this.showSettings(i18n.FORMAT('COMPRESSION_OPTIONS_TITLE', job.file.name), job.options))
 							return false;
 						break;
@@ -2298,7 +2318,7 @@ module.exports = (() => {
 									}
 									if (audioBitrate > (256000 * outputChannels))
 										audioBitrate = (256000 * outputChannels);
-									let outputBitDepth = bitDepth;
+									let outputBitDepth;
 									if ((!bitDepth || bitDepth > 16) && ((audioBitrate / outputChannels) < 96000))
 										outputBitDepth = 16;
 									if (this.settings.compressor.debug) {
@@ -2311,25 +2331,29 @@ module.exports = (() => {
 										Logger.info(config.info.name, "[" + job.file.name + "] Number of channels: " + numChannels + " channels");
 										Logger.info(config.info.name, "[" + job.file.name + "] Number of output channels: " + outputChannels + " channels");
 										Logger.info(config.info.name, "[" + job.file.name + "] Bit depth: " + bitDepth + " bits");
-										Logger.info(config.info.name, "[" + job.file.name + "] Output bit depth: " + outputBitDepth + " bits");
+										Logger.info(config.info.name, "[" + job.file.name + "] Output bit depth: " + (outputBitDepth ? outputBitDepth : bitDepth) + " bits");
 									}
 									try {
 										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PERCENT', '0'));
-										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-vn", "-c:a", "libopus", "-map", "0:a", "-b:a", audioBitrate, "-maxrate", audioBitrate, "-bufsize", audioBitrate, ...((outputBitDepth && (outputBitDepth < bitDepth || !bitDepth)) ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, "-sn", "-map_chapters", "-1", compressedPathPre], str => {
-											return str.includes("time=");
-										}, str => {
-											try {
-												const timeStr = regexPatternTime.exec(str);
-												if (timeStr?.length > 1) {
-													const timeStrParts = timeStr[1].split(':');
-													const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
-													const percent = Math.round((elapsedTime / duration) * 100);
-													toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PERCENT', percent ? percent : 0));
+										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-vn", "-c:a", "libopus", "-map", "0:a", "-b:a", audioBitrate, "-maxrate", audioBitrate, "-bufsize", audioBitrate, ...((outputBitDepth && (outputBitDepth < bitDepth || !bitDepth)) ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, "-sn", "-map_chapters", "-1", compressedPathPre], [{
+													filter: str => {
+														return str.includes("time=");
+													},
+													process: str => {
+														try {
+															const timeStr = regexPatternTime.exec(str);
+															if (timeStr?.length > 1) {
+																const timeStrParts = timeStr[1].split(':');
+																const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
+																const percent = Math.round((elapsedTime / duration) * 100);
+																toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PERCENT', percent ? percent : 0));
+															}
+														} catch (e) {
+															Logger.err(config.info.name, e);
+														}
+													}
 												}
-											} catch (e) {
-												Logger.err(config.info.name, e);
-											}
-										});
+											]);
 									} catch (e) {
 										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
 											try {
@@ -2503,9 +2527,15 @@ module.exports = (() => {
 								const videoOutputStr = videoData.data;
 								const audioOutputStr = audioData.data;
 								try {
-									const videoFilters = [];
+									const videoFiltersPass1 = [];
+									const videoFiltersPass2 = [];
+									const autoCropSettings = [-1, -1, -1, -1];
+									if (job.options.autoCrop.value) {
+										videoFiltersPass1.push("cropdetect=round=2");
+									}
 									if (job.options.interlace.value) {
-										videoFilters.push("interlace=lowpass=2");
+										videoFiltersPass1.push("interlace=lowpass=2");
+										videoFiltersPass2.push("interlace=lowpass=2");
 									}
 									const cappedFileSize = Math.floor((job.options.sizeCap.value && parseInt(job.options.sizeCap.value) < maxUploadSize ? parseInt(job.options.sizeCap.value) : maxUploadSize)) - 150000;
 									const durationMatches = regexPatternDuration.exec(videoOutputStr);
@@ -2522,7 +2552,8 @@ module.exports = (() => {
 									const numChannels = channelsMatches?.length > 1 ? parseInt(channelsMatches[1]) : null;
 									const isHDR = hdrColorPrimaries.includes(colorPrimaries);
 									if (isHDR) {
-										videoFilters.push("zscale=transfer=linear,tonemap=hable,zscale=transfer=bt709");
+										videoFiltersPass1.push("zscale=transfer=linear,tonemap=hable,zscale=transfer=bt709");
+										videoFiltersPass2.push("zscale=transfer=linear,tonemap=hable,zscale=transfer=bt709");
 									}
 									const frameRate = frameRateMatchesSplit?.length > 1 ? (parseFloat(frameRateMatchesSplit[0]) / parseFloat(frameRateMatchesSplit[1])) : null;
 									if (originalDuration == 0)
@@ -2586,7 +2617,7 @@ module.exports = (() => {
 										}
 										if (audioBitrate > (256000 * outputChannels))
 											audioBitrate = (256000 * outputChannels);
-										let outputBitDepth = null;
+										let outputBitDepth;
 										if ((!bitDepth || bitDepth > 16) && ((audioBitrate / outputChannels) < 96000))
 											outputBitDepth = 16;
 										/*
@@ -2599,25 +2630,29 @@ module.exports = (() => {
 											Logger.info(config.info.name, "[" + job.file.name + "] Number of audio channels: " + numChannels + " channels");
 											Logger.info(config.info.name, "[" + job.file.name + "] Number of audio output channels: " + outputChannels + " channels");
 											Logger.info(config.info.name, "[" + job.file.name + "] Audio bit depth: " + bitDepth + " bits");
-											Logger.info(config.info.name, "[" + job.file.name + "] Output audio bit depth: " + outputBitDepth + " bits");
+											Logger.info(config.info.name, "[" + job.file.name + "] Output audio bit depth: " + (outputBitDepth ? outputBitDepth : bitDepth) + " bits");
 										}
 										try {
 											toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PERCENT', '0'));
-											await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-vn", "-c:a", "libopus", "-map", "0:a", "-b:a", audioBitrate, "-maxrate", audioBitrate, "-bufsize", audioBitrate, ...(outputBitDepth && (outputBitDepth < bitDepth || !bitDepth) ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, "-sn", "-map_chapters", "-1", tempAudioPath], str => {
-												return str.includes("time=");
-											}, str => {
-												try {
-													const timeStr = regexPatternTime.exec(str);
-													if (timeStr?.length > 1) {
-														const timeStrParts = timeStr[1].split(':');
-														const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
-														const percent = Math.round((elapsedTime / duration) * 100);
-														toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PERCENT', percent ? percent : 0));
+											await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-vn", "-c:a", "libopus", "-map", "0:a", "-b:a", audioBitrate, "-maxrate", audioBitrate, "-bufsize", audioBitrate, ...(outputBitDepth && (outputBitDepth < bitDepth || !bitDepth) ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, "-sn", "-map_chapters", "-1", tempAudioPath], [{
+														filter: str => {
+															return str.includes("time=");
+														},
+														process: str => {
+															try {
+																const timeStr = regexPatternTime.exec(str);
+																if (timeStr?.length > 1) {
+																	const timeStrParts = timeStr[1].split(':');
+																	const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
+																	const percent = Math.round((elapsedTime / duration) * 100);
+																	toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PERCENT', percent ? percent : 0));
+																}
+															} catch (e) {
+																Logger.err(config.info.name, e);
+															}
+														}
 													}
-												} catch (e) {
-													Logger.err(config.info.name, e);
-												}
-											});
+												]);
 										} catch (e) {
 											if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
 												try {
@@ -2702,39 +2737,78 @@ module.exports = (() => {
 									let maxFrameRate = frameRate;
 									if (job.options.maxFps.value && (job.options.maxFps.value < frameRate || !frameRate)) {
 										maxFrameRate = job.options.maxFps.value;
-										videoFilters.push("fps=fps=" + maxFrameRate);
+										videoFiltersPass1.push("fps=fps=" + maxFrameRate);
+										videoFiltersPass2.push("fps=fps=" + maxFrameRate);
 									}
 									let videoBitrate = Math.floor(((cappedFileSize - audioSize) * 8) / duration);
 									let maxVideoHeight = videoEncoderSettings[job.options.encoder.value].encoderPresets[job.options.encoderPreset.value].videoHeightCapFunction(videoBitrate);
 									if (job.options.maxHeight.value && (job.options.maxHeight.value < originalHeight || !originalHeight)) {
 										maxVideoHeight = job.options.maxHeight.value;
 									}
-									if (maxVideoHeight < originalHeight || !originalHeight) {
-										videoFilters.push("scale=-1:" + maxVideoHeight + ",scale=trunc(iw/2)*2:" + maxVideoHeight);
+									if (maxVideoHeight < originalHeight || (!originalHeight && maxVideoHeight)) {
+										videoFiltersPass1.push("scale=-1:" + maxVideoHeight + ",scale=trunc(iw/2)*2:" + maxVideoHeight);
+										videoFiltersPass2.push("scale=-1:" + maxVideoHeight + ",scale=trunc(iw/2)*2:" + maxVideoHeight);
 									}
 									if (this.settings.compressor.debug) {
 										Logger.info(config.info.name, "[" + job.file.name + "] Max frame rate: " + maxFrameRate + " fps");
 										Logger.info(config.info.name, "[" + job.file.name + "] Target video bitrate: " + videoBitrate + " bits/second");
 										Logger.info(config.info.name, "[" + job.file.name + "] Max frame height: " + maxVideoHeight + " pixels");
-										Logger.info(config.info.name, "[" + job.file.name + "] Capped frame height: " + ((maxVideoHeight && originalHeight > maxVideoHeight) || !originalHeight ? maxVideoHeight : originalHeight) + " pixels");
+										Logger.info(config.info.name, "[" + job.file.name + "] Output frame height: " + (maxVideoHeight < originalHeight || (!originalHeight && maxVideoHeight) ? maxVideoHeight : originalHeight) + " pixels");
 									}
 									try {
 										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PASS_1_PERCENT', '0'));
-										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate, ...(videoFilters.length > 0 ? ["-vf", videoFilters.join(",")] : []), "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "1", "-passlogfile", tempVideoTwoPassPath, "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")], str => {
-											return str.includes("time=");
-										}, str => {
-											try {
-												const timeStr = regexPatternTime.exec(str);
-												if (timeStr?.length > 1) {
-													const timeStrParts = timeStr[1].split(':');
-													const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
-													const percent = Math.round((elapsedTime / duration) * 100);
-													toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PASS_1_PERCENT', percent ? percent : 0));
-												}
-											} catch (e) {
-												Logger.err(config.info.name, e);
-											}
-										});
+										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate, ...(videoFiltersPass1.length > 0 ? ["-vf", videoFiltersPass1.join(",")] : []), "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "1", "-passlogfile", tempVideoTwoPassPath, "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")], [{
+													filter: str => {
+														return str.includes("time=");
+													},
+													process: str => {
+														try {
+															const timeStr = regexPatternTime.exec(str);
+															if (timeStr?.length > 1) {
+																const timeStrParts = timeStr[1].split(':');
+																const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
+																const percent = Math.round((elapsedTime / duration) * 100);
+																toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PASS_1_PERCENT', percent ? percent : 0));
+															}
+														} catch (e) {
+															Logger.err(config.info.name, e);
+														}
+													}
+												}, ...(job.options.autoCrop.value ? [{
+															filter: str => {
+																return str.includes("crop=");
+															},
+															process: str => {
+																try {
+																	const cropStr = regexPatternCrop.exec(str);
+																	if (cropStr?.length > 1) {
+																		const cropStrParts = cropStr[1].split(':');
+																		if (cropStrParts.length == 4) {
+																			const tempCropSettings = cropStrParts.map(val => parseInt(val));
+																			if (tempCropSettings.every(val => !isNaN(val))) {
+																				if (tempCropSettings[0] > autoCropSettings[0]) {
+																					autoCropSettings[0] = tempCropSettings[0];
+																				}
+																				if (tempCropSettings[1] > autoCropSettings[1]) {
+																					autoCropSettings[1] = tempCropSettings[1];
+																				}
+																				if (tempCropSettings[2] < autoCropSettings[2] || autoCropSettings[2] == -1) {
+																					autoCropSettings[2] = tempCropSettings[2];
+																				}
+																				if (tempCropSettings[3] < autoCropSettings[3] || autoCropSettings[3] == -1) {
+																					autoCropSettings[3] = tempCropSettings[3];
+																				}
+																			}
+																		}
+																	}
+																} catch (e) {
+																	Logger.err(config.info.name, e);
+																}
+															}
+														}
+													]
+													 : [])
+											]);
 									} catch (e) {
 										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
 											try {
@@ -2753,23 +2827,34 @@ module.exports = (() => {
 										}
 										throw e;
 									}
+									if (job.options.autoCrop.value && autoCropSettings.length == 4 && autoCropSettings.every(val => typeof val !== 'undefined')) {
+										const autoCropSettingsStr = autoCropSettings.join(':');
+										if (this.settings.compressor.debug) {
+											Logger.info(config.info.name, "[" + job.file.name + "] Video crop settings: " + autoCropSettingsStr);
+										}
+										videoFiltersPass2.unshift("crop=" + autoCropSettingsStr);
+									}
 									try {
 										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PASS_2_PERCENT', '0'));
-										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate, ...(videoFilters.length > 0 ? ["-vf", videoFilters.join(",")] : []), "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "2", "-passlogfile", tempVideoTwoPassPath, tempVideoPath], str => {
-											return str.includes("time=");
-										}, str => {
-											try {
-												const timeStr = regexPatternTime.exec(str);
-												if (timeStr?.length > 1) {
-													const timeStrParts = timeStr[1].split(':');
-													const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
-													const percent = Math.round((elapsedTime / duration) * 100);
-													toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PASS_2_PERCENT', percent ? percent : 0));
+										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate, ...(videoFiltersPass2.length > 0 ? ["-vf", videoFiltersPass2.join(",")] : []), "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "2", "-passlogfile", tempVideoTwoPassPath, tempVideoPath], [{
+													filter: str => {
+														return str.includes("time=");
+													},
+													process: str => {
+														try {
+															const timeStr = regexPatternTime.exec(str);
+															if (timeStr?.length > 1) {
+																const timeStrParts = timeStr[1].split(':');
+																const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
+																const percent = Math.round((elapsedTime / duration) * 100);
+																toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PASS_2_PERCENT', percent ? percent : 0));
+															}
+														} catch (e) {
+															Logger.err(config.info.name, e);
+														}
+													}
 												}
-											} catch (e) {
-												Logger.err(config.info.name, e);
-											}
-										});
+											]);
 									} catch (e) {
 										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
 											try {
