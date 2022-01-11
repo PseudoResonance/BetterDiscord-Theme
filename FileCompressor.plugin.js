@@ -21,22 +21,16 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.5.10",
+			version: "1.5.11",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
 		},
 		changelog: [{
-				title: "Added",
-				type: "added",
+				title: "Fixed",
+				type: "fixed",
 				items: [
-					"Option to automatically detect and crop out black bars"
-				]
-			}, {
-				title: "Improved",
-				type: "improved",
-				items: [
-					"Lowered priority of FFmpeg/MKVmerge processes to reduce performance impact to Discord"
+					"Updated to latest Discord version"
 				]
 			}, {
 				title: "Known Bugs",
@@ -1064,7 +1058,7 @@ module.exports = (() => {
 						let entry = this.cacheLookup.get(fileKey);
 						if (entry) {
 							if (fs.existsSync(entry.path)) {
-								return new File([Uint8Array.from(Buffer.from(fs.readFileSync(entry.path))).buffer], entry.name, {
+								return new File([fs.readFileSync(entry.path).buffer], entry.name, {
 									type: mime.contentType(entry.path)
 								});
 							} else {
@@ -1399,12 +1393,12 @@ module.exports = (() => {
 						this.originalUploadFunction = promptToUploadModule.promptToUpload;
 						const uploadFunc = this.handleUploadEvent;
 						const originalFunc = this.originalUploadFunction;
-						if (this.originalUploadFunction && this.originalUploadFunction.length === 7) {
-							promptToUploadModule.promptToUpload = function (fileList, channel, draftType, instantBackdrop, requireConfirmation, showLargeMessageDialog, ignoreDraft, fileCompressorCompressedFile = false) {
-								if (fileCompressorCompressedFile) {
-									return originalFunc(fileList, channel, draftType, instantBackdrop, requireConfirmation, showLargeMessageDialog, ignoreDraft);
+						if (this.originalUploadFunction && this.originalUploadFunction.length === 4) {
+							promptToUploadModule.promptToUpload = function (fileList, channel, draftType, uploadOptions) {
+								if (uploadOptions.fileCompressorCompressedFile) {
+									return originalFunc(fileList, channel, draftType, uploadOptions);
 								} else {
-									return uploadFunc(fileList, channel, draftType, instantBackdrop, requireConfirmation, showLargeMessageDialog, ignoreDraft);
+									return uploadFunc(fileList, channel, draftType, uploadOptions);
 								}
 							};
 						} else {
@@ -1700,7 +1694,7 @@ module.exports = (() => {
 					return false;
 				}
 
-				async handleUploadEvent(fileList, channel, draftType, instantBackdrop, requireConfirmation, showLargeMessageDialog, ignoreDraft) {
+				async handleUploadEvent(fileList, channel, draftType, uploadOptions) {
 					if (typeof fileList[Symbol.iterator] === 'function' && channel) {
 						let guildId = null;
 						let channelId = null;
@@ -1720,7 +1714,7 @@ module.exports = (() => {
 						this.processUploadFileList(fileList, guildId, channelId, threadId, sidebar);
 						return true;
 					} else {
-						Logger.err(config.info.name, "Invalid upload event: fileList:", fileList, "channel:", channel, "draftType:", draftType, "instantBackdrop:", instantBackdrop, "requireConfirmation", requireConfirmation, "showLargeMessageDialog", showLargeMessageDialog, "ignoreDraft", ignoreDraft);
+						Logger.err(config.info.name, "Invalid upload event: fileList:", fileList, "channel:", channel, "draftType:", draftType, "uploadOptions:", uploadOptions);
 						BdApi.showToast(i18n.MESSAGES.ERROR_UPLOADING, {
 							type: "error"
 						});
@@ -1831,7 +1825,11 @@ module.exports = (() => {
 					try {
 						const channelObj = threadId ? DiscordModules.ChannelStore.getChannel(threadId) : DiscordModules.ChannelStore.getChannel(channelId);
 						channelObj.fileCompressorCompressedFile = true;
-						BdApi.findModuleByProps("promptToUpload").promptToUpload(files, channelObj, 0, true, !(this.settings.upload.immediateUpload), false, false, true /*Special boolean to mark file as processed and prevent loops*/);
+						BdApi.findModuleByProps("promptToUpload").promptToUpload(files, channelObj, 0, {
+							requireConfirm: true,
+							showLargeMessageDialog: true,
+							fileCompressorCompressedFile: true /*Special boolean to mark file as processed and prevent loops*/
+						});
 					} catch (e) {
 						Logger.err(config.info.name, e);
 						BdApi.showToast(i18n.MESSAGES.ERROR_UPLOADING, {
@@ -2171,11 +2169,9 @@ module.exports = (() => {
 
 				// When a file is done processing, add it to the upload queue and check if a new file can be processed
 				finishProcessing(job, promise) {
-					promise.then(returnJob => {
-						if (returnJob != null) {
-							if (returnJob.compressedFile) {
-								this.sendUploadFileList(this.wrapFileInList(returnJob.compressedFile), returnJob.guildId, returnJob.channelId, returnJob.threadId, returnJob.isSidebar);
-							}
+					promise.then(returnFile => {
+						if (returnFile) {
+							this.sendUploadFileList(this.wrapFileInList(returnFile), job.guildId, job.channelId, job.threadId, job.isSidebar);
 						}
 						toasts.setToast(job.jobId);
 						const index = runningJobs.indexOf(job);
@@ -2395,7 +2391,7 @@ module.exports = (() => {
 										if (cache) {
 											cache.addToCache(compressedPath, name + ".ogg", job.fileKey);
 										}
-										const retFile = new File([Uint8Array.from(Buffer.from(fs.readFileSync(compressedPath))).buffer], name + ".ogg", {
+										const retFile = new File([fs.readFileSync(compressedPath).buffer], name + ".ogg", {
 											type: job.file.type
 										});
 										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
@@ -2408,13 +2404,12 @@ module.exports = (() => {
 												fs.rmSync(compressedPathPre);
 											} catch (e) {}
 										}
-										job.compressedFile = retFile;
 										if (!cache && !this.settings.compressor.keepTemp) {
 											try {
 												fs.rmSync(compressedPath);
 											} catch (e) {}
 										}
-										return job;
+										return retFile;
 									} else {
 										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
 											try {
@@ -2699,7 +2694,7 @@ module.exports = (() => {
 												if (cache) {
 													cache.addToCache(compressedPath, name + ".ogg", job.fileKey);
 												}
-												const retFile = new File([Uint8Array.from(Buffer.from(fs.readFileSync(compressedPath))).buffer], name + ".ogg", {
+												const retFile = new File([fs.readFileSync(compressedPath).buffer], name + ".ogg", {
 													type: job.file.type
 												});
 												if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
@@ -2712,13 +2707,12 @@ module.exports = (() => {
 														fs.rmSync(tempAudioPath);
 													} catch (e) {}
 												}
-												job.compressedFile = retFile;
 												if (!cache && !this.settings.compressor.keepTemp) {
 													try {
 														fs.rmSync(compressedPath);
 													} catch (e) {}
 												}
-												return job;
+												return retFile;
 											} else {
 												if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
 													try {
@@ -2966,7 +2960,7 @@ module.exports = (() => {
 										if (cache) {
 											cache.addToCache(compressedPath, name + ".webm", job.fileKey);
 										}
-										const retFile = new File([Uint8Array.from(Buffer.from(fs.readFileSync(compressedPath))).buffer], name + ".webm", {
+										const retFile = new File([fs.readFileSync(compressedPath).buffer], name + ".webm", {
 											type: job.file.type
 										});
 										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
@@ -2985,13 +2979,12 @@ module.exports = (() => {
 												fs.rmSync(tempVideoPath);
 											} catch (e) {}
 										}
-										job.compressedFile = retFile;
 										if (!cache && !this.settings.compressor.keepTemp) {
 											try {
 												fs.rmSync(compressedPath);
 											} catch (e) {}
 										}
-										return job;
+										return retFile;
 									} else {
 										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
 											try {
@@ -3060,7 +3053,7 @@ module.exports = (() => {
 					};
 					if (await this.compressImageLoop(job, image)) {
 						toasts.setToast(job.jobId, i18n.MESSAGES.PACKAGING);
-						job.compressedFile = new File([image.outputData], image.file.name, {
+						const retFile = new File([image.outputData], image.file.name, {
 							type: image.file.type
 						});
 						if (this.settings.compressor.debug) {
@@ -3074,9 +3067,9 @@ module.exports = (() => {
 							Logger.info(config.info.name, "[" + job.file.name + "] Time to compress: " + (compressionTimeHours.toFixed(0) + ":" + compressionTimeMinutes.toFixed(0).padStart(2, 0) + ":" + compressionTimeSeconds.toFixed(3).padStart(6, 0)));
 						}
 						if (cache) {
-							cache.saveAndCache(job.compressedFile, job.fileKey);
+							cache.saveAndCache(retFile, job.fileKey);
 						}
-						return job;
+						return retFile;
 					}
 					throw new Error("Unable to compress image");
 				}
