@@ -5,45 +5,37 @@
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeCompanion.plugin.js
  */
 
-module.exports = (() =>
-{
-	const config =
-	{
-		info:
-		{
+module.exports = (() => {
+	const config = {
+		info: {
 			name: "XposeCompanion",
 			authors:
-			[
-				{
+			[{
 					name: "PseudoResonance",
 					discord_id: "152927763605618689",
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "2.2.3",
+			version: "2.2.4",
 			description: "Companion plugin for Xpose theme.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeCompanion.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/XposeCompanion.plugin.js"
 		},
-		changelog: [
-			{
+		changelog: [{
 				title: "Fixed Error",
 				type: "fixed",
 				items: [
-					"Fixed null text field",
-					"Fixed folder colors disappearing after language change"
+					"Fixed folder colors disappearing"
 				]
 			}
 		],
-		defaultConfig: [
-			{
+		defaultConfig: [{
 				type: 'category',
 				id: 'appearance',
 				name: 'Appearance Settings',
 				collapsible: true,
 				shown: true,
-				settings: [
-					{
+				settings: [{
 						name: 'Expanded server folder has color',
 						id: 'guildFolderColor',
 						type: 'switch',
@@ -53,103 +45,46 @@ module.exports = (() =>
 			}
 		]
 	};
-	
+
 	var _XposeCompanion = null;
 
-	return !global.ZeresPluginLibrary ? class
-	{
-		constructor() { this._config = config; }
+	return !global.ZeresPluginLibrary ? class{
+		constructor() {
+			this._config = config;
+		}
 
 		getName = () => config.info.name;
 		getAuthor = () => config.info.description;
 		getVersion = () => config.info.version;
 
-		load()
-		{
+		load() {
 			BdApi.showConfirmationModal("Library Missing", `The library plugin needed for ${config.info.name} is missing. Please click Download Now to install it.`, {
 				confirmText: "Download Now",
 				cancelText: "Cancel",
-				onConfirm: () =>
-				{
-					require("request").get("https://rauenzi.github.io/BDPluginLibrary/release/0PluginLibrary.plugin.js", async (err, res, body) =>
-					{
-						if (err) return require("electron").shell.openExternal("https://betterdiscord.net/ghdl?url=https://raw.githubusercontent.com/rauenzi/BDPluginLibrary/master/release/0PluginLibrary.plugin.js");
+				onConfirm: () => {
+					require("request").get("https://rauenzi.github.io/BDPluginLibrary/release/0PluginLibrary.plugin.js", async(err, res, body) => {
+						if (err)
+							return require("electron").shell.openExternal("https://betterdiscord.net/ghdl?url=https://raw.githubusercontent.com/rauenzi/BDPluginLibrary/master/release/0PluginLibrary.plugin.js");
 						await new Promise(r => require("fs").writeFile(require("path").join(BdApi.Plugins.folder, "0PluginLibrary.plugin.js"), body, r));
 					});
 				}
 			});
 		}
 
-		start() { }
-		stop() { }
-	} : (([Plugin, Api]) => {
+		start() {}
+		stop() {}
+	}
+	 : (([Plugin, Api]) => {
 
-		const plugin = (Plugin, Api) =>
-		{
-			const { DiscordModules, DOMTools, PluginUtilities } = Api;
-			
-			const uploadPlaceholderObserver = new MutationObserver(function(mutationsList, observer) {
-				if (document.getElementsByClassName("uploadModal-2ifh8j").length) {
-					var labels = document.querySelectorAll(".uploadModal-2ifh8j .inner-3nWsbo .comment-4IWttf .label-3aiqT2");
-					var labelsText = [];
-					for (var i = 0; i < labels.length; i++) {
-						labelsText[i] = "";
-						for (var j = 0; j < labels[i].children.length; j++) {
-							labelsText[i] += labels[i].children[j].textContent + " ";
-						}
-						labelsText[i] = labelsText[i].substring(0, labelsText[i].length - 1).replace(/\n/g, " ");
-					}
-					if (labelsText.length > 0) {
-						var input = document.querySelector(".uploadModal-2ifh8j .textArea-12jD-V .slateTextArea-1Mkdgw");
-						var inputName = document.querySelector(".uploadModal-2ifh8j .inputWrapper-31_8H8 .input-cIJ7To");
-						var fileDescription = document.querySelector(".uploadModal-2ifh8j .description-2ug5H_ .filename-ovv3c5");
-						var samplePlaceholder = document.querySelector(".channelTextArea-2VhZ6z .textArea-12jD-V .placeholder-37qJjk");
-						if (input.textContent.trim() != "") labelsText[labelsText.length - 1] = ""
-						var classes = ["placeholder-37qJjk"];
-						if (samplePlaceholder != null) {
-							if (samplePlaceholder.classList.length > 0) {
-								classes = samplePlaceholder.classList;
-							}
-						} else {
-							for (var i = 0; i < input.classList.length; i++) {
-								if (input.classList[i].startsWith("fontSize")) {
-									classes.push(input.classList[i]);
-									break;
-								}
-							}
-						}
-						var uploadModalPlaceholder = document.getElementById("pseudo-uploadModalPlaceholder");
-						if (uploadModalPlaceholder == null) {
-							var placeholderNode = document.createElement("div");
-							placeholderNode.id = "pseudo-uploadModalPlaceholder";
-							placeholderNode.textContent = labelsText[labelsText.length - 1];
-							for (var i = 0; i < classes.length; i++) {
-								placeholderNode.classList.add(classes[i]);
-							}
-							input.parentElement.insertBefore(placeholderNode, input);
-							uploadPlaceholderTextObserver.observe(input, {subtree: true, childList: true, characterData: true});
-						} else if (uploadModalPlaceholder.textContent != labelsText[labelsText.length - 1]) {
-							uploadModalPlaceholder.textContent = labelsText[labelsText.length - 1];
-						}
-						if (labelsText.length > 1) {
-							fileDescription.textContent = "";
-							if (inputName != null) {
-								inputName.placeholder = labelsText[0];
-							}
-						}
-					}
-				}
-			});
-			
-			const uploadPlaceholderTextObserver = new MutationObserver(function(mutationsList, observer) {
-				var input = document.querySelector(".uploadModal-2ifh8j .textArea-12jD-V .slateTextArea-1Mkdgw");
-				if (input.textContent.trim() === "")
-					document.getElementById("pseudo-uploadModalPlaceholder").style.display = "block";
-				else
-					document.getElementById("pseudo-uploadModalPlaceholder").style.display = "none";
-			});
-			
-			const guildListObserver = new MutationObserver(function(mutationsList, observer) {
+		const plugin = (Plugin, Api) => {
+			const {
+				DiscordModules,
+				DOMTools,
+				PluginUtilities,
+				Patcher
+			} = Api;
+
+			const guildListObserver = new MutationObserver(function (mutationsList, observer) {
 				for (const mutation of mutationsList) {
 					if (mutation.type === 'childList') {
 						for (const node of mutation.addedNodes) {
@@ -188,41 +123,32 @@ module.exports = (() =>
 				}
 			});
 
-			return class XposeCompanion extends Plugin
-			{
-				constructor()
-				{
+			return class XposeCompanion extends Plugin{
+				constructor() {
 					super();
 					_XposeCompanion = this;
+					this.updateFolderBackgrounds = this.updateFolderBackgrounds.bind(this);
+					this.handleUserSettingsChange = this.handleUserSettingsChange.bind(this);
 				}
-	
-				onStart()
-				{
-					PluginUtilities.addStyle(
-						'XposeCompanion-CSS',
-						`
-						#pseudo-uploadModalPlaceholder {
-							padding-left:16px;
-						}
-						`
-					);
-					uploadPlaceholderObserver.observe(document.querySelector(".popouts-2bnG9Z + div"), {subtree: true, childList: true});
+
+				onStart() {
 					this.updateFolderBackgrounds();
 					DiscordModules.UserSettingsStore.addChangeListener(this.handleUserSettingsChange);
 				}
-	
-				onStop()
-				{
-					PluginUtilities.removeStyle('XposeCompanion-CSS');
-					uploadPlaceholderObserver.disconnect();
-					uploadPlaceholderTextObserver.disconnect();
+
+				onStop() {
+					Patcher.unpatchAll();
 					guildListObserver.disconnect();
 					DiscordModules.UserSettingsStore.removeChangeListener(this.handleUserSettingsChange);
 				}
-				
+
 				updateFolderBackgrounds() {
 					if (this.settings.appearance.guildFolderColor) {
-						guildListObserver.observe(document.querySelector('[data-list-id="guildsnav"]'), {subtree: true, childList: true, attributeFilter: ["style"]});
+						guildListObserver.observe(document.querySelector('[data-list-id="guildsnav"]'), {
+							subtree: true,
+							childList: true,
+							attributeFilter: ["style"]
+						});
 						var folderBackgrounds = document.querySelectorAll('[class^="expandedFolderBackground-"]');
 						for (var i = 0; i < folderBackgrounds.length; i++) {
 							var icon = DOMTools.query('[class^="folderIconWrapper-"]', folderBackgrounds[i].nextSibling);
@@ -241,12 +167,12 @@ module.exports = (() =>
 						}
 					}
 				}
-				
+
 				getSettingsPanel() {
 					const panel = this.buildSettingsPanel();
 					return panel.getElement();
 				}
-				
+
 				saveSettings(category, setting, value) {
 					this.settings[category][setting] = value;
 					PluginUtilities.saveSettings(config.info.name, this.settings);
@@ -258,9 +184,9 @@ module.exports = (() =>
 				}
 
 				async handleUserSettingsChange() {
-					_XposeCompanion.updateFolderBackgrounds();
+					this.updateFolderBackgrounds();
 				}
-				
+
 				listStartsWith(list, str) {
 					if (list != null) {
 						for (let value of list.entries()) {
@@ -273,7 +199,7 @@ module.exports = (() =>
 				}
 
 			}
-			
+
 		};
 		return plugin(Plugin, Api);
 	})(global.ZeresPluginLibrary.buildPlugin(config));
