@@ -10,6 +10,7 @@
 //TODO Add plugin settings for default options
 //TODO Add plugin settings for toast position on screen
 //TODO Add button to bypass compression
+//TODO Add setting to screen all files to check if Discord can embed them and reencode if not
 
 module.exports = (() => {
 	const config = {
@@ -21,16 +22,16 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.5.11",
+			version: "1.5.12",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
 		},
 		changelog: [{
-				title: "Fixed",
-				type: "fixed",
+				title: "Improved",
+				type: "improved",
 				items: [
-					"Updated to latest Discord version"
+					"Improved options in preparation for more fine control"
 				]
 			}, {
 				title: "Known Bugs",
@@ -242,6 +243,9 @@ module.exports = (() => {
 			SETTINGS_KEEP_TEMP: 'Keep Temp Files',
 			SETTINGS_KEEP_TEMP_DESC: 'Retain temporary files after compression.',
 			COMPRESSION_OPTIONS_TITLE: '{$0$} Compression Options',
+			COMPRESSION_OPTIONS_CATEGORIES_CACHE: 'Cache Options',
+			COMPRESSION_OPTIONS_CATEGORIES_BASIC: 'Basic Options',
+			COMPRESSION_OPTIONS_CATEGORIES_ADVANCED: 'Advanced Options',
 			COMPRESSION_OPTIONS_USE_CACHE: 'Use Cached File',
 			COMPRESSION_OPTIONS_USE_CACHE_DESC: 'Use the previously cached file.',
 			COMPRESSION_OPTIONS_SIZE_CAP: 'Size Cap (bytes)',
@@ -331,6 +335,9 @@ module.exports = (() => {
 			SETTINGS_KEEP_TEMP: '一時ファイルを保持',
 			SETTINGS_KEEP_TEMP_DESC: '圧縮後に一時ファイルを保持する。',
 			COMPRESSION_OPTIONS_TITLE: '{$0$}　圧縮設定',
+			COMPRESSION_OPTIONS_CATEGORIES_CACHE: 'キャッシュ設定',
+			COMPRESSION_OPTIONS_CATEGORIES_BASIC: '基本設定',
+			COMPRESSION_OPTIONS_CATEGORIES_ADVANCED: '高度設定',
 			COMPRESSION_OPTIONS_USE_CACHE: 'キャッシュされたファイルュを使用',
 			COMPRESSION_OPTIONS_USE_CACHE_DESC: '以前にキャッシュされたファイルを使用する。',
 			COMPRESSION_OPTIONS_SIZE_CAP: '最大ファイルサイズ（bytes）',
@@ -676,12 +683,6 @@ module.exports = (() => {
 			const regexPatternTime = /time=(\d+:\d+:\d+.\d+)/;
 			const regexPatternCrop = /crop=(\d+:\d+:\d+:\d+)/;
 			const regexPatternProgress = /Progress: (\d{1,3})%/;
-			const regexPatternDuration = /duration=([\d.]+)/;
-			const regexPatternChannels = /channels=(\d+)/;
-			const regexPatternBitDepth = /bits_per_raw_sample=(\d+)/;
-			const regexPatternHeight = /height=(\d+)/;
-			const regexPatternFrameRate = /r_frame_rate=(\d+\/\d+)/;
-			const regexPatternColorPrimaries = /color_primaries=(\w+)/;
 
 			// Persistent toasts container
 			let toasts = null;
@@ -1884,22 +1885,58 @@ module.exports = (() => {
 						}
 						toasts.setToast(job.jobId);
 					}
+					if (!await this.populateCompressionOptions(job, cacheFile))
+						return false;
+					// If user wants to use cached options & cached file exists
+					if (cacheFile && job.options.cache.useCache.value) {
+						this.sendUploadFileList(this.wrapFileInList(cacheFile), job.guildId, job.channelId, job.threadId, job.isSidebar);
+					} else {
+						if (runningJobs.length < this.settings.compressor.concurrentThreads) {
+							toasts.setToast(job.jobId, i18n.MESSAGES.INITIALIZING);
+							runningJobs.push(job);
+							this.compressFileType(job);
+						} else {
+							processingQueue.push(job);
+							toasts.setToast(0, i18n.FORMAT('QUEUED_FILES_NUM', processingQueue.length));
+						}
+					}
+				}
+
+				async populateCompressionOptions(job, cacheFile) {
+					job.optionsCategories = {
+						cache: {
+							name: i18n.MESSAGES.COMPRESSION_OPTIONS_CATEGORIES_CACHE,
+							shown: true
+						},
+						basic: {
+							name: i18n.MESSAGES.COMPRESSION_OPTIONS_CATEGORIES_BASIC,
+							shown: true
+						},
+						advanced: {
+							name: i18n.MESSAGES.COMPRESSION_OPTIONS_CATEGORIES_ADVANCED,
+							shown: false
+						}
+					};
 					// If cached file exists, ask user if they want to use cached options
 					if (cacheFile) {
-						job.options.useCache = {
+						job.options.cache = {};
+						job.options.cache.useCache = {
 							name: i18n.MESSAGES.COMPRESSION_OPTIONS_USE_CACHE,
 							description: i18n.MESSAGES.COMPRESSION_OPTIONS_USE_CACHE_DESC,
 							type: "switch",
 							defaultValue: true,
-							category: "cache",
 							onChange: (value, allCategories) => {
-								const defaultCategory = allCategories["default"];
-								if (defaultCategory)
-									defaultCategory.style.display = (value ? "none" : null);
+								for (const[key, category]of Object.entries(allCategories)) {
+									if (key != "cache") {
+										category.style.display = (value ? "none" : null);
+									}
+								}
 							}
 						};
 					}
-					job.options.sizeCap = {
+					job.options.basic = {};
+					job.options.advanced = {};
+					job.options.basic.sizeCap = {
 						name: i18n.MESSAGES.COMPRESSION_OPTIONS_SIZE_CAP,
 						description: i18n.MESSAGES.COMPRESSION_OPTIONS_SIZE_CAP_DESC,
 						type: "textbox",
@@ -1910,7 +1947,7 @@ module.exports = (() => {
 					};
 					switch (job.type) {
 					case "image":
-						job.options.sizeMultiplier = {
+						job.options.basic.sizeMultiplier = {
 							name: i18n.MESSAGES.COMPRESSION_OPTIONS_SIZE_MULTIPLIER,
 							description: i18n.MESSAGES.COMPRESSION_OPTIONS_SIZE_MULTIPLIER_DESC,
 							type: "textbox",
@@ -1919,7 +1956,7 @@ module.exports = (() => {
 								return (!isNaN(value) && !isNaN(parseFloat(value)) && value < 1 && value > 0);
 							}
 						};
-						job.options.maxIterations = {
+						job.options.basic.maxIterations = {
 							name: i18n.MESSAGES.COMPRESSION_OPTIONS_MAX_ITERATIONS,
 							description: i18n.MESSAGES.COMPRESSION_OPTIONS_MAX_ITERATIONS_DESC,
 							type: "textbox",
@@ -1928,10 +1965,63 @@ module.exports = (() => {
 								return (!isNaN(value) && !isNaN(parseInt(value)) && value > 0);
 							}
 						};
-						if (!await this.showSettings(i18n.FORMAT('COMPRESSION_OPTIONS_TITLE', job.file.name), job.options))
-							return false;
+						if (await this.showSettings(i18n.FORMAT('COMPRESSION_OPTIONS_TITLE', job.file.name), job.options))
+							return true;
 						break;
 					case "video":
+						if (!ffmpeg || !ffmpeg.checkFFmpeg()) {
+							await this.initFfmpeg();
+						}
+						if (!(ffmpeg && ffmpeg.checkFFmpeg())) {
+							return false;
+						}
+						job.originalFilePath = job.file.path;
+						job.isOriginalTemporary = false;
+						if (!job.originalFilePath) {
+							job.isOriginalTemporary = true;
+							job.originalFilePath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + "." + extension);
+							const fileStream = job.file.stream();
+							const fileStreamReader = fileStream.getReader();
+							const writeStream = fs.createWriteStream(job.originalFilePath);
+							const totalBytes = job.file.size;
+							let bytesWritten = 0;
+							await new Promise((resolve1, reject1) => {
+								fileStreamReader.read().then(function processData({
+										done,
+										value
+									}) {
+									try {
+										if (value) {
+											bytesWritten += value.byteLength;
+											const percent = Math.round((bytesWritten / totalBytes) * 100);
+											toasts.setToast(job.jobId, i18n.FORMAT('COPYING_PERCENT', percent ? percent : 0));
+										}
+										if (done) {
+											if (this.settings.compressor.debug)
+												Logger.info(config.info.name, "[" + job.file.name + "] Copied: " + bytesWritten + " bytes");
+											writeStream.destroy();
+											resolve1(true);
+											return;
+										}
+										const writeReady = writeStream.write(value);
+										if (writeReady) {
+											return fileStreamReader.read().then(processData);
+										} else {
+											writeStream.once('drain', () => {
+												fileStreamReader.read().then(processData);
+											});
+											return true;
+										}
+									} catch (err) {
+										Logger.err(config.info.name, err);
+										reject1();
+										return false;
+									}
+								});
+							});
+							writeStream.destroy();
+						}
+						job.probeData = await ffmpeg.runProbeWithArgs(["-v", "error", "-show_format", "-show_streams", "-print_format", "json", job.originalFilePath]);
 						const encoderValuesArray = [];
 						for (const name of Object.getOwnPropertyNames(videoEncoderSettings)) {
 							encoderValuesArray.push({
@@ -1939,7 +2029,7 @@ module.exports = (() => {
 								label: name
 							});
 						}
-						job.options.encoder = {
+						job.options.basic.encoder = {
 							name: i18n.MESSAGES.COMPRESSION_OPTIONS_ENCODER,
 							type: "dropdown",
 							defaultValue: "libx264",
@@ -1954,7 +2044,7 @@ module.exports = (() => {
 								label: i18n.MESSAGES[videoEncoderPresets[preset]]
 							});
 						}
-						job.options.encoderPreset = {
+						job.options.basic.encoderPreset = {
 							name: i18n.MESSAGES.COMPRESSION_OPTIONS_ENCODER_PRESET,
 							type: "dropdown",
 							defaultValue: "balanced",
@@ -1962,7 +2052,7 @@ module.exports = (() => {
 								values: encoderPresetsValuesArray
 							}
 						};
-						job.options.maxHeight = {
+						job.options.advanced.maxHeight = {
 							name: i18n.MESSAGES.COMPRESSION_OPTIONS_MAX_HEIGHT,
 							type: "textbox",
 							defaultValue: "",
@@ -1970,7 +2060,7 @@ module.exports = (() => {
 								return (!isNaN(value) && !isNaN(parseInt(value)) && value > 0);
 							}
 						};
-						job.options.maxFps = {
+						job.options.basic.maxFps = {
 							name: i18n.MESSAGES.COMPRESSION_OPTIONS_MAX_FPS,
 							type: "textbox",
 							defaultValue: "",
@@ -1978,25 +2068,25 @@ module.exports = (() => {
 								return (!isNaN(value) && !isNaN(parseFloat(value)) && value > 0);
 							}
 						};
-						job.options.interlace = {
+						job.options.advanced.interlace = {
 							name: i18n.MESSAGES.COMPRESSION_OPTIONS_INTERLACE_VIDEO,
 							description: i18n.MESSAGES.COMPRESSION_OPTIONS_INTERLACE_VIDEO_DESC,
 							type: "switch",
 							defaultValue: false
 						};
-						job.options.stripAudio = {
+						job.options.basic.stripAudio = {
 							name: i18n.MESSAGES.COMPRESSION_OPTIONS_STRIP_AUDIO,
 							description: i18n.MESSAGES.COMPRESSION_OPTIONS_STRIP_AUDIO_DESC,
 							type: "switch",
 							defaultValue: false
 						};
-						job.options.stripVideo = {
+						job.options.basic.stripVideo = {
 							name: i18n.MESSAGES.COMPRESSION_OPTIONS_STRIP_VIDEO,
 							description: i18n.MESSAGES.COMPRESSION_OPTIONS_STRIP_VIDEO_DESC,
 							type: "switch",
 							defaultValue: false
 						};
-						job.options.startTimestamp = {
+						job.options.basic.startTimestamp = {
 							name: i18n.MESSAGES.COMPRESSION_OPTIONS_STARTING_TIMESTAMP,
 							type: "textbox",
 							defaultValue: "",
@@ -2007,7 +2097,7 @@ module.exports = (() => {
 										return true;
 							}
 						};
-						job.options.endTimestamp = {
+						job.options.basic.endTimestamp = {
 							name: i18n.MESSAGES.COMPRESSION_OPTIONS_ENDING_TIMESTAMP,
 							type: "textbox",
 							defaultValue: "",
@@ -2018,17 +2108,70 @@ module.exports = (() => {
 										return true;
 							}
 						};
-						job.options.autoCrop = {
+						job.options.advanced.autoCrop = {
 							name: i18n.MESSAGES.COMPRESSION_OPTIONS_AUTO_CROP,
 							description: i18n.MESSAGES.COMPRESSION_OPTIONS_AUTO_CROP_DESC,
 							type: "switch",
 							defaultValue: false
 						};
-						if (!await this.showSettings(i18n.FORMAT('COMPRESSION_OPTIONS_TITLE', job.file.name), job.options))
-							return false;
+						if (await this.showSettings(i18n.FORMAT('COMPRESSION_OPTIONS_TITLE', job.file.name), job.options, job.optionsCategories))
+							return true;
 						break;
 					case "audio":
-						job.options.startTimestamp = {
+						if (!ffmpeg || !ffmpeg.checkFFmpeg()) {
+							await this.initFfmpeg();
+						}
+						if (!(ffmpeg && ffmpeg.checkFFmpeg())) {
+							return false;
+						}
+						job.originalFilePath = job.file.path;
+						job.isOriginalTemporary = false;
+						if (!job.originalFilePath) {
+							job.isOriginalTemporary = true;
+							job.originalFilePath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + "." + extension);
+							const fileStream = job.file.stream();
+							const fileStreamReader = fileStream.getReader();
+							const writeStream = fs.createWriteStream(job.originalFilePath);
+							const totalBytes = job.file.size;
+							let bytesWritten = 0;
+							await new Promise((resolve1, reject1) => {
+								fileStreamReader.read().then(function processData({
+										done,
+										value
+									}) {
+									try {
+										if (value) {
+											bytesWritten += value.byteLength;
+											const percent = Math.round((bytesWritten / totalBytes) * 100);
+											toasts.setToast(job.jobId, i18n.FORMAT('COPYING_PERCENT', percent ? percent : 0));
+										}
+										if (done) {
+											if (this.settings.compressor.debug)
+												Logger.info(config.info.name, "[" + job.file.name + "] Copied: " + bytesWritten + " bytes");
+											writeStream.destroy();
+											resolve1(true);
+											return;
+										}
+										const writeReady = writeStream.write(value);
+										if (writeReady) {
+											return fileStreamReader.read().then(processData);
+										} else {
+											writeStream.once('drain', () => {
+												fileStreamReader.read().then(processData);
+											});
+											return true;
+										}
+									} catch (err) {
+										Logger.err(config.info.name, err);
+										reject1();
+										return false;
+									}
+								});
+							});
+							writeStream.destroy();
+						}
+						job.probeData = await ffmpeg.runProbeWithArgs(["-v", "error", "-show_format", "-show_streams", "-print_format", "json", job.originalFilePath]);
+						job.options.basic.startTimestamp = {
 							name: i18n.MESSAGES.COMPRESSION_OPTIONS_STARTING_TIMESTAMP,
 							type: "textbox",
 							defaultValue: "",
@@ -2039,7 +2182,7 @@ module.exports = (() => {
 										return true;
 							}
 						};
-						job.options.endTimestamp = {
+						job.options.basic.endTimestamp = {
 							name: i18n.MESSAGES.COMPRESSION_OPTIONS_ENDING_TIMESTAMP,
 							type: "textbox",
 							defaultValue: "",
@@ -2050,62 +2193,61 @@ module.exports = (() => {
 										return true;
 							}
 						};
-						if (!await this.showSettings(i18n.FORMAT('COMPRESSION_OPTIONS_TITLE', job.file.name), job.options))
-							return false;
+						if (await this.showSettings(i18n.FORMAT('COMPRESSION_OPTIONS_TITLE', job.file.name), job.options, job.optionsCategories))
+							return true;
 						break;
 					}
-					// If user wants to use cached options & cached file exists
-					if (cacheFile && job.options.useCache.value) {
-						this.sendUploadFileList(this.wrapFileInList(cacheFile), job.guildId, job.channelId, job.threadId, job.isSidebar);
-					} else {
-						if (runningJobs.length < this.settings.compressor.concurrentThreads) {
-							toasts.setToast(job.jobId, i18n.MESSAGES.INITIALIZING);
-							runningJobs.push(job);
-							this.compressFileType(job);
-						} else {
-							processingQueue.push(job);
-							toasts.setToast(0, i18n.FORMAT('QUEUED_FILES_NUM', processingQueue.length));
-						}
-					}
+					return false;
 				}
 
-				showSettings(title, options) {
+				showSettings(title, options, optionsCategories) {
 					return new Promise((resolve, reject) => {
 						// If options should be shown
 						if (this.settings.compressor.promptOptions) {
 							const settingsElements = new Map();
+							const settingsGroups = new Map();
 							const settingsPanels = new Map();
 							const settingsPanelsReact = new Map();
-							for (const setting in options) {
-								// Set current value to default value
-								options[setting].value = options[setting].defaultValue;
-								// Get option category and store an array for each category
-								const category = options[setting].category ? options[setting].category : "default";
-								if (!settingsElements[category])
-									settingsElements[category] = [];
-								// Add setting object to array
-								settingsElements[category].push(this.createSettingField(options[setting].type, options[setting].name, options[setting].description, options[setting].defaultValue, value => {
-										// onChange function
-										// Only set value if validation function doesn't exist, or if function exists and returns true
-										if (typeof(options[setting].validation) != "function" || options[setting].validation(value)) {
-											// Set value
-											options[setting].value = value;
-											// Run custom onChange function when value is set
-											if (typeof(options[setting].onChange) == "function")
-												options[setting].onChange(value, settingsPanels);
-										}
-									}, options[setting].props));
+							for (const category in options) {
+								for (const setting in options[category]) {
+									// Set current value to default value
+									options[category][setting].value = options[category][setting].defaultValue;
+									// Get option category and store an array for each category
+									if (!settingsElements[category])
+										settingsElements[category] = [];
+									// Add setting object to array
+									settingsElements[category].push(this.createSettingField(options[category][setting].type, options[category][setting].name, options[category][setting].description, options[category][setting].defaultValue, value => {
+											// onChange function
+											// Only set value if validation function doesn't exist, or if function exists and returns true
+											if (typeof(options[category][setting].validation) != "function" || options[category][setting].validation(value)) {
+												// Set value
+												options[category][setting].value = value;
+												// Run custom onChange function when value is set
+												if (typeof(options[category][setting].onChange) == "function")
+													options[category][setting].onChange(value, settingsPanels);
+											}
+										}, options[category][setting].props));
+								}
+							}
+							// Add elements to SettingGroups
+							for (const[key, value]of Object.entries(settingsElements)) {
+								settingsGroups[key] = new Settings.SettingGroup(optionsCategories[key].name, {
+									shown: optionsCategories[key].shown,
+									collapsible: true
+								}).append(...value);
 							}
 							// Convert elements to HTML SettingPanel objects
-							for (const[key, value]of Object.entries(settingsElements))
-								settingsPanels[key] = Settings.SettingPanel.build(null, ...value);
+							for (const[key, value]of Object.entries(settingsGroups))
+								settingsPanels[key] = Settings.SettingPanel.build(null, value);
 							// Convert HTML to React elements
 							for (const[key, value]of Object.entries(settingsPanels))
 								settingsPanelsReact[key] = ReactTools.createWrappedElement(value);
 							// Run all onChange functions with default values for setup
-							for (const setting in options) {
-								if (typeof(options[setting].onChange) == "function")
-									options[setting].onChange(options[setting].value, settingsPanels);
+							for (const category in options) {
+								for (const setting in options[category]) {
+									if (typeof(options[category][setting].onChange) == "function")
+										options[category][setting].onChange(options[category][setting].value, settingsPanels);
+								}
 							}
 							// Display modal with React elements
 							BdApi.showConfirmationModal(title, Object.values(settingsPanelsReact), {
@@ -2121,7 +2263,7 @@ module.exports = (() => {
 						} else {
 							for (const setting in options) {
 								// Set current value to default value
-								options[setting].value = options[setting].defaultValue;
+								options[category][setting].value = options[category][setting].defaultValue;
 							}
 							resolve(true);
 						}
@@ -2218,52 +2360,6 @@ module.exports = (() => {
 							const nameSplit = job.file.name.split('.');
 							const name = nameSplit.slice(0, nameSplit.length - 1).join(".");
 							const extension = nameSplit[nameSplit.length - 1];
-							let originalPath = job.file.path;
-							let isOriginalTemporary = false;
-							if (!originalPath) {
-								isOriginalTemporary = true;
-								originalPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + "." + extension);
-								const fileStream = job.file.stream();
-								const fileStreamReader = fileStream.getReader();
-								const writeStream = fs.createWriteStream(originalPath);
-								const totalBytes = job.file.size;
-								let bytesWritten = 0;
-								await new Promise((resolve1, reject1) => {
-									fileStreamReader.read().then(function processData({
-											done,
-											value
-										}) {
-										try {
-											if (value) {
-												bytesWritten += value.byteLength;
-												const percent = Math.round((bytesWritten / totalBytes) * 100);
-												toasts.setToast(job.jobId, i18n.FORMAT('COPYING_PERCENT', percent ? percent : 0));
-											}
-											if (done) {
-												if (this.settings.compressor.debug)
-													Logger.info(config.info.name, "[" + job.file.name + "] Copied: " + bytesWritten + " bytes");
-												writeStream.destroy();
-												resolve1(true);
-												return;
-											}
-											const writeReady = writeStream.write(value);
-											if (writeReady) {
-												return fileStreamReader.read().then(processData);
-											} else {
-												writeStream.once('drain', () => {
-													fileStreamReader.read().then(processData);
-												});
-												return true;
-											}
-										} catch (err) {
-											Logger.err(config.info.name, err);
-											reject1();
-											return false;
-										}
-									});
-								});
-								writeStream.destroy();
-							}
 							const compressedPathPre = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".opus");
 							let compressedPath = "";
 							if (cache) {
@@ -2272,26 +2368,29 @@ module.exports = (() => {
 								compressedPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".ogg");
 							}
 							toasts.setToast(job.jobId, i18n.MESSAGES.CALCULATING);
-							const audioData = await ffmpeg.runProbeWithArgs(["-v", "error", "-select_streams", "a", "-show_entries", "format=duration:stream=channels,bits_per_raw_sample", "-of", "default=noprint_wrappers=1", originalPath]);
-							if (audioData) {
-								const audioOutputStr = audioData.data;
+							if (job.probeData) {
+								const probeOutputData = JSON.parse(job.probeData.data);
 								try {
-									const durationMatches = regexPatternDuration.exec(audioOutputStr);
-									const channelsMatches = regexPatternChannels.exec(audioOutputStr);
-									const bitDepthMatches = regexPatternBitDepth.exec(audioOutputStr);
-									const originalDuration = durationMatches?.length > 1 ? parseFloat(durationMatches[1]) : 0;
-									const bitDepth = bitDepthMatches?.length > 1 ? parseInt(bitDepthMatches[1]) : null;
-									const numChannels = channelsMatches?.length > 1 ? parseInt(channelsMatches[1]) : null;
-									if (originalDuration == 0)
+									let streamIndex = -1;
+									for (const streamData of probeOutputData.streams) {
+										if (streamData.codec_type == "audio") {
+											streamIndex = streamData.index;
+											break;
+										}
+									}
+									const originalDuration = probeOutputData.format.duration ? parseFloat(probeOutputData.format.duration) : 0;
+									const bitDepth = probeOutputData.streams[streamIndex].bits_per_raw_sample ? parseInt(probeOutputData.streams[streamIndex].bits_per_raw_sample) : null;
+									const numChannels = probeOutputData.streams[streamIndex].channels ? parseInt(probeOutputData.streams[streamIndex].channels) : null;
+									if (originalDuration <= 0)
 										throw new Error("Invalid file duration");
 									let duration = originalDuration;
-									const startSecondsSplit = job.options.startTimestamp.value.split(':');
+									const startSecondsSplit = job.options.basic.startTimestamp.value.split(':');
 									let startSeconds = 0;
 									for (const[index, val]of startSecondsSplit.entries())
 										startSeconds += Math.pow(60, (startSecondsSplit.length - (index + 1))) * (index + 1 == startSecondsSplit.length ? parseFloat(val) : parseInt(val));
 									if (startSeconds < 0 || isNaN(startSeconds) || startSeconds >= duration)
 										startSeconds = 0;
-									const endSecondsSplit = job.options.endTimestamp.value.split(':');
+									const endSecondsSplit = job.options.basic.endTimestamp.value.split(':');
 									let endSeconds = 0;
 									for (const[index, val]of endSecondsSplit.entries())
 										endSeconds += Math.pow(60, (endSecondsSplit.length - (index + 1))) * (index + 1 == endSecondsSplit.length ? parseFloat(val) : parseInt(val));
@@ -2301,7 +2400,7 @@ module.exports = (() => {
 									duration = endSeconds > 0 ? endSeconds : originalDuration - startSeconds;
 									if (duration <= 0)
 										duration = originalDuration;
-									const cappedFileSize = Math.floor((job.options.sizeCap.value && parseInt(job.options.sizeCap.value) < maxUploadSize ? parseInt(job.options.sizeCap.value) : maxUploadSize)) - 10000;
+									const cappedFileSize = Math.floor((job.options.basic.sizeCap.value && parseInt(job.options.basic.sizeCap.value) < maxUploadSize ? parseInt(job.options.basic.sizeCap.value) : maxUploadSize)) - 10000;
 									let audioBitrate = Math.floor((cappedFileSize * 8) / duration);
 									if (audioBitrate < 500)
 										audioBitrate = 500;
@@ -2318,7 +2417,7 @@ module.exports = (() => {
 									if ((!bitDepth || bitDepth > 16) && ((audioBitrate / outputChannels) < 96000))
 										outputBitDepth = 16;
 									if (this.settings.compressor.debug) {
-										const fileStats = fs.statSync(originalPath);
+										const fileStats = fs.statSync(job.originalFilePath);
 										Logger.info(config.info.name, "[" + job.file.name + "] Original file size: " + (fileStats ? fileStats.size : 0) + " bytes");
 										Logger.info(config.info.name, "[" + job.file.name + "] Max file size: " + cappedFileSize + " bytes");
 										Logger.info(config.info.name, "[" + job.file.name + "] File length: " + originalDuration + " seconds");
@@ -2331,7 +2430,7 @@ module.exports = (() => {
 									}
 									try {
 										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PERCENT', '0'));
-										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-vn", "-c:a", "libopus", "-map", "0:a", "-b:a", audioBitrate, "-maxrate", audioBitrate, "-bufsize", audioBitrate, ...((outputBitDepth && (outputBitDepth < bitDepth || !bitDepth)) ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, "-sn", "-map_chapters", "-1", compressedPathPre], [{
+										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", job.originalFilePath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-vn", "-c:a", "libopus", "-map", "0:a", "-b:a", audioBitrate, "-maxrate", audioBitrate, "-bufsize", audioBitrate, ...((outputBitDepth && (outputBitDepth < bitDepth || !bitDepth)) ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, "-sn", "-map_chapters", "-1", compressedPathPre], [{
 													filter: str => {
 														return str.includes("time=");
 													},
@@ -2351,9 +2450,9 @@ module.exports = (() => {
 												}
 											]);
 									} catch (e) {
-										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
+										if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
 											try {
-												fs.rmSync(originalPath);
+												fs.rmSync(job.originalFilePath);
 											} catch (e) {}
 										}
 										if (!this.settings.compressor.keepTemp) {
@@ -2367,9 +2466,9 @@ module.exports = (() => {
 									if (fs.existsSync(compressedPathPre)) {
 										fs.renameSync(compressedPathPre, compressedPath);
 									} else {
-										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
+										if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
 											try {
-												fs.rmSync(originalPath);
+												fs.rmSync(job.originalFilePath);
 											} catch (e) {}
 										}
 										throw new Error("Cannot find FFmpeg output");
@@ -2378,7 +2477,7 @@ module.exports = (() => {
 										if (this.settings.compressor.debug) {
 											const endCompressionTime = new Date();
 											Logger.info(config.info.name, "[" + job.file.name + "] End time: " + endCompressionTime.toLocaleString());
-											let compressionTimeDiff = (endCompressionTime - startTime) / 1000;
+											let compressionTimeDiff = (endCompressionTime - startCompressionTime) / 1000;
 											const compressionTimeSeconds = compressionTimeDiff % 60;
 											compressionTimeDiff = (compressionTimeDiff - compressionTimeSeconds) / 60;
 											const compressionTimeMinutes = compressionTimeDiff % 60;
@@ -2394,9 +2493,9 @@ module.exports = (() => {
 										const retFile = new File([fs.readFileSync(compressedPath).buffer], name + ".ogg", {
 											type: job.file.type
 										});
-										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
+										if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
 											try {
-												fs.rmSync(originalPath);
+												fs.rmSync(job.originalFilePath);
 											} catch (e) {}
 										}
 										if (!this.settings.compressor.keepTemp) {
@@ -2411,9 +2510,9 @@ module.exports = (() => {
 										}
 										return retFile;
 									} else {
-										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
+										if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
 											try {
-												fs.rmSync(originalPath);
+												fs.rmSync(job.originalFilePath);
 											} catch (e) {}
 										}
 										if (!this.settings.compressor.keepTemp) {
@@ -2424,9 +2523,9 @@ module.exports = (() => {
 										throw new Error("Cannot find FFmpeg output");
 									}
 								} catch (e) {
-									if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
+									if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
 										try {
-											fs.rmSync(originalPath);
+											fs.rmSync(job.originalFilePath);
 										} catch (e) {}
 									}
 									throw e;
@@ -2457,56 +2556,10 @@ module.exports = (() => {
 							const nameSplit = job.file.name.split('.');
 							const name = nameSplit.slice(0, nameSplit.length - 1).join(".");
 							const extension = nameSplit[nameSplit.length - 1];
-							let originalPath = job.file.path;
-							let isOriginalTemporary = false;
-							if (!originalPath) {
-								isOriginalTemporary = true;
-								originalPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + "." + extension);
-								const fileStream = job.file.stream();
-								const fileStreamReader = fileStream.getReader();
-								const writeStream = fs.createWriteStream(originalPath);
-								const totalBytes = job.file.size;
-								let bytesWritten = 0;
-								await new Promise((resolve1, reject1) => {
-									fileStreamReader.read().then(function processData({
-											done,
-											value
-										}) {
-										try {
-											if (value) {
-												bytesWritten += value.byteLength;
-												const percent = Math.round((bytesWritten / totalBytes) * 100);
-												toasts.setToast(job.jobId, i18n.FORMAT('COPYING_PERCENT', percent ? percent : 0));
-											}
-											if (done) {
-												if (this.settings.compressor.debug)
-													Logger.info(config.info.name, "[" + job.file.name + "] Copied: " + bytesWritten + " bytes");
-												writeStream.destroy();
-												resolve1(true);
-												return;
-											}
-											const writeReady = writeStream.write(value);
-											if (writeReady) {
-												return fileStreamReader.read().then(processData);
-											} else {
-												writeStream.once('drain', () => {
-													fileStreamReader.read().then(processData);
-												});
-												return true;
-											}
-										} catch (err) {
-											Logger.err(config.info.name, err);
-											reject1();
-											return false;
-										}
-									});
-								});
-								writeStream.destroy();
-							}
-							const stripAudio = job.options.stripAudio.value && job.options.stripVideo.value ? false : job.options.stripAudio.value;
-							const stripVideo = job.options.stripAudio.value && job.options.stripVideo.value ? false : job.options.stripVideo.value;
+							const stripAudio = job.options.basic.stripAudio.value && job.options.basic.stripVideo.value ? false : job.options.basic.stripAudio.value;
+							const stripVideo = job.options.basic.stripAudio.value && job.options.basic.stripVideo.value ? false : job.options.basic.stripVideo.value;
 							const tempAudioPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".opus");
-							const tempVideoPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + "." + videoEncoderSettings[job.options.encoder.value].fileType);
+							const tempVideoPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + "." + videoEncoderSettings[job.options.basic.encoder.value].fileType);
 							const tempVideoTwoPassPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, ""));
 							const compressedPathPre = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".mkv");
 							let compressedPath = "";
@@ -2516,35 +2569,40 @@ module.exports = (() => {
 								compressedPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + (!stripVideo ? ".webm" : ".ogg"));
 							}
 							toasts.setToast(job.jobId, i18n.MESSAGES.CALCULATING);
-							const videoData = await ffmpeg.runProbeWithArgs(["-v", "error", "-select_streams", "v:0", "-show_entries", "format=duration:stream=height,r_frame_rate,color_primaries", "-of", "default=noprint_wrappers=1", originalPath]);
-							const audioData = await ffmpeg.runProbeWithArgs(["-v", "error", "-select_streams", "a:0", "-show_entries", "stream=channels,bits_per_raw_sample", "-of", "default=noprint_wrappers=1", originalPath]);
-							if (videoData && audioData) {
-								const videoOutputStr = videoData.data;
-								const audioOutputStr = audioData.data;
+							if (job.probeData) {
+								const probeOutputData = JSON.parse(job.probeData.data);
 								try {
+									let audioStreamIndex = -1;
+									let videoStreamIndex = -1;
+									for (const streamData of probeOutputData.streams) {
+										if (streamData.codec_type == "audio") {
+											audioStreamIndex = streamData.index;
+											break;
+										}
+									}
+									for (const streamData of probeOutputData.streams) {
+										if (streamData.codec_type == "video") {
+											videoStreamIndex = streamData.index;
+											break;
+										}
+									}
 									const videoFiltersPass1 = [];
 									const videoFiltersPass2 = [];
 									const autoCropSettings = [-1, -1, -1, -1];
-									if (job.options.autoCrop.value) {
+									if (job.options.advanced.autoCrop.value) {
 										videoFiltersPass1.push("cropdetect=round=2");
 									}
-									if (job.options.interlace.value) {
+									if (job.options.advanced.interlace.value) {
 										videoFiltersPass1.push("interlace=lowpass=2");
 										videoFiltersPass2.push("interlace=lowpass=2");
 									}
-									const cappedFileSize = Math.floor((job.options.sizeCap.value && parseInt(job.options.sizeCap.value) < maxUploadSize ? parseInt(job.options.sizeCap.value) : maxUploadSize)) - 150000;
-									const durationMatches = regexPatternDuration.exec(videoOutputStr);
-									const heightMatches = regexPatternHeight.exec(videoOutputStr);
-									const frameRateMatches = regexPatternFrameRate.exec(videoOutputStr);
-									const colorPrimariesMatches = regexPatternColorPrimaries.exec(videoOutputStr);
-									const channelsMatches = regexPatternChannels.exec(audioOutputStr);
-									const bitDepthMatches = regexPatternBitDepth.exec(audioOutputStr);
-									const frameRateMatchesSplit = frameRateMatches.length > 1 ? frameRateMatches[1].split('/') : null;
-									const originalDuration = durationMatches?.length > 1 ? parseFloat(durationMatches[1]) : 0;
-									const originalHeight = heightMatches?.length > 1 ? parseInt(heightMatches[1]) : null;
-									const colorPrimaries = colorPrimariesMatches?.length > 1 ? colorPrimariesMatches[1] : null;
-									const bitDepth = bitDepthMatches?.length > 1 ? parseInt(bitDepthMatches[1]) : null;
-									const numChannels = channelsMatches?.length > 1 ? parseInt(channelsMatches[1]) : null;
+									const cappedFileSize = Math.floor((job.options.basic.sizeCap.value && parseInt(job.options.basic.sizeCap.value) < maxUploadSize ? parseInt(job.options.basic.sizeCap.value) : maxUploadSize)) - 150000;
+									const frameRateMatchesSplit = probeOutputData.streams[videoStreamIndex].r_frame_rate ? probeOutputData.streams[videoStreamIndex].r_frame_rate.split('/') : null;
+									const originalDuration = probeOutputData.format.duration ? parseFloat(probeOutputData.format.duration) : 0;
+									const originalHeight = probeOutputData.streams[videoStreamIndex].height ? parseInt(probeOutputData.streams[videoStreamIndex].height) : null;
+									const colorPrimaries = probeOutputData.streams[videoStreamIndex].color_primaries ? probeOutputData.streams[videoStreamIndex].color_primaries : null;
+									const bitDepth = probeOutputData.streams[audioStreamIndex].bits_per_raw_sample ? parseInt(probeOutputData.streams[audioStreamIndex].bits_per_raw_sample) : null;
+									const numChannels = probeOutputData.streams[audioStreamIndex].channels ? parseInt(probeOutputData.streams[audioStreamIndex].channels) : null;
 									const isHDR = hdrColorPrimaries.includes(colorPrimaries);
 									if (isHDR) {
 										videoFiltersPass1.push("zscale=transfer=linear,tonemap=hable,zscale=transfer=bt709");
@@ -2554,13 +2612,13 @@ module.exports = (() => {
 									if (originalDuration == 0)
 										throw new Error("Invalid file duration");
 									let duration = originalDuration;
-									const startSecondsSplit = job.options.startTimestamp.value.split(':');
+									const startSecondsSplit = job.options.basic.startTimestamp.value.split(':');
 									let startSeconds = 0;
 									for (const[index, val]of startSecondsSplit.entries())
 										startSeconds += Math.pow(60, (startSecondsSplit.length - (index + 1))) * (index + 1 == startSecondsSplit.length ? parseFloat(val) : parseInt(val));
 									if (startSeconds < 0 || isNaN(startSeconds) || startSeconds >= duration)
 										startSeconds = 0;
-									const endSecondsSplit = job.options.endTimestamp.value.split(':');
+									const endSecondsSplit = job.options.basic.endTimestamp.value.split(':');
 									let endSeconds = 0;
 									for (const[index, val]of endSecondsSplit.entries())
 										endSeconds += Math.pow(60, (endSecondsSplit.length - (index + 1))) * (index + 1 == endSecondsSplit.length ? parseFloat(val) : parseInt(val));
@@ -2571,7 +2629,7 @@ module.exports = (() => {
 									if (duration <= 0)
 										duration = originalDuration;
 									if (this.settings.compressor.debug) {
-										const fileStats = fs.statSync(originalPath);
+										const fileStats = fs.statSync(job.originalFilePath);
 										Logger.info(config.info.name, "[" + job.file.name + "] Original file size: " + (fileStats ? fileStats.size : 0) + " bytes");
 										Logger.info(config.info.name, "[" + job.file.name + "] Max file size: " + cappedFileSize + " bytes");
 										Logger.info(config.info.name, "[" + job.file.name + "] File length: " + originalDuration + " seconds");
@@ -2584,7 +2642,7 @@ module.exports = (() => {
 									let videoSize = 0;
 									if (!stripAudio) {
 										//TODO check per-channel bitrate and keep as many audio channels as possible
-										let audioBitrate = ((cappedFileSize * 8) * (stripVideo ? 1 : videoEncoderSettings[job.options.encoder.value].encoderPresets[job.options.encoderPreset.value].audioFilePercent)) / duration;
+										let audioBitrate = ((cappedFileSize * 8) * (stripVideo ? 1 : videoEncoderSettings[job.options.basic.encoder.value].encoderPresets[job.options.basic.encoderPreset.value].audioFilePercent)) / duration;
 										if (audioBitrate < 10240)
 											audioBitrate = 10240;
 										let outputChannels = numChannels;
@@ -2629,7 +2687,7 @@ module.exports = (() => {
 										}
 										try {
 											toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PERCENT', '0'));
-											await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-vn", "-c:a", "libopus", "-map", "0:a", "-b:a", audioBitrate, "-maxrate", audioBitrate, "-bufsize", audioBitrate, ...(outputBitDepth && (outputBitDepth < bitDepth || !bitDepth) ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, "-sn", "-map_chapters", "-1", tempAudioPath], [{
+											await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", job.originalFilePath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-vn", "-c:a", "libopus", "-map", "0:a", "-b:a", audioBitrate, "-maxrate", audioBitrate, "-bufsize", audioBitrate, ...(outputBitDepth && (outputBitDepth < bitDepth || !bitDepth) ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, "-sn", "-map_chapters", "-1", tempAudioPath], [{
 														filter: str => {
 															return str.includes("time=");
 														},
@@ -2649,9 +2707,9 @@ module.exports = (() => {
 													}
 												]);
 										} catch (e) {
-											if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
+											if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
 												try {
-													fs.rmSync(originalPath);
+													fs.rmSync(job.originalFilePath);
 												} catch (e) {}
 											}
 											if (!this.settings.compressor.keepTemp) {
@@ -2673,9 +2731,9 @@ module.exports = (() => {
 											if (fs.existsSync(tempAudioPath)) {
 												fs.renameSync(tempAudioPath, compressedPath);
 											} else {
-												if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
+												if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
 													try {
-														fs.rmSync(originalPath);
+														fs.rmSync(job.originalFilePath);
 													} catch (e) {}
 												}
 												throw new Error("Cannot find FFmpeg output");
@@ -2697,9 +2755,9 @@ module.exports = (() => {
 												const retFile = new File([fs.readFileSync(compressedPath).buffer], name + ".ogg", {
 													type: job.file.type
 												});
-												if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
+												if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
 													try {
-														fs.rmSync(originalPath);
+														fs.rmSync(job.originalFilePath);
 													} catch (e) {}
 												}
 												if (!this.settings.compressor.keepTemp) {
@@ -2714,9 +2772,9 @@ module.exports = (() => {
 												}
 												return retFile;
 											} else {
-												if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
+												if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
 													try {
-														fs.rmSync(originalPath);
+														fs.rmSync(job.originalFilePath);
 													} catch (e) {}
 												}
 												if (!this.settings.compressor.keepTemp) {
@@ -2729,15 +2787,15 @@ module.exports = (() => {
 										}
 									}
 									let maxFrameRate = frameRate;
-									if (job.options.maxFps.value && (job.options.maxFps.value < frameRate || !frameRate)) {
-										maxFrameRate = job.options.maxFps.value;
+									if (job.options.basic.maxFps.value && (job.options.basic.maxFps.value < frameRate || !frameRate)) {
+										maxFrameRate = job.options.basic.maxFps.value;
 										videoFiltersPass1.push("fps=fps=" + maxFrameRate);
 										videoFiltersPass2.push("fps=fps=" + maxFrameRate);
 									}
 									let videoBitrate = Math.floor(((cappedFileSize - audioSize) * 8) / duration);
-									let maxVideoHeight = videoEncoderSettings[job.options.encoder.value].encoderPresets[job.options.encoderPreset.value].videoHeightCapFunction(videoBitrate);
-									if (job.options.maxHeight.value && (job.options.maxHeight.value < originalHeight || !originalHeight)) {
-										maxVideoHeight = job.options.maxHeight.value;
+									let maxVideoHeight = videoEncoderSettings[job.options.basic.encoder.value].encoderPresets[job.options.basic.encoderPreset.value].videoHeightCapFunction(videoBitrate);
+									if (job.options.advanced.maxHeight.value && (job.options.advanced.maxHeight.value < originalHeight || !originalHeight)) {
+										maxVideoHeight = job.options.advanced.maxHeight.value;
 									}
 									if (maxVideoHeight < originalHeight || (!originalHeight && maxVideoHeight)) {
 										videoFiltersPass1.push("scale=-1:" + maxVideoHeight + ",scale=trunc(iw/2)*2:" + maxVideoHeight);
@@ -2751,7 +2809,7 @@ module.exports = (() => {
 									}
 									try {
 										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PASS_1_PERCENT', '0'));
-										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate, ...(videoFiltersPass1.length > 0 ? ["-vf", videoFiltersPass1.join(",")] : []), "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "1", "-passlogfile", tempVideoTwoPassPath, "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")], [{
+										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", job.originalFilePath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate, ...(videoFiltersPass1.length > 0 ? ["-vf", videoFiltersPass1.join(",")] : []), "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.basic.encoder.value, "-pass", "1", "-passlogfile", tempVideoTwoPassPath, "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")], [{
 													filter: str => {
 														return str.includes("time=");
 													},
@@ -2768,7 +2826,7 @@ module.exports = (() => {
 															Logger.err(config.info.name, e);
 														}
 													}
-												}, ...(job.options.autoCrop.value ? [{
+												}, ...(job.options.advanced.autoCrop.value ? [{
 															filter: str => {
 																return str.includes("crop=");
 															},
@@ -2804,9 +2862,9 @@ module.exports = (() => {
 													 : [])
 											]);
 									} catch (e) {
-										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
+										if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
 											try {
-												fs.rmSync(originalPath);
+												fs.rmSync(job.originalFilePath);
 											} catch (e) {}
 										}
 										if (!stripAudio && !this.settings.compressor.keepTemp) {
@@ -2821,7 +2879,7 @@ module.exports = (() => {
 										}
 										throw e;
 									}
-									if (job.options.autoCrop.value && autoCropSettings.length == 4 && autoCropSettings.every(val => typeof val !== 'undefined')) {
+									if (job.options.advanced.autoCrop.value && autoCropSettings.length == 4 && autoCropSettings.every(val => typeof val !== 'undefined')) {
 										const autoCropSettingsStr = autoCropSettings.join(':');
 										if (this.settings.compressor.debug) {
 											Logger.info(config.info.name, "[" + job.file.name + "] Video crop settings: " + autoCropSettingsStr);
@@ -2830,7 +2888,7 @@ module.exports = (() => {
 									}
 									try {
 										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_PASS_2_PERCENT', '0'));
-										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", originalPath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate, ...(videoFiltersPass2.length > 0 ? ["-vf", videoFiltersPass2.join(",")] : []), "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.encoder.value, "-pass", "2", "-passlogfile", tempVideoTwoPassPath, tempVideoPath], [{
+										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", job.originalFilePath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate, ...(videoFiltersPass2.length > 0 ? ["-vf", videoFiltersPass2.join(",")] : []), "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.basic.encoder.value, "-pass", "2", "-passlogfile", tempVideoTwoPassPath, tempVideoPath], [{
 													filter: str => {
 														return str.includes("time=");
 													},
@@ -2850,9 +2908,9 @@ module.exports = (() => {
 												}
 											]);
 									} catch (e) {
-										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
+										if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
 											try {
-												fs.rmSync(originalPath);
+												fs.rmSync(job.originalFilePath);
 											} catch (e) {}
 										}
 										if (!this.settings.compressor.keepTemp) {
@@ -2866,9 +2924,9 @@ module.exports = (() => {
 										throw e;
 									}
 									if (!fs.existsSync(tempVideoPath)) {
-										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
+										if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
 											try {
-												fs.rmSync(originalPath);
+												fs.rmSync(job.originalFilePath);
 											} catch (e) {}
 										}
 										if (!this.settings.compressor.keepTemp) {
@@ -2904,9 +2962,9 @@ module.exports = (() => {
 											});
 										}
 									} catch (e) {
-										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
+										if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
 											try {
-												fs.rmSync(originalPath);
+												fs.rmSync(job.originalFilePath);
 											} catch (e) {}
 										}
 										if (!this.settings.compressor.keepTemp) {
@@ -2925,9 +2983,9 @@ module.exports = (() => {
 									if (fs.existsSync(compressedPathPre)) {
 										fs.renameSync(compressedPathPre, compressedPath);
 									} else {
-										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
+										if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
 											try {
-												fs.rmSync(originalPath);
+												fs.rmSync(job.originalFilePath);
 											} catch (e) {}
 										}
 										if (!this.settings.compressor.keepTemp) {
@@ -2963,9 +3021,9 @@ module.exports = (() => {
 										const retFile = new File([fs.readFileSync(compressedPath).buffer], name + ".webm", {
 											type: job.file.type
 										});
-										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
+										if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
 											try {
-												fs.rmSync(originalPath);
+												fs.rmSync(job.originalFilePath);
 											} catch (e) {}
 										}
 										if (!this.settings.compressor.keepTemp) {
@@ -2986,9 +3044,9 @@ module.exports = (() => {
 										}
 										return retFile;
 									} else {
-										if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
+										if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
 											try {
-												fs.rmSync(originalPath);
+												fs.rmSync(job.originalFilePath);
 											} catch (e) {}
 										}
 										if (!this.settings.compressor.keepTemp) {
@@ -3005,9 +3063,9 @@ module.exports = (() => {
 										throw new Error("Cannot find MKVmerge output");
 									}
 								} catch (e) {
-									if (isOriginalTemporary && !this.settings.compressor.keepTemp) {
+									if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
 										try {
-											fs.rmSync(originalPath);
+											fs.rmSync(job.originalFilePath);
 										} catch (e) {}
 									}
 									throw e;
@@ -3079,7 +3137,7 @@ module.exports = (() => {
 					toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_TRY_NUMBER', image.iterations));
 					image.outputData = await this.compressImageCanvas(image, job.options);
 					if (image.outputData.size >= maxUploadSize) {
-						if (image.iterations >= job.options.maxIterations.value) {
+						if (image.iterations >= job.options.basic.maxIterations.value) {
 							throw new Error("Max iterations reached while compressing image");
 						} else {
 							return await this.compressImageLoop(job, image);
@@ -3092,7 +3150,7 @@ module.exports = (() => {
 				async compressImageCanvas(image, options) {
 					const canvas = document.createElement("canvas");
 					const context = canvas.getContext("2d");
-					const multiplier = Math.pow(options.sizeMultiplier.value, image.iterations);
+					const multiplier = Math.pow(options.basic.sizeMultiplier.value, image.iterations);
 					canvas.width = Math.round(image.width * multiplier);
 					canvas.height = Math.round(image.height * multiplier);
 					context.drawImage(image.data, 0, 0, canvas.width, canvas.height);
