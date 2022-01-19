@@ -16,23 +16,16 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.0.2",
+			version: "1.0.3",
 			description: "Automatic URL decoder.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/URLDecode.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/URLDecode.plugin.js"
 		},
 		changelog: [{
-				title: "Initial Release",
-				type: "added",
-				items: [
-					"Automatically decodes URLs in chat and embeds."
-				]
-			}, {
 				title: "Fixed",
 				type: "fixed",
 				items: [
-					"Fixed missing null check.",
-					"Fixed decoding truncated titles/descriptions."
+					"Leave actual URL encoded for poorly designed websites."
 				]
 			}
 		],
@@ -118,7 +111,7 @@ module.exports = (() => {
 				 * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 				 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 				 * SOFTWARE.
-				*/
+				 */
 
 				/**
 				 * Parses a (possibly) hex char into its int value.
@@ -330,7 +323,7 @@ module.exports = (() => {
 																	arr[index] = arr[index].replace(elem.props.href, newUrl);
 																}
 															});
-															elem.props.href = newUrl;
+															console.log(msg);
 														}
 													}
 												}
@@ -340,9 +333,9 @@ module.exports = (() => {
 											if (msg.props && msg.props.message && msg.props.message.embeds && Symbol.iterator in msg.props.message.embeds) {
 												for (const embed of msg.props.message.embeds) {
 													if (embed.url) {
-														embed.url = this.decodeText(embed.url);
 														embed.rawTitle = this.decodeText(embed.rawTitle);
 														embed.rawDescription = this.decodeText(embed.rawDescription);
+														console.log(msg);
 													}
 												}
 											}
