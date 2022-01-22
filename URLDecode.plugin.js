@@ -16,7 +16,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.0.3",
+			version: "1.0.4",
 			description: "Automatic URL decoder.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/URLDecode.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/URLDecode.plugin.js"
@@ -25,7 +25,7 @@ module.exports = (() => {
 				title: "Fixed",
 				type: "fixed",
 				items: [
-					"Leave actual URL encoded for poorly designed websites."
+					"Remove debug logging."
 				]
 			}
 		],
@@ -323,7 +323,6 @@ module.exports = (() => {
 																	arr[index] = arr[index].replace(elem.props.href, newUrl);
 																}
 															});
-															console.log(msg);
 														}
 													}
 												}
@@ -335,7 +334,6 @@ module.exports = (() => {
 													if (embed.url) {
 														embed.rawTitle = this.decodeText(embed.rawTitle);
 														embed.rawDescription = this.decodeText(embed.rawDescription);
-														console.log(msg);
 													}
 												}
 											}
