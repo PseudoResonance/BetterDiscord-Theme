@@ -23,7 +23,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.5.14",
+			version: "1.5.15",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -33,7 +33,8 @@ module.exports = (() => {
 				type: "fixed",
 				items: [
 					"Fixed issues with ZeresPluginLibrary 2.0",
-					"Updated to use fixed dropdowns"
+					"Updated to use fixed dropdowns",
+					"Fixed compressing video that contains no audio"
 				]
 			}, {
 				title: "Known Bugs",
@@ -2533,7 +2534,7 @@ module.exports = (() => {
 							const nameSplit = job.file.name.split('.');
 							const name = nameSplit.slice(0, nameSplit.length - 1).join(".");
 							const extension = nameSplit[nameSplit.length - 1];
-							const stripAudio = job.options.basic.stripAudio.value && job.options.basic.stripVideo.value ? false : job.options.basic.stripAudio.value;
+							let stripAudio = job.options.basic.stripAudio.value && job.options.basic.stripVideo.value ? false : job.options.basic.stripAudio.value;
 							const stripVideo = job.options.basic.stripAudio.value && job.options.basic.stripVideo.value ? false : job.options.basic.stripVideo.value;
 							const tempAudioPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".opus");
 							const tempVideoPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + "." + videoEncoderSettings[job.options.basic.encoder.value].fileType);
@@ -2563,6 +2564,8 @@ module.exports = (() => {
 											break;
 										}
 									}
+									if (audioStreamIndex < 0)
+										stripAudio = true;
 									const videoFiltersPass1 = [];
 									const videoFiltersPass2 = [];
 									const autoCropSettings = [-1, -1, -1, -1];
@@ -2578,8 +2581,8 @@ module.exports = (() => {
 									const originalDuration = probeOutputData.format.duration ? parseFloat(probeOutputData.format.duration) : 0;
 									const originalHeight = probeOutputData.streams[videoStreamIndex].height ? parseInt(probeOutputData.streams[videoStreamIndex].height) : null;
 									const colorPrimaries = probeOutputData.streams[videoStreamIndex].color_primaries ? probeOutputData.streams[videoStreamIndex].color_primaries : null;
-									const bitDepth = probeOutputData.streams[audioStreamIndex].bits_per_raw_sample ? parseInt(probeOutputData.streams[audioStreamIndex].bits_per_raw_sample) : null;
-									const numChannels = probeOutputData.streams[audioStreamIndex].channels ? parseInt(probeOutputData.streams[audioStreamIndex].channels) : null;
+									const bitDepth = audioStreamIndex >= 0 && probeOutputData.streams[audioStreamIndex].bits_per_raw_sample ? parseInt(probeOutputData.streams[audioStreamIndex].bits_per_raw_sample) : null;
+									const numChannels = audioStreamIndex >= 0 && probeOutputData.streams[audioStreamIndex].channels ? parseInt(probeOutputData.streams[audioStreamIndex].channels) : null;
 									const isHDR = hdrColorPrimaries.includes(colorPrimaries);
 									if (isHDR) {
 										videoFiltersPass1.push("zscale=transfer=linear,tonemap=hable,zscale=transfer=bt709");
