@@ -23,7 +23,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.5.13",
+			version: "1.5.14",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -32,7 +32,8 @@ module.exports = (() => {
 				title: "Fixed",
 				type: "fixed",
 				items: [
-					"Fixed issues with ZeresPluginLibrary 2.0"
+					"Fixed issues with ZeresPluginLibrary 2.0",
+					"Updated to use fixed dropdowns"
 				]
 			}, {
 				title: "Known Bugs",
@@ -699,7 +700,6 @@ module.exports = (() => {
 
 			// Discord related data
 			const Markdown = BdApi.findModule(m => m?.displayName === "Markdown" && m?.rules);
-			const DiscordDropdown = BdApi.findModuleByDisplayName('SelectTempWrapper');
 
 			// Toast icon SVGs
 			const loadingSvg = `<svg fill="currentColor" width="24" height="24" viewBox="0 0 24 24"><path d="M12,0v2C6.48,2,2,6.48,2,12c0,3.05,1.37,5.78,3.52,7.61l1.15-1.66C5.04,16.48,4,14.36,4,12c0-4.41,3.59-8,8-8v2l2.59-1.55l2.11-1.26L17,3L12,0z"/><path d="M18.48,4.39l-1.15,1.66C18.96,7.52,20,9.64,20,12c0,4.41-3.59,8-8,8v-2l-2.59,1.55L7.3,20.82L7,21l5,3v-2c5.52,0,10-4.48,10-10C22,8.95,20.63,6.22,18.48,4.39z"/></svg>`;
@@ -1233,39 +1233,6 @@ module.exports = (() => {
 					});
 				}
 			};
-
-			const Dropdown = class extends Settings.SettingField {
-				/**
-				 * @param {string} name - name label of the setting
-				 * @param {string} note - help/note to show underneath or above the setting
-				 * @param {*} defaultValue - currently selected value
-				 * @param {Array<module:Settings~DropdownItem>} values - array of all options available
-				 * @param {callable} onChange - callback to perform on setting change, callback item value
-				 * @param {object} [options] - object of options to give to the setting
-				 * @param {boolean} [options.clearable=false] - should be able to empty the field value
-				 * @param {boolean} [options.searchable=false] - should user be able to search the dropdown
-				 * @param {boolean} [options.disabled=false] - should the setting be disabled
-				 */
-				constructor(name, note, defaultValue, values, onChange, options = {}) {
-					const {
-						clearable = false,
-						searchable = false,
-						disabled = false
-					} = options;
-					super(name, note, onChange, DiscordDropdown, {
-						clearable: clearable,
-						searchable: searchable,
-						disabled: disabled,
-						options: values,
-						onChange: dropdown => opt => {
-							dropdown.props.value = opt && opt.value;
-							dropdown.forceUpdate();
-							this.onChange(opt && opt.value);
-						},
-						value: defaultValue
-					});
-				}
-			}
 
 			return class FileCompressor extends Plugin {
 				constructor() {
@@ -2284,7 +2251,7 @@ module.exports = (() => {
 					case "color":
 						return new Settings.ColorPicker(name, description, defaultValue, onChange, props);
 					case "dropdown":
-						return new Dropdown(name, description, defaultValue, props.values, onChange, props);
+						return new Settings.Dropdown(name, description, defaultValue, props.values, onChange, props);
 					case "file":
 						return new Settings.FilePicker(name, description, onChange, props);
 					case "keybind":
