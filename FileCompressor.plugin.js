@@ -11,6 +11,7 @@
 //TODO Add plugin settings for toast position on screen
 //TODO Add button to bypass compression
 //TODO Add setting to screen all files to check if Discord can embed them and reencode if not
+//TODO Refactor to use state-based processing of video/audio and store data to config file to attempt compression recovery if Discord/plugin is stopped
 
 module.exports = (() => {
 	const config = {
@@ -22,16 +23,16 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.5.12",
+			version: "1.5.13",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
 		},
 		changelog: [{
-				title: "Improved",
-				type: "improved",
+				title: "Fixed",
+				type: "fixed",
 				items: [
-					"Improved options in preparation for more fine control"
+					"Fixed issues with ZeresPluginLibrary 2.0"
 				]
 			}, {
 				title: "Known Bugs",
@@ -468,7 +469,6 @@ module.exports = (() => {
 				Utilities,
 				DOMTools,
 				PluginUtilities,
-				DiscordAPI,
 				Settings,
 				ReactTools,
 				WebpackModules
@@ -1281,6 +1281,7 @@ module.exports = (() => {
 					this.handleUploadEvent = this.handleUploadEvent.bind(this);
 					this.sendUploadFileList = this.sendUploadFileList.bind(this);
 					this.sendUploadFileListInternal = this.sendUploadFileListInternal.bind(this);
+					this.switchChannel = this.switchChannel.bind(this);
 					this.processUploadFileList = this.processUploadFileList.bind(this);
 					this.checkIsCompressible = this.checkIsCompressible.bind(this);
 					this.compressFile = this.compressFile.bind(this);
@@ -1303,7 +1304,7 @@ module.exports = (() => {
 					this.updateCache();
 					// Setup toasts
 					toasts = new Toasts();
-					i18n.updateLocale(DiscordAPI.UserSettings.locale);
+					i18n.updateLocale(DiscordModules.UserSettingsStore.locale);
 					PluginUtilities.addStyle('FileCompressor-CSS', `
 						#pseudocompressor-toasts {
 							position:fixed;
@@ -1682,6 +1683,14 @@ module.exports = (() => {
 					});
 				}
 
+				getCurrentUser() {
+					return DiscordModules.UserStore.getCurrentUser();
+				}
+
+				getCurrentChannel() {
+					return DiscordModules.ChannelStore.getChannel(DiscordModules.SelectedChannelStore.getChannelId());
+				}
+
 				async initTempFolder() {
 					if (!this.tempDataPath) {
 						this.tempDataPath = require('os').tmpdir.apply();
@@ -1706,7 +1715,7 @@ module.exports = (() => {
 							guildId = channel.guild_id;
 							channelId = channel.parent_id;
 							threadId = channel.id;
-							sidebar = DiscordAPI.currentChannel ? DiscordAPI.currentChannel.discordObject.id !== threadId : false;
+							sidebar = this.getCurrentChannel() ? this.getCurrentChannel().id !== threadId : false;
 						} else {
 							// Normal channel
 							guildId = channel.guild_id;
@@ -1726,7 +1735,7 @@ module.exports = (() => {
 					// Check account status and update max file upload size
 					const settingsMaxSize = this.settings.upload.maxFileSize != 0 ? this.settings.upload.maxFileSize : 0;
 					try {
-						maxUploadSize = DiscordModules.DiscordConstants.PremiumUserLimits[DiscordAPI.currentUser.discordObject.premiumType ? DiscordAPI.currentUser.discordObject.premiumType : 0].fileSize;
+						maxUploadSize = DiscordModules.DiscordConstants.PremiumUserLimits[this.getCurrentUser().premiumType ? this.getCurrentUser().premiumType : 0].fileSize;
 					} catch (e) {
 						Logger.err(config.info.name, e);
 						BdApi.showToast(i18n.MESSAGES.ERROR_GETTING_ACCOUNT_INFO, {
@@ -1788,11 +1797,11 @@ module.exports = (() => {
 				switchChannel(guildId, channelId, threadId, sidebar) {
 					if (!channelId)
 						return false;
-					const originalGuildId = DiscordAPI.currentChannel ? DiscordAPI.currentChannel.discordObject.guild_id : null;
-					const originalChannelId = DiscordAPI.currentChannel ? (DiscordAPI.currentChannel.discordObject.threadMetadata ? DiscordAPI.currentChannel.discordObject.parent_id : DiscordAPI.currentChannel.discordObject.id) : null;
-					const originalThreadId = DiscordAPI.currentChannel ? (DiscordAPI.currentChannel.discordObject.threadMetadata ? DiscordAPI.currentChannel.discordObject.id : null) : null;
+					const originalGuildId = this.getCurrentChannel() ? this.getCurrentChannel().guild_id : null;
+					const originalChannelId = this.getCurrentChannel() ? (this.getCurrentChannel().threadMetadata ? this.getCurrentChannel().parent_id : this.getCurrentChannel().id) : null;
+					const originalThreadId = this.getCurrentChannel() ? (this.getCurrentChannel().threadMetadata ? this.getCurrentChannel().id : null) : null;
 					let sidebarThreadData = BdApi.findModuleByProps('getThreadSidebarState').getThreadSidebarState(originalChannelId);
-					const sidebarThreadId = (DiscordAPI.currentChannel && !originalThreadId) ? (sidebarThreadData ? sidebarThreadData.channelId : null) : null;
+					const sidebarThreadId = (this.getCurrentChannel() && !originalThreadId) ? (sidebarThreadData ? sidebarThreadData.channelId : null) : null;
 					if (threadId) {
 						if (threadId !== sidebarThreadId && threadId !== originalThreadId) {
 							if (sidebar) {
@@ -1807,8 +1816,8 @@ module.exports = (() => {
 					} else {
 						DiscordModules.NavigationUtils.transitionToGuild(!guildId ? "@me" : guildId, channelId);
 					}
-					sidebarThreadData = BdApi.findModuleByProps('getThreadSidebarState').getThreadSidebarState(DiscordAPI.currentChannel.discordObject.id);
-					if ((guildId ? DiscordAPI.currentChannel.discordObject.guild_id === guildId : !DiscordAPI.currentChannel.discordObject.guild_id) && (threadId ? ((DiscordAPI.currentChannel.discordObject.id === threadId && DiscordAPI.currentChannel.discordObject.parent_id === channelId) || DiscordAPI.currentChannel.discordObject.id === channelId && (sidebarThreadData ? sidebarThreadData.channelId : null) === threadId) : DiscordAPI.currentChannel.discordObject.id === channelId)) {
+					sidebarThreadData = BdApi.findModuleByProps('getThreadSidebarState').getThreadSidebarState(this.getCurrentChannel().id);
+					if ((guildId ? this.getCurrentChannel().guild_id === guildId : !this.getCurrentChannel().guild_id) && (threadId ? ((this.getCurrentChannel().id === threadId && this.getCurrentChannel().parent_id === channelId) || this.getCurrentChannel().id === channelId && (sidebarThreadData ? sidebarThreadData.channelId : null) === threadId) : this.getCurrentChannel().id === channelId)) {
 						return true;
 					} else {
 						BdApi.showToast(i18n.MESSAGES.UNABLE_TO_RETURN_TO_CHANNEL, {
@@ -2425,6 +2434,7 @@ module.exports = (() => {
 										Logger.info(config.info.name, "[" + job.file.name + "] Target bitrate: " + audioBitrate + " bits/second");
 										Logger.info(config.info.name, "[" + job.file.name + "] Number of channels: " + numChannels + " channels");
 										Logger.info(config.info.name, "[" + job.file.name + "] Number of output channels: " + outputChannels + " channels");
+										Logger.info(config.info.name, "[" + job.file.name + "] Target audio bitrate per channel: " + (audioBitrate / outputChannels) + " bits/second");
 										Logger.info(config.info.name, "[" + job.file.name + "] Bit depth: " + bitDepth + " bits");
 										Logger.info(config.info.name, "[" + job.file.name + "] Output bit depth: " + (outputBitDepth ? outputBitDepth : bitDepth) + " bits");
 									}
@@ -2641,7 +2651,6 @@ module.exports = (() => {
 									let audioSize = 0;
 									let videoSize = 0;
 									if (!stripAudio) {
-										//TODO check per-channel bitrate and keep as many audio channels as possible
 										let audioBitrate = ((cappedFileSize * 8) * (stripVideo ? 1 : videoEncoderSettings[job.options.basic.encoder.value].encoderPresets[job.options.basic.encoderPreset.value].audioFilePercent)) / duration;
 										if (audioBitrate < 10240)
 											audioBitrate = 10240;
@@ -2682,6 +2691,7 @@ module.exports = (() => {
 											Logger.info(config.info.name, "[" + job.file.name + "] Target audio bitrate: " + audioBitrate + " bits/second");
 											Logger.info(config.info.name, "[" + job.file.name + "] Number of audio channels: " + numChannels + " channels");
 											Logger.info(config.info.name, "[" + job.file.name + "] Number of audio output channels: " + outputChannels + " channels");
+											Logger.info(config.info.name, "[" + job.file.name + "] Target audio bitrate per channel: " + (audioBitrate / outputChannels) + " bits/second");
 											Logger.info(config.info.name, "[" + job.file.name + "] Audio bit depth: " + bitDepth + " bits");
 											Logger.info(config.info.name, "[" + job.file.name + "] Output audio bit depth: " + (outputBitDepth ? outputBitDepth : bitDepth) + " bits");
 										}
@@ -3184,7 +3194,7 @@ module.exports = (() => {
 				}
 
 				async handleUserSettingsChange() {
-					i18n.updateLocale(DiscordAPI.UserSettings.locale);
+					i18n.updateLocale(DiscordModules.UserSettingsStore.locale);
 				}
 
 				listStartsWith(list, str) {
