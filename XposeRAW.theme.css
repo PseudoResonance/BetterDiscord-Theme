@@ -1,7 +1,7 @@
 /**
  * @name XposeRAW
  * @author PseudoResonance
- * @version 3.1.1
+ * @version 3.1.2
  * @description Custom theme.
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeRAW.theme.css
  */
@@ -19,7 +19,7 @@
  */
 
 :root, .theme-dark, .theme-light {
-	--xposeVersion:"3.1.1";
+	--xposeVersion:"3.1.2";
 	--blur-radius:10px;
 }
 
@@ -98,6 +98,10 @@
 	--background-modifier-active-danger:rgba(240, 71, 71, 0.24);
 	--background-floating-hover:rgba(24, 25, 28, 0.5);
 	--background-notice:rgba(78, 93, 148, 0.4);
+	--background-notice-info:rgba(74, 143, 225, 0.4);
+	--background-notice-warning:rgba(250, 168, 26, 0.4);
+	--background-notice-error:rgba(237, 66, 69, 0.4);
+	--background-notice-success:rgba(59, 165, 93, 0.4);
 	--playback-bar:rgba(0, 0, 0, 0.3);
 }
 
@@ -170,6 +174,7 @@
 	--background-modifier-hover-danger:rgba(240, 71, 71, 0.26);
 	--background-floating-hover:rgba(255, 255, 255, 0.5);
 	--background-notice:rgba(78, 93, 148, 0.4);
+	--background-notice-error:rgba(237, 66, 69, 0.4);
 	--playback-bar:rgba(0, 0, 0, 0.3);
 }
 
@@ -454,9 +459,35 @@
 }
 
 /* Transparent Notice */
+
 [class*="notice-"]:not([class*="-message"]) {
 	background-color:var(--background-notice) !important;
 	backdrop-filter:blur(var(--blur-radius));
+}
+
+[class*="notice-info"]:not([class*="-message"]) {
+	background-color:var(--background-notice-info) !important;
+	backdrop-filter:blur(var(--blur-radius));
+}
+
+[class*="notice-warning"]:not([class*="-message"]) {
+	background-color:var(--background-notice-warning) !important;
+	backdrop-filter:blur(var(--blur-radius));
+}
+
+[class*="notice-error"]:not([class*="-message"]) {
+	background-color:var(--background-notice-error) !important;
+	backdrop-filter:blur(var(--blur-radius));
+}
+
+[class*="notice-success"]:not([class*="-message"]) {
+	background-color:var(--background-notice-success) !important;
+	backdrop-filter:blur(var(--blur-radius));
+}
+
+[class*="notice-"] [class*="notice-close"], [class*="notice-"] [class*="notice-content"], [class*="notice-"] [class*="notice-button"] {
+	background-color:transparent !important;
+	backdrop-filter:none;
 }
 
 /* Scrollbars */
@@ -1340,7 +1371,7 @@ div:not([class*="translate-"]) > .layerContainer-2v_Sit [role="dialog"]:not(#emo
 }
 
 /* Display Version Info */
-[class*="sidebar-"] [role="tabbar"] [class*="info-"]::after {
+[class*="sidebar-"] [role="tablist"] [class*="info-"]::after {
 	content:"Xpose Theme Version: v" var(--xposeVersion);
 	color:var(--text-muted);
 	font-size:12px;
