@@ -23,7 +23,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.5.15",
+			version: "1.5.16",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -32,9 +32,7 @@ module.exports = (() => {
 				title: "Fixed",
 				type: "fixed",
 				items: [
-					"Fixed issues with ZeresPluginLibrary 2.0",
-					"Updated to use fixed dropdowns",
-					"Fixed compressing video that contains no audio"
+					"Fixed image compression"
 				]
 			}, {
 				title: "Known Bugs",
@@ -893,10 +891,18 @@ module.exports = (() => {
 								switch (process.arch) {
 								case "arm":
 								case "arm64":
-									this.mkvmerge += librarySuffixes["darwin_arm64"];
+									this.mkvmerge += librarySuffixes["darwin_amd64"];
 									break;
 								case "x64":
 								default:
+									/**
+									try {
+										if (child_process.execSync("sysctl -n sysctl.proc_translated").toString().startsWith("1")) {
+											this.mkvmerge += librarySuffixes["darwin_arm64"];
+											break;
+										}
+									} catch {}
+									*/
 									this.mkvmerge += librarySuffixes["darwin_amd64"];
 									break;
 								}
@@ -1942,7 +1948,7 @@ module.exports = (() => {
 								return (!isNaN(value) && !isNaN(parseInt(value)) && value > 0);
 							}
 						};
-						if (await this.showSettings(i18n.FORMAT('COMPRESSION_OPTIONS_TITLE', job.file.name), job.options))
+						if (await this.showSettings(i18n.FORMAT('COMPRESSION_OPTIONS_TITLE', job.file.name), job.options, job.optionsCategories))
 							return true;
 						break;
 					case "video":
