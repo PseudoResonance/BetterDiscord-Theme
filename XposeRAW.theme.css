@@ -1,7 +1,7 @@
 /**
  * @name XposeRAW
  * @author PseudoResonance
- * @version 3.1.2
+ * @version 3.1.3
  * @description Custom theme.
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeRAW.theme.css
  */
@@ -19,7 +19,7 @@
  */
 
 :root, .theme-dark, .theme-light {
-	--xposeVersion:"3.1.2";
+	--xposeVersion:"3.1.3";
 	--blur-radius:10px;
 }
 
@@ -573,11 +573,6 @@ code.inline {
 
 [class*="messagesWrapper-"] [class*="wrapperAudio-"] [class*="audioControls-"], [class*="messagesWrapper-"] [class*="volumeButtonSlider-"] [class*="mediaBarInteraction-"], [class*="messagesWrapper-"] [class*="volumeButtonSlider-"] [class*="mediaBarInteractionDragging-"], [class*="messagesWrapper-"] [class*="videoControls-"] {
 	background-color:var(--playback-bar);
-}
-
-/* Remove Nitro Gift Icon */
-[class*="chat-"] [class*="channelTextArea-"]  [class*="buttons-"]> button[class*="colorBrand-"]:first-child {
-	display:none;
 }
 
 /* Tooltips */
