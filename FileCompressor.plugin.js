@@ -22,23 +22,24 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.5.17",
+			version: "1.5.18",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
 		},
 		changelog: [{
+				title: "Updated",
+				type: "fixed",
+				items: [
+					"Updated to FFmpeg 5.0 - resolves FLAC decoding issue"
+				]
+			}, {
 				title: "Added",
 				type: "added",
 				items: [
 					"2 pass audio encoding to ensure audio is small enough",
-					"Toast position option"
-				]
-			}, {
-				title: "Known Bugs",
-				type: "improved",
-				items: [
-					"FFmpeg 4.4 has a FLAC decoding bug"
+					"Toast position option",
+					"Checks to ensure downloaded libraries are original"
 				]
 			}
 		],
@@ -129,12 +130,32 @@ module.exports = (() => {
 						]
 					}, {
 						get name() {
-							return i18n.MESSAGES.SETTINGS_PROMPT_FOR_OPTIONS
+							return i18n.MESSAGES.SETTINGS_PROMPT_FOR_OPTIONS_IMAGE
 						},
 						get note() {
-							return i18n.MESSAGES.SETTINGS_PROMPT_FOR_OPTIONS_DESC
+							return i18n.MESSAGES.SETTINGS_PROMPT_FOR_OPTIONS_IMAGE_DESC
 						},
-						id: 'promptOptions',
+						id: 'promptOptionsImage',
+						type: 'switch',
+						value: false
+					}, {
+						get name() {
+							return i18n.MESSAGES.SETTINGS_PROMPT_FOR_OPTIONS_VIDEO
+						},
+						get note() {
+							return i18n.MESSAGES.SETTINGS_PROMPT_FOR_OPTIONS_VIDEO_DESC
+						},
+						id: 'promptOptionsVideo',
+						type: 'switch',
+						value: true
+					}, {
+						get name() {
+							return i18n.MESSAGES.SETTINGS_PROMPT_FOR_OPTIONS_AUDIO
+						},
+						get note() {
+							return i18n.MESSAGES.SETTINGS_PROMPT_FOR_OPTIONS_AUDIO_DESC
+						},
+						id: 'promptOptionsAudio',
 						type: 'switch',
 						value: true
 					}, {
@@ -264,8 +285,12 @@ module.exports = (() => {
 			SETTINGS_BOTTOM_LEFT: 'Bottom Left',
 			SETTINGS_TOP_RIGHT: 'Top Right',
 			SETTINGS_TOP_LEFT: 'Top Left',
-			SETTINGS_PROMPT_FOR_OPTIONS: 'Prompt for Options',
-			SETTINGS_PROMPT_FOR_OPTIONS_DESC: 'Prompt for compression options before compressing.',
+			SETTINGS_PROMPT_FOR_OPTIONS_IMAGE: 'Prompt for Options (Images)',
+			SETTINGS_PROMPT_FOR_OPTIONS_IMAGE_DESC: 'Prompt for compression options before compressing images.',
+			SETTINGS_PROMPT_FOR_OPTIONS_VIDEO: 'Prompt for Options (Video)',
+			SETTINGS_PROMPT_FOR_OPTIONS_VIDEO_DESC: 'Prompt for compression options before compressing video.',
+			SETTINGS_PROMPT_FOR_OPTIONS_AUDIO: 'Prompt for Options (Audio)',
+			SETTINGS_PROMPT_FOR_OPTIONS_AUDIO_DESC: 'Prompt for compression options before compressing audio.',
 			SETTINGS_CONCURRENT_THREADS: 'Concurrent Compression Jobs',
 			SETTINGS_CONCURRENT_THREADS_DESC: 'Number of compression jobs that can be processing simultaneously.',
 			SETTINGS_CACHE_PATH: 'Cache Location',
@@ -365,8 +390,12 @@ module.exports = (() => {
 			SETTINGS_BOTTOM_LEFT: '左下',
 			SETTINGS_TOP_RIGHT: '右上',
 			SETTINGS_TOP_LEFT: '左上',
-			SETTINGS_PROMPT_FOR_OPTIONS: 'オプションのプロンプト',
-			SETTINGS_PROMPT_FOR_OPTIONS_DESC: '圧縮を開始前にオプションのプロンプト。',
+			SETTINGS_PROMPT_FOR_OPTIONS_IMAGE: 'オプションのプロンプト　（画像）',
+			SETTINGS_PROMPT_FOR_OPTIONS_IMAGE_DESC: '画像の圧縮を開始前にオプションのプロンプト。',
+			SETTINGS_PROMPT_FOR_OPTIONS_VIDEO: 'オプションのプロンプト　（動画）',
+			SETTINGS_PROMPT_FOR_OPTIONS_VIDEO_DESC: '動画の圧縮を開始前にオプションのプロンプト。',
+			SETTINGS_PROMPT_FOR_OPTIONS_AUDIO: 'オプションのプロンプト　（音声）',
+			SETTINGS_PROMPT_FOR_OPTIONS_AUDIO_DESC: '音声の圧縮を開始前にオプションのプロンプト。',
 			SETTINGS_CONCURRENT_THREADS: '同時圧縮ジョブ',
 			SETTINGS_CONCURRENT_THREADS_DESC: '同時で圧縮できるジョブの数。',
 			SETTINGS_CACHE_PATH: 'キャッシュの所在',
@@ -531,7 +560,7 @@ module.exports = (() => {
 			// Node modules
 			const fs = require('fs');
 			const path = require('path');
-			const child_process = require('child_process');
+			const childProcess = require('child_process');
 			const uuidv4 = require('uuid/v4');
 			const cryptoModule = require('crypto');
 			const mime = require('mime-types');
@@ -542,47 +571,127 @@ module.exports = (() => {
 
 			// FFmpeg container
 			let ffmpeg = null;
-			// FFmpeg constants
-			const ffmpegVersion = "4.4";
-			const ffmpegSourceUrl = "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffmpeg-source.zip";
-			const ffmpegLicense = "GPL Version 2";
-			const ffmpegLicenseUrl = "https://www.gnu.org/licenses/old-licenses/gpl-2.0.html";
-			const ffmpegDownloadUrls = {
-				win_amd64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffmpeg-win-amd64.exe",
-				darwin_amd64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffmpeg-darwin-amd64",
-				linux_i686: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffmpeg-linux-i686",
-				linux_amd64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffmpeg-linux-amd64",
-				linux_armhf: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffmpeg-linux-armhf",
-				linux_arm64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffmpeg-linux-arm64"
-			};
-			const ffprobeDownloadUrls = {
-				win_amd64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffprobe-win-amd64.exe",
-				darwin_amd64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffprobe-darwin-amd64",
-				linux_i686: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffprobe-linux-i686",
-				linux_amd64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffprobe-linux-amd64",
-				linux_armhf: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffprobe-linux-armhf",
-				linux_arm64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/4.4/ffprobe-linux-arm64"
+			// FFmpeg library constants
+			const ffmpegConstants = {
+				name: "FFmpeg",
+				version: "5.0",
+				sourceUrl: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/5.0/ffmpeg-source.zip",
+				license: "GPL Version 2",
+				licenseUrl: "https://www.gnu.org/licenses/old-licenses/gpl-2.0.html",
+				downloadUrls: {
+					FFmpeg: {
+						win_amd64: {
+							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/5.0/ffmpeg-win-amd64.exe",
+							size: 119959040,
+							hash: "4ca02c7908169391cbd95435b986b8b9296706cfe48164475c9abb88f684d6bd6fa841a971fbcc27e630fa67282aba5a57b007bb3fa0ab1f7c626d9c28cfcac9"
+						},
+						darwin_amd64: {
+							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/5.0/ffmpeg-darwin-amd64",
+							size: 78138880,
+							hash: "50e09b80001ff2387cbc66cdc4784630e9ef47a87c27a2e0dc52fb6e776653e663547b95f87a7574c9f2c3c80d007c0ba33c3a90917db429855cf788e8794f76"
+						},
+						linux_i686: {
+							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/5.0/ffmpeg-linux-i686",
+							size: 50856012,
+							hash: "c22abe13fada3790900ace3d01c1453862c9c87fecfa60877d11bfe41fc8805d9677a6d0db3d5def24bb9e03760b32014ffbd4b9f9d0f0dbc88161002dba51a2"
+						},
+						linux_amd64: {
+							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/5.0/ffmpeg-linux-amd64",
+							size: 78317376,
+							hash: "ee247090c8ad936a702bc1ee214fe2aab6c6b2043703a951e2ff073db55eb0999c6824a12f60ed324b7d197fe2c0c9e713fd26d86aa74e07cf305a74552a62a1"
+						},
+						linux_armhf: {
+							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/5.0/ffmpeg-linux-armhf",
+							size: 30711516,
+							hash: "dce6817062c787888995b7ff21e9623d0d648744db5b0b13f99ea86ac24470a551748d0608c601e0d384a6f186aef5244e49bdb70a39b0f69d99fc1e5c9fe2de"
+						},
+						linux_arm64: {
+							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/5.0/ffmpeg-linux-arm64",
+							size: 49628720,
+							hash: "3d499d52e74803af75c4f8cc6e5f0ef8942205d0314a06edd6ccc76ee8aa80a9440a8d848f7f5c6028cc4222ea70a20530ef1bd8e635d9d36e9d67890775d115"
+						}
+					},
+					FFprobe: {
+						win_amd64: {
+							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/5.0/ffprobe-win-amd64.exe",
+							size: 119863296,
+							hash: "5b9ccb803f12b5cea98913aa8647f3b7995c9092d5e0bf95963a6df5f13f380d031ad1c2f5a0f967f6d0c4970d566492f3f9339d58abc00fb9745f9841f2861f"
+						},
+						darwin_amd64: {
+							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/5.0/ffprobe-darwin-amd64",
+							size: 78073216,
+							hash: "23d68f33bb53c2fd91cb69f135635cf82b50174b56556f39475146fb9c17ed7b7333817ba767509481da4c624f84a38dc11f1b94277116c0b4f15e2b12b26d97"
+						},
+						linux_i686: {
+							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/5.0/ffprobe-linux-i686",
+							size: 50724300,
+							hash: "1d2e67859245563e3c530e8f23b4d41d08d5d05214046655d14fe605e1d706c13cce92e102d3594207504a58f6a875dd0986aeecf0fe9307159097e5e1691fe0"
+						},
+						linux_amd64: {
+							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/5.0/ffprobe-linux-amd64",
+							size: 78215520,
+							hash: "93832f28a8eff04d72930aad457022bc0455f9a3909d50bd3f043fe9e444549dc2b8945a623555bd5e927d2880d0bc90b95b55dc72d078dc614fe87ed26ef4dc"
+						},
+						linux_armhf: {
+							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/5.0/ffprobe-linux-armhf",
+							size: 30624652,
+							hash: "edc28aa8e0eda8e2cfc64ac002f58a9cfa3c4cd929f24b85175c404c400185988b3fef5ccbf03b4a9dd3de9a7ec0cc0db67964bbc142c440c53f2f46b97638d4"
+						},
+						linux_arm64: {
+							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/5.0/ffprobe-linux-arm64",
+							size: 49543216,
+							hash: "3c43d3c78cd5e2f1604f26b1052846a4e9a07c8f6efb26d6e3572c6a423bda95e0a68759d1d2dd96c11b3d62454a9753da61d0e0e49e29eb029bb29b51a53412"
+						}
+					}
+				}
 			};
 			// MKVmerge container
 			let mkvmerge = null;
-			// MKVmerge constants
-			const mkvmergeVersion = "58.0.0";
-			const mkvmergeSourceUrl = "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-source.tar.xz";
-			const mkvmergeLicense = "GPL Version 2";
-			const mkvmergeLicenseUrl = "https://www.gnu.org/licenses/old-licenses/gpl-2.0.html";
-			const mkvmergeDownloadUrls = {
-				win_amd64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-win-amd64.exe",
-				darwin_amd64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-darwin-amd64",
-				darwin_arm64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-darwin-arm64",
-				linux_i686: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-linux-i686",
-				linux_amd64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-linux-amd64",
-				linux_armhf: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-linux-armhf",
-				linux_arm64: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-linux-arm64"
+			// MKVmerge library constants
+			const mkvmergeConstants = {
+				name: "MKVmerge",
+				version: "58.0.0",
+				sourceUrl: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-source.tar.xz",
+				license: "GPL Version 2",
+				licenseUrl: "https://www.gnu.org/licenses/old-licenses/gpl-2.0.html",
+				downloadUrls: {
+					MKVmerge: {
+						win_amd64: {
+							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-win-amd64.exe",
+							size: 12389416,
+							hash: "ff4f1b349de9e440121f7dc7de94d90f638709bd2f336e9ab28237e86febe6ab493c5b2737b1c02e40ba75378dd045daf653d6dff4df71055b05faa558e893b2"
+						},
+						darwin_amd64: {
+							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-darwin-amd64",
+							size: 10417720,
+							hash: "59c574561f6567222adda67b01fefcafba3cc03a61c8b4565789411cca9b0b43a6705857ef0f639babe119d0a63f93ff8d0974d4c90d8021c7f2d5df8e44fb4f"
+						},
+						linux_i686: {
+							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-linux-i686",
+							size: 13558924,
+							hash: "ef845b83a59ea0a93ecfcd593abbb066593137e820678242d7a2010c9da1fb9925f9726eca34077bf474df8fdab4c2190fc316c153a76fac656463eb50e7a5a7"
+						},
+						linux_amd64: {
+							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-linux-amd64",
+							size: 13070840,
+							hash: "b14ea5ede6019fd612985ddd864925326ad5ae5c6f4851a8701cde555d4ef499d61b67c2a382f5ef4fc313f9ad9aba17847eb3820766d0c4bcc97ff40d0c89b8"
+						},
+						linux_armhf: {
+							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-linux-armhf",
+							size: 8573116,
+							hash: "b428b35c36a2f4e43ac16369be6212724787e926041b49826e429f4c806805b25cb346c2a2d4cbe563c29294fd04985263a9786e5c933b585cc0e0ed530bdbaf"
+						},
+						linux_arm64: {
+							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-linux-arm64",
+							size: 11509304,
+							hash: "03223a4a3b6baf55d26ff582a6f79857db4fa41bad24074ee267d9f2b592e36ff337b952f03c60508888737c34fe79258bd31ea49337c04131f8e82b3cd90ae9"
+						}
+					}
+				}
 			};
 			const librarySuffixes = {
 				win_amd64: "-win-amd64.exe",
 				darwin_amd64: "-darwin-amd64",
-				darwin_arm64: "-darwin-arm64",
 				linux_i686: "-linux-i686",
 				linux_amd64: "-linux-amd64",
 				linux_armhf: "-linux-armhf",
@@ -830,7 +939,7 @@ module.exports = (() => {
 						}
 						if (fs.existsSync(this.ffmpeg) && fs.existsSync(this.ffprobe)) {
 							Logger.info(config.info.name, 'Running FFmpeg -version');
-							Logger.debug(config.info.name, child_process.execFileSync(this.ffmpeg, ["-version"], {
+							Logger.debug(config.info.name, childProcess.execFileSync(this.ffmpeg, ["-version"], {
 									timeout: 10000
 								}).toString());
 						} else {
@@ -854,7 +963,7 @@ module.exports = (() => {
 						if (fs.existsSync(this.ffmpeg)) {
 							const rollingOutputBuffer = [];
 							Logger.info(config.info.name, 'Running FFmpeg ' + args.join(' '));
-							const process = child_process.spawn(this.ffmpeg, args);
+							const process = childProcess.spawn(this.ffmpeg, args);
 							osModule.setPriority(process.pid, 10);
 							process.on('error', err => {
 								Logger.err(config.info.name, err);
@@ -897,7 +1006,7 @@ module.exports = (() => {
 					return new Promise((resolve, reject) => {
 						if (fs.existsSync(this.ffprobe)) {
 							Logger.info(config.info.name, 'Running FFprobe ' + args.join(' '));
-							const process = child_process.execFile(this.ffprobe, args, (err, stdout, stderr) => {
+							const process = childProcess.execFile(this.ffprobe, args, (err, stdout, stderr) => {
 								if (err) {
 									Logger.err(config.info.name, stderr);
 									reject(err);
@@ -951,7 +1060,7 @@ module.exports = (() => {
 								default:
 									/**
 									try {
-									if (child_process.execSync("sysctl -n sysctl.proc_translated").toString().startsWith("1")) {
+									if (childProcess.execSync("sysctl -n sysctl.proc_translated").toString().startsWith("1")) {
 									this.mkvmerge += librarySuffixes["darwin_arm64"];
 									break;
 									}
@@ -983,7 +1092,7 @@ module.exports = (() => {
 						}
 						if (fs.existsSync(this.mkvmerge)) {
 							Logger.info(config.info.name, 'Running MKVmerge --version');
-							Logger.debug(config.info.name, child_process.execFileSync(this.mkvmerge, ["--version"], {
+							Logger.debug(config.info.name, childProcess.execFileSync(this.mkvmerge, ["--version"], {
 									timeout: 10000
 								}).toString());
 						} else {
@@ -1007,7 +1116,7 @@ module.exports = (() => {
 						if (fs.existsSync(this.mkvmerge)) {
 							const rollingOutputBuffer = [];
 							Logger.info(config.info.name, 'Running MKVmerge ' + args.join(' '));
-							const process = child_process.spawn(this.mkvmerge, args);
+							const process = childProcess.spawn(this.mkvmerge, args);
 							osModule.setPriority(process.pid, 10);
 							process.on('error', err => {
 								Logger.err(config.info.name, err);
@@ -1437,7 +1546,6 @@ module.exports = (() => {
 
 				updateToastCSS() {
 					PluginUtilities.removeStyle('FileCompressor-Toast-CSS');
-					console.log(this.settings.compressor.toastPosition);
 					switch (this.settings.compressor.toastPosition) {
 					case 'bottomright':
 						PluginUtilities.addStyle('FileCompressor-Toast-CSS', `
@@ -1554,7 +1662,7 @@ module.exports = (() => {
 						let ffmpegPath = this.settings.compressor.ffmpegPath ? this.settings.compressor.ffmpegPath : path.join(BdApi.Plugins.folder, "compressorlibraries");
 						let noFfmpeg = false;
 						let installedFfmpeg = BdApi.getData(config.info.name, "ffmpeg.version");
-						if (installedFfmpeg && installedFfmpeg != ffmpegVersion) {
+						if (installedFfmpeg && installedFfmpeg != ffmpegConstants.version) {
 							noFfmpeg = true;
 						} else {
 							if (this.settings.compressor.ffmpeg) {
@@ -1575,40 +1683,75 @@ module.exports = (() => {
 						}
 						if (noFfmpeg) {
 							if (this.settings.compressor.ffmpegDownload) {
-								BdApi.showConfirmationModal(i18n.FORMAT('LIBRARY_VERSION_REQUIRED', "FFmpeg", ffmpegVersion),
+								BdApi.showConfirmationModal(i18n.FORMAT('LIBRARY_VERSION_REQUIRED', ffmpegConstants.name, ffmpegConstants.version),
 									DiscordModules.React.createElement("div", {},
 										[
-											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_REQUIRED_COMPRESSION', config.info.name, "FFmpeg")),
+											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_REQUIRED_COMPRESSION', config.info.name, ffmpegConstants.name)),
 											DiscordModules.React.createElement("hr"),
-											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_REQUIRED_CUSTOM_INSTALL', config.info.name, "FFmpeg")),
+											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_REQUIRED_CUSTOM_INSTALL', config.info.name, ffmpegConstants.name)),
 											DiscordModules.React.createElement("hr"),
-											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_SOURCE_LOCATION', "FFmpeg", ffmpegVersion, ffmpegSourceUrl)),
-											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_LICENSE_INFO', "FFmpeg", ffmpegLicense, ffmpegLicenseUrl))
+											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_SOURCE_LOCATION', ffmpegConstants.name, ffmpegConstants.version, ffmpegConstants.sourceUrl)),
+											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_LICENSE_INFO', ffmpegConstants.name, ffmpegConstants.license, ffmpegConstants.licenseUrl))
 										]), {
 									danger: false,
 									onConfirm: () => {
-										this.saveSettings("compressor", "ffmpeg", true);
-										const ffmpegPromise = this.downloadLibrary(ffmpegPath, ffmpegDownloadUrls, "FFmpeg");
-										ffmpegPromise.then(filePath => {
-											fs.chmodSync(filePath, 755);
-										}).catch(e => {
+										let ffmpegPromise,
+										ffprobePromise;
+										try {
+											this.saveSettings("compressor", "ffmpeg", true);
+											ffmpegPromise = this.downloadLibrary(ffmpegPath, ffmpegConstants.downloadUrls, "FFmpeg");
+											ffmpegPromise.then(filePath => {
+												try {
+													fs.chmodSync(filePath, 755);
+												} catch (ex) {
+													Logger.err(config.info.name, "Unable to download FFmpeg", ex);
+													BdApi.showToast(i18n.FORMAT('ERROR_DOWNLOADING_PROGRAM', 'FFmpeg'), {
+														type: "error"
+													});
+													reject(ex);
+												}
+											}).catch(ex => {
+												Logger.err(config.info.name, "Unable to download FFmpeg", ex);
+												BdApi.showToast(i18n.FORMAT('ERROR_DOWNLOADING_PROGRAM', 'FFmpeg'), {
+													type: "error"
+												});
+												reject(ex);
+											});
+										} catch (e) {
 											Logger.err(config.info.name, "Unable to download FFmpeg", e);
 											BdApi.showToast(i18n.FORMAT('ERROR_DOWNLOADING_PROGRAM', 'FFmpeg'), {
 												type: "error"
 											});
 											reject(e);
-										});
-										const ffprobePromise = this.downloadLibrary(ffmpegPath, ffprobeDownloadUrls, "FFprobe");
-										ffprobePromise.then(filePath => {
-											fs.chmodSync(filePath, 755);
-										}).catch(e => {
+										}
+										try {
+											ffprobePromise = this.downloadLibrary(ffmpegPath, ffmpegConstants.downloadUrls, "FFprobe");
+											ffprobePromise.then(filePath => {
+												try {
+													fs.chmodSync(filePath, 755);
+												} catch (ex) {
+													Logger.err(config.info.name, "Unable to download FFprobe", ex);
+													BdApi.showToast(i18n.FORMAT('ERROR_DOWNLOADING_PROGRAM', 'FFprobe'), {
+														type: "error"
+													});
+													reject(ex);
+												}
+											}).catch(ex => {
+												Logger.err(config.info.name, "Unable to download FFprobe", ex);
+												BdApi.showToast(i18n.FORMAT('ERROR_DOWNLOADING_PROGRAM', 'FFprobe'), {
+													type: "error"
+												});
+												reject(ex);
+											});
+										} catch (e) {
 											Logger.err(config.info.name, "Unable to download FFprobe", e);
 											BdApi.showToast(i18n.FORMAT('ERROR_DOWNLOADING_PROGRAM', 'FFprobe'), {
 												type: "error"
 											});
 											reject(e);
-										});
+										}
 										Promise.all([ffmpegPromise, ffprobePromise]).then(() => {
+											BdApi.saveData(config.info.name, "ffmpeg.version", ffmpegConstants.version);
 											resolve(this.initFfmpeg());
 										});
 									},
@@ -1619,7 +1762,7 @@ module.exports = (() => {
 									cancelText: i18n.MESSAGES.CANCEL
 								});
 							} else {
-								Modals.showAlertModal(i18n.FORMAT('LIBRARY_VERSION_REQUIRED', "FFmpeg", ffmpegVersion), i18n.FORMAT('LIBRARY_CUSTOM_PATH_INVALID', config.info.name, "FFmpeg"));
+								Modals.showAlertModal(i18n.FORMAT('LIBRARY_VERSION_REQUIRED', "FFmpeg", ffmpegConstants.version), i18n.FORMAT('LIBRARY_CUSTOM_PATH_INVALID', config.info.name, "FFmpeg"));
 								reject();
 							}
 						}
@@ -1631,7 +1774,7 @@ module.exports = (() => {
 						let mkvmergePath = this.settings.compressor.mkvmergePath ? this.settings.compressor.mkvmergePath : path.join(BdApi.Plugins.folder, "compressorlibraries");
 						let noMkvmerge = false;
 						let installedMkvmerge = BdApi.getData(config.info.name, "mkvmerge.version");
-						if (installedMkvmerge && installedMkvmerge != mkvmergeVersion) {
+						if (installedMkvmerge && installedMkvmerge != mkvmergeConstants.version) {
 							noMkvmerge = true;
 						} else {
 							if (this.settings.compressor.mkvmerge) {
@@ -1652,29 +1795,46 @@ module.exports = (() => {
 						}
 						if (noMkvmerge) {
 							if (this.settings.compressor.mkvmergeDownload) {
-								BdApi.showConfirmationModal(i18n.FORMAT('LIBRARY_VERSION_REQUIRED', "MKVmerge", mkvmergeVersion),
+								BdApi.showConfirmationModal(i18n.FORMAT('LIBRARY_VERSION_REQUIRED', mkvmergeConstants.name, mkvmergeConstants.version),
 									DiscordModules.React.createElement("div", {},
 										[
-											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_REQUIRED_COMPRESSION', config.info.name, "MKVmerge")),
+											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_REQUIRED_COMPRESSION', config.info.name, mkvmergeConstants.name)),
 											DiscordModules.React.createElement("hr"),
-											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_REQUIRED_CUSTOM_INSTALL', config.info.name, "MKVmerge")),
+											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_REQUIRED_CUSTOM_INSTALL', config.info.name, mkvmergeConstants.name)),
 											DiscordModules.React.createElement("hr"),
-											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_SOURCE_LOCATION', "MKVmerge", mkvmergeVersion, mkvmergeSourceUrl)),
-											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_LICENSE_INFO', "MKVmerge", mkvmergeLicense, mkvmergeLicenseUrl))
+											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_SOURCE_LOCATION', mkvmergeConstants.name, mkvmergeConstants.version, mkvmergeConstants.sourceUrl)),
+											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_LICENSE_INFO', mkvmergeConstants.name, mkvmergeConstants.license, mkvmergeConstants.licenseUrl))
 										]), {
 									danger: false,
 									onConfirm: () => {
-										this.saveSettings("compressor", "mkvmerge", true);
-										this.downloadLibrary(mkvmergePath, mkvmergeDownloadUrls, "MKVmerge").then(filePath => {
-											fs.chmodSync(filePath, 755);
-											resolve(this.initMkvmerge());
-										}).catch(e => {
+										try {
+											this.saveSettings("compressor", "mkvmerge", true);
+											this.downloadLibrary(mkvmergePath, mkvmergeConstants.downloadUrls, "MKVmerge").then(filePath => {
+												try {
+													fs.chmodSync(filePath, 755);
+													BdApi.saveData(config.info.name, "mkvmerge.version", mkvmergeConstants.version);
+													resolve(this.initMkvmerge());
+												} catch (ex) {
+													Logger.err(config.info.name, "Unable to download MKVmerge", ex);
+													BdApi.showToast(i18n.FORMAT('ERROR_DOWNLOADING_PROGRAM', 'MKVmerge'), {
+														type: "error"
+													});
+													reject(ex);
+												}
+											}).catch(ex => {
+												Logger.err(config.info.name, "Unable to download MKVmerge", ex);
+												BdApi.showToast(i18n.FORMAT('ERROR_DOWNLOADING_PROGRAM', 'MKVmerge'), {
+													type: "error"
+												});
+												reject(ex);
+											});
+										} catch (e) {
 											Logger.err(config.info.name, "Unable to download MKVmerge", e);
 											BdApi.showToast(i18n.FORMAT('ERROR_DOWNLOADING_PROGRAM', 'MKVmerge'), {
 												type: "error"
 											});
 											reject(e);
-										});
+										}
 									},
 									onCancel: () => {
 										reject();
@@ -1683,7 +1843,7 @@ module.exports = (() => {
 									cancelText: i18n.MESSAGES.CANCEL
 								});
 							} else {
-								Modals.showAlertModal(i18n.FORMAT('LIBRARY_VERSION_REQUIRED', "MKVmerge", mkvmergeVersion), i18n.FORMAT('LIBRARY_CUSTOM_PATH_INVALID', config.info.name, "MKVmerge"));
+								Modals.showAlertModal(i18n.FORMAT('LIBRARY_VERSION_REQUIRED', "MKVmerge", mkvmergeConstants.version), i18n.FORMAT('LIBRARY_CUSTOM_PATH_INVALID', config.info.name, "MKVmerge"));
 								reject();
 							}
 						}
@@ -1694,59 +1854,120 @@ module.exports = (() => {
 					fs.mkdirSync(downloadPath, {
 						recursive: true
 					});
-					let dlUrl = "";
+					let dlInfo = "";
 					switch (process.platform) {
 					case "win32":
-						dlUrl = downloadUrls["win_amd64"];
+						dlInfo = downloadUrls[name].win_amd64;
 						break;
 					case "darwin":
 						switch (process.arch) {
 						case "arm":
 						case "arm64":
-							dlUrl = downloadUrls["darwin_arm64"];
-							if (!dlUrl)
-								dlUrl = downloadUrls["darwin_amd64"];
+							dlInfo = downloadUrls[name].darwin_arm64;
+							if (!dlInfo)
+								dlInfo = downloadUrls[name].darwin_amd64;
 							break;
 						case "x64":
 						default:
-							dlUrl = downloadUrls["darwin_amd64"];
+							dlInfo = downloadUrls[name].darwin_amd64;
 							break;
 						}
 						break;
 					default:
 						switch (process.arch) {
 						case "arm":
-							dlUrl = downloadUrls["linux_armhf"];
+							dlInfo = downloadUrls[name].linux_armhf;
 							break;
 						case "arm64":
-							dlUrl = downloadUrls["linux_arm64"];
+							dlInfo = downloadUrls[name].linux_arm64;
 							break;
 						case "x64":
-							dlUrl = downloadUrls["linux_amd64"];
+							dlInfo = downloadUrls[name].linux_amd64;
 							break;
 						case "ia32":
 						case "x32":
 						default:
-							dlUrl = downloadUrls["linux_i686"];
+							dlInfo = downloadUrls[name].linux_i686;
 							break;
 						}
 						break;
 					}
-					return this.downloadFile("-" + uuidv4().replace(/-/g, ""), dlUrl, downloadPath, name);
+					// Wait for file download to complete - .tmp appended to filename to prevent it from being run accidentally until verified
+					const tmpJobId = "-" + uuidv4().replace(/-/g, "");
+					toasts.createToast(tmpJobId);
+					const filePath = await this.downloadFile(tmpJobId, dlInfo.url, downloadPath, name);
+					// Check file size
+					const fileStats = fs.statSync(filePath);
+					const fileSize = fileStats ? fileStats.size : 0;
+					if (fileSize !== dlInfo.size) {
+						toasts.removeToast(tmpJobId);
+						try {
+							fs.rmSync(filePath);
+						} catch (e) {
+							Logger.err(config.info.name, "Error deleting " + filePath, e);
+						}
+						throw new Error("Size for downloaded " + name + " does not match! Downloaded: " + fileSize + " Expected: " + dlInfo.size);
+					}
+					// Wait until file is hashed
+					const fileHash = await this.hashDownloadedFile(tmpJobId, filePath, fileSize);
+					toasts.setToast(tmpJobId);
+					// Check file hash
+					if (fileHash !== dlInfo.hash) {
+						toasts.removeToast(tmpJobId);
+						try {
+							fs.rmSync(filePath);
+						} catch (e) {
+							Logger.err(config.info.name, "Error deleting " + filePath, e);
+						}
+						throw new Error("Hash for downloaded " + name + " does not match! Calculated: " + fileHash + " Expected: " + dlInfo.hash);
+					}
+					// Rename file for use if checks pass
+					const newPath = filePath.slice(0, -4);
+					fs.renameSync(filePath, newPath);
+					toasts.removeToast(tmpJobId);
+					return newPath;
 				}
 
-				downloadFile(jobId, url, downloadPath, name) {
+				hashDownloadedFile(jobId, file, fileSize) {
+					return new Promise((resolve, reject) => {
+						let bytesProcessed = 0;
+						const hash = cryptoModule.createHash('sha512');
+						const fileReadStream = fs.createReadStream(file);
+						toasts.setToast(jobId, i18n.FORMAT('HASHING_PERCENT', '0'));
+						fileReadStream.on('end', () => {
+							try {
+								resolve(hash.digest('hex'));
+							} catch (err) {
+								Logger.err(config.info.name, err);
+								reject();
+							}
+						});
+						fileReadStream.on('error', (e) => {
+							reject(new Error("Error while hashing " + file, {
+									cause: e
+								}));
+						});
+						fileReadStream.on('data', (chunk) => {
+							bytesProcessed += chunk.length;
+							const percent = Math.round((bytesProcessed / fileSize) * 100);
+							toasts.setToast(jobId, i18n.FORMAT('HASHING_PERCENT', percent ? percent : 0));
+						});
+						fileReadStream.pipe(hash);
+					});
+				}
+
+				downloadFile(jobId, downloadUrl, downloadPath, name) {
 					return new Promise((resolve, reject) => {
 						const toastsModule = toasts;
 						const https = require('https');
-						const req = https.request(url);
+						const req = https.request(downloadUrl);
 						req.on('response', result => {
 							if (result.statusCode === 200) {
 								const regexp = /filename=(.*?)(?=;|$)/gi;
 								const originalFileName = regexp.exec(result.headers['content-disposition'])[1];
 								const totalLength = result.headers['content-length'];
 								let writtenLength = 0;
-								const fileStream = fs.createWriteStream(path.join(downloadPath, originalFileName));
+								const fileStream = fs.createWriteStream(path.join(downloadPath, originalFileName + ".tmp"));
 								toastsModule.setToast(jobId, i18n.FORMAT('DOWNLOADING_PROGRAM_PERCENT', name, '0'));
 								result.on('data', chunk => {
 									writtenLength += chunk.length;
@@ -1754,24 +1975,26 @@ module.exports = (() => {
 									toastsModule.setToast(jobId, i18n.FORMAT('DOWNLOADING_PROGRAM_PERCENT', name, percent ? percent : 0));
 								});
 								result.pipe(fileStream);
-								fileStream.on('error', function (e) {
+								fileStream.on('error', (e) => {
 									// Handle write errors
-									reject(new Error("Error while downloading " + url + " for " + name));
+									reject(new Error("Error while downloading " + downloadUrl + " for " + name, {
+											cause: e
+										}));
 								});
 								fileStream.on('finish', function () {
 									// The file has been downloaded
 									toastsModule.removeToast(jobId);
-									resolve(path.join(downloadPath, originalFileName));
+									resolve(path.join(downloadPath, originalFileName + ".tmp"));
 								});
 							} else if (result.statusCode === 302) {
 								const location = result.headers['location'];
 								if (location) {
 									resolve(this.downloadFile(jobId, location, downloadPath, name));
 								} else {
-									reject(new Error("Invalid file URL: " + url + " for downloading " + name));
+									reject(new Error("Invalid file URL: " + downloadUrl + " for downloading " + name));
 								}
 							} else {
-								reject(new Error("Server returned " + result.statusCode + " at " + url + " for downloading " + name));
+								reject(new Error("Server returned " + result.statusCode + " at " + downloadUrl + " for downloading " + name));
 							}
 						});
 						req.end();
@@ -1895,8 +2118,7 @@ module.exports = (() => {
 					const originalGuildId = this.getCurrentChannel() ? this.getCurrentChannel().guild_id : null;
 					const originalChannelId = this.getCurrentChannel() ? (this.getCurrentChannel().threadMetadata ? this.getCurrentChannel().parent_id : this.getCurrentChannel().id) : null;
 					const originalThreadId = this.getCurrentChannel() ? (this.getCurrentChannel().threadMetadata ? this.getCurrentChannel().id : null) : null;
-					let sidebarThreadData = BdApi.findModuleByProps('getThreadSidebarState').getThreadSidebarState(originalChannelId);
-					const sidebarThreadId = (this.getCurrentChannel() && !originalThreadId) ? (sidebarThreadData ? sidebarThreadData.channelId : null) : null;
+					const sidebarThreadId = (this.getCurrentChannel() && !originalThreadId) ? BdApi.findModuleByProps('getCurrentSidebarChannelId').getCurrentSidebarChannelId(originalChannelId) : null;
 					if (threadId) {
 						if (threadId !== sidebarThreadId && threadId !== originalThreadId) {
 							if (sidebar) {
@@ -1911,8 +2133,7 @@ module.exports = (() => {
 					} else {
 						DiscordModules.NavigationUtils.transitionToGuild(!guildId ? "@me" : guildId, channelId);
 					}
-					sidebarThreadData = BdApi.findModuleByProps('getThreadSidebarState').getThreadSidebarState(this.getCurrentChannel().id);
-					if ((guildId ? this.getCurrentChannel().guild_id === guildId : !this.getCurrentChannel().guild_id) && (threadId ? ((this.getCurrentChannel().id === threadId && this.getCurrentChannel().parent_id === channelId) || this.getCurrentChannel().id === channelId && (sidebarThreadData ? sidebarThreadData.channelId : null) === threadId) : this.getCurrentChannel().id === channelId)) {
+					if ((guildId ? this.getCurrentChannel().guild_id === guildId : !this.getCurrentChannel().guild_id) && (threadId ? ((this.getCurrentChannel().id === threadId && this.getCurrentChannel().parent_id === channelId) || this.getCurrentChannel().id === channelId && BdApi.findModuleByProps('getCurrentSidebarChannelId').getCurrentSidebarChannelId(this.getCurrentChannel().id) === threadId) : this.getCurrentChannel().id === channelId)) {
 						return true;
 					} else {
 						BdApi.showToast(i18n.MESSAGES.UNABLE_TO_RETURN_TO_CHANNEL, {
@@ -2075,7 +2296,7 @@ module.exports = (() => {
 								return (!isNaN(value) && !isNaN(parseInt(value)) && value > 0);
 							}
 						};
-						if (await this.showSettings(i18n.FORMAT('COMPRESSION_OPTIONS_TITLE', job.file.name), job.options, job.optionsCategories))
+						if (await this.showSettings(i18n.FORMAT('COMPRESSION_OPTIONS_TITLE', job.file.name), job.options, job.optionsCategories, this.settings.compressor.promptOptionsImage))
 							return true;
 						break;
 					case "video":
@@ -2224,7 +2445,7 @@ module.exports = (() => {
 							type: "switch",
 							defaultValue: false
 						};
-						if (await this.showSettings(i18n.FORMAT('COMPRESSION_OPTIONS_TITLE', job.file.name), job.options, job.optionsCategories))
+						if (await this.showSettings(i18n.FORMAT('COMPRESSION_OPTIONS_TITLE', job.file.name), job.options, job.optionsCategories, this.settings.compressor.promptOptionsVideo))
 							return true;
 						break;
 					case "audio":
@@ -2303,17 +2524,17 @@ module.exports = (() => {
 										return true;
 							}
 						};
-						if (await this.showSettings(i18n.FORMAT('COMPRESSION_OPTIONS_TITLE', job.file.name), job.options, job.optionsCategories))
+						if (await this.showSettings(i18n.FORMAT('COMPRESSION_OPTIONS_TITLE', job.file.name), job.options, job.optionsCategories, this.settings.compressor.promptOptionsAudio))
 							return true;
 						break;
 					}
 					return false;
 				}
 
-				showSettings(title, options, optionsCategories) {
+				showSettings(title, options, optionsCategories, shouldPrompt) {
 					return new Promise((resolve, reject) => {
 						// If options should be shown
-						if (this.settings.compressor.promptOptions) {
+						if (shouldPrompt) {
 							const settingsElements = new Map();
 							const settingsGroups = new Map();
 							const settingsPanels = new Map();
@@ -2371,9 +2592,11 @@ module.exports = (() => {
 								cancelText: i18n.MESSAGES.CANCEL
 							});
 						} else {
-							for (const setting in options) {
-								// Set current value to default value
-								options[category][setting].value = options[category][setting].defaultValue;
+							for (const category in options) {
+								for (const setting in options[category]) {
+									// Set current value to default value
+									options[category][setting].value = options[category][setting].defaultValue;
+								}
 							}
 							resolve(true);
 						}
@@ -2481,6 +2704,7 @@ module.exports = (() => {
 					}
 				}
 
+				// Main function to compress a given audio file
 				async compressAudio(job) {
 					if (!ffmpeg || !ffmpeg.checkFFmpeg()) {
 						await this.initFfmpeg();
@@ -2718,6 +2942,7 @@ module.exports = (() => {
 					}
 				}
 
+				// Main function to compress a given video
 				async compressVideo(job) {
 					if (!ffmpeg || !ffmpeg.checkFFmpeg()) {
 						await this.initFfmpeg();
@@ -3183,6 +3408,7 @@ module.exports = (() => {
 					}
 				}
 
+				// Wait for image to finish loading
 				loadImageElement(img, src) {
 					return new Promise((resolve, reject) => {
 						img.addEventListener("load", () => {
@@ -3195,6 +3421,7 @@ module.exports = (() => {
 					});
 				}
 
+				// Main function to compress a given image
 				async compressImage(job) {
 					const objectUrl = URL.createObjectURL(job.file);
 					const img = new window.Image();
@@ -3221,6 +3448,7 @@ module.exports = (() => {
 					throw new Error("Unable to compress image");
 				}
 
+				// Internal recursive loop
 				async compressImageLoop(job, image) {
 					image.iterations++;
 					toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_TRY_NUMBER', image.iterations));
@@ -3236,6 +3464,7 @@ module.exports = (() => {
 					}
 				}
 
+				// Compress HTML canvas to target size
 				async compressImageCanvas(image, options) {
 					const canvas = document.createElement("canvas");
 					const context = canvas.getContext("2d");
@@ -3267,9 +3496,6 @@ module.exports = (() => {
 						case "cachePath":
 							this.updateCache();
 							break;
-						case "ffmpegPath":
-							this.initFfmpeg();
-							break;
 						}
 						break;
 					}
@@ -3277,17 +3503,6 @@ module.exports = (() => {
 
 				async handleUserSettingsChange() {
 					i18n.updateLocale(DiscordModules.UserSettingsStore.locale);
-				}
-
-				listStartsWith(list, str) {
-					if (list != null) {
-						for (let value of list.entries()) {
-							if (value[1].startsWith(str)) {
-								return true;
-							}
-						}
-					}
-					return false;
 				}
 
 			};
