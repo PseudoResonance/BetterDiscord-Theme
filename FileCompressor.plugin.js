@@ -22,7 +22,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.5.18",
+			version: "1.5.19",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -40,6 +40,12 @@ module.exports = (() => {
 					"2 pass audio encoding to ensure audio is small enough",
 					"Toast position option",
 					"Checks to ensure downloaded libraries are original"
+				]
+			}, {
+				title: "Fixed",
+				type: "fixed",
+				items: [
+					"Tuned audio encoding"
 				]
 			}
 		],
@@ -2821,7 +2827,7 @@ module.exports = (() => {
 											Logger.info(config.info.name, "[" + job.file.name + "] Final audio size: " + audioSize + " bytes");
 										}
 										if (audioSize > cappedFileSize) {
-											const sizeDiff = (audioSize - cappedFileSize);
+											const sizeDiff = (audioSize - cappedFileSize) + 1000;
 											const audioBitrateDiff = (sizeDiff * 8) / duration
 											const audioBitrateAdjusted = Math.floor(audioBitrate - audioBitrateDiff);
 											if (this.settings.compressor.debug) {
