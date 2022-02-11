@@ -22,7 +22,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.5.19",
+			version: "1.5.20",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -366,10 +366,8 @@ module.exports = (() => {
 			CALCULATING: 'Calculating',
 			COMPRESSING_PERCENT: 'Compressing {$0$}%',
 			COMPRESSING_AUDIO_PERCENT: 'Compressing Audio {$0$}%',
-			COMPRESSING_AUDIO_PASS_1_PERCENT: 'Compressing Audio Pass 1 {$0$}%',
-			COMPRESSING_AUDIO_PASS_2_PERCENT: 'Compressing Audio Pass 2 {$0$}%',
-			COMPRESSING_VIDEO_PASS_1_PERCENT: 'Compressing Video Pass 1 {$0$}%',
-			COMPRESSING_VIDEO_PASS_2_PERCENT: 'Compressing Video Pass 2 {$0$}%',
+			COMPRESSING_AUDIO_PASS_PERCENT: 'Compressing Audio Pass {$0$} {$1$}%',
+			COMPRESSING_VIDEO_PASS_PERCENT: 'Compressing Video Pass {$0$} {$1$}%',
 			COMPRESSING_TRY_NUMBER: 'Compressing Attempt {$0$}',
 			PACKAGING: 'Packaging',
 			PACKAGING_PERCENT: 'Packaging {$0$}%',
@@ -471,10 +469,8 @@ module.exports = (() => {
 			CALCULATING: '計算中',
 			COMPRESSING_PERCENT: '圧縮中　{$0$}％',
 			COMPRESSING_AUDIO_PERCENT: '音声圧縮中　{$0$}％',
-			COMPRESSING_AUDIO_PASS_1_PERCENT: '音声圧縮中１回目　{$0$}％',
-			COMPRESSING_AUDIO_PASS_2_PERCENT: '音声圧縮中２回目　{$0$}％',
-			COMPRESSING_VIDEO_PASS_1_PERCENT: '動画圧縮中１回目　{$0$}％',
-			COMPRESSING_VIDEO_PASS_2_PERCENT: '動画圧縮中２回目　{$0$}％',
+			COMPRESSING_AUDIO_PASS_PERCENT: '音声圧縮中 {$0$} 回目　{$1$}％',
+			COMPRESSING_VIDEO_PASS_PERCENT: '動画圧縮中 {$0$} 回目　{$1$}％',
 			COMPRESSING_TRY_NUMBER: '圧縮試行番　{$0$}',
 			PACKAGING: 'パッケージング中',
 			PACKAGING_PERCENT: 'パッケージング中　{$0$}％',
@@ -2786,7 +2782,7 @@ module.exports = (() => {
 										Logger.info(config.info.name, "[" + job.file.name + "] Output bit depth: " + (outputBitDepth ? outputBitDepth : bitDepth) + " bits");
 									}
 									try {
-										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PASS_1_PERCENT', '0'));
+										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PASS_PERCENT', '1', '0'));
 										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", job.originalFilePath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-vn", "-c:a", "libopus", "-map", "0:a", "-b:a", audioBitrate, "-maxrate", audioBitrate, "-bufsize", audioBitrate, ...((outputBitDepth && (outputBitDepth < bitDepth || !bitDepth)) ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, "-sn", "-map_chapters", "-1", job.compressionData.compressedPathPre], [{
 													filter: str => {
 														return str.includes("time=");
@@ -2798,7 +2794,7 @@ module.exports = (() => {
 																const timeStrParts = timeStr[1].split(':');
 																const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
 																const percent = Math.round((elapsedTime / duration) * 100);
-																toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PASS_1_PERCENT', percent ? percent : 0));
+																toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PASS_PERCENT', '1', percent ? percent : 0));
 															}
 														} catch (e) {
 															Logger.err(config.info.name, e);
@@ -2822,66 +2818,69 @@ module.exports = (() => {
 									if (fs.existsSync(job.compressionData.compressedPathPre)) {
 										let audioStats = fs.statSync(job.compressionData.compressedPathPre);
 										let audioSize = audioStats ? audioStats.size : 0;
+										const originalAudioSize = audioSize;
 										if (this.settings.compressor.debug) {
 											Logger.info(config.info.name, "[" + job.file.name + "] Expected audio size: " + (duration * (audioBitrate / 8)) + " bytes");
 											Logger.info(config.info.name, "[" + job.file.name + "] Final audio size: " + audioSize + " bytes");
 										}
-										if (audioSize > cappedFileSize) {
-											const sizeDiff = (audioSize - cappedFileSize) + 1000;
-											const audioBitrateDiff = (sizeDiff * 8) / duration
-											const audioBitrateAdjusted = Math.floor(audioBitrate - audioBitrateDiff);
-											if (this.settings.compressor.debug) {
-												Logger.info(config.info.name, "[" + job.file.name + "] Adjusted target bitrate: " + audioBitrateAdjusted + " bits/second");
-												Logger.info(config.info.name, "[" + job.file.name + "] Adjusted target audio bitrate per channel: " + (audioBitrateAdjusted / outputChannels) + " bits/second");
-											}
-											try {
-												toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PASS_2_PERCENT', '0'));
-												await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", job.originalFilePath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-vn", "-c:a", "libopus", "-map", "0:a", "-b:a", audioBitrateAdjusted, "-maxrate", audioBitrateAdjusted, "-bufsize", audioBitrateAdjusted, ...((outputBitDepth && (outputBitDepth < bitDepth || !bitDepth)) ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, "-sn", "-map_chapters", "-1", job.compressionData.compressedPathPre], [{
-															filter: str => {
-																return str.includes("time=");
-															},
-															process: str => {
-																try {
-																	const timeStr = regexPatternTime.exec(str);
-																	if (timeStr?.length > 1) {
-																		const timeStrParts = timeStr[1].split(':');
-																		const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
-																		const percent = Math.round((elapsedTime / duration) * 100);
-																		toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PASS_2_PERCENT', percent ? percent : 0));
+										for (let compressionPass = 2; compressionPass <= 3; compressionPass++) {
+											if (audioSize > cappedFileSize) {
+												const sizeDiff = (originalAudioSize - cappedFileSize) + (compressionPass == 2 ? 1000 : 35000);
+												const audioBitrateDiff = (sizeDiff * 8) / duration;
+												const audioBitrateAdjusted = Math.floor(audioBitrate - audioBitrateDiff);
+												if (this.settings.compressor.debug) {
+													Logger.info(config.info.name, "[" + job.file.name + "] Adjusted target bitrate: " + audioBitrateAdjusted + " bits/second");
+													Logger.info(config.info.name, "[" + job.file.name + "] Adjusted target audio bitrate per channel: " + (audioBitrateAdjusted / outputChannels) + " bits/second");
+												}
+												try {
+													toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PASS_PERCENT', compressionPass, '0'));
+													await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", job.originalFilePath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-vn", "-c:a", "libopus", "-map", "0:a", "-b:a", audioBitrateAdjusted, "-maxrate", audioBitrateAdjusted, "-bufsize", audioBitrateAdjusted, ...((outputBitDepth && (outputBitDepth < bitDepth || !bitDepth)) ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, "-sn", "-map_chapters", "-1", job.compressionData.compressedPathPre], [{
+																filter: str => {
+																	return str.includes("time=");
+																},
+																process: str => {
+																	try {
+																		const timeStr = regexPatternTime.exec(str);
+																		if (timeStr?.length > 1) {
+																			const timeStrParts = timeStr[1].split(':');
+																			const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
+																			const percent = Math.round((elapsedTime / duration) * 100);
+																			toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PASS_PERCENT', compressionPass, percent ? percent : 0));
+																		}
+																	} catch (e) {
+																		Logger.err(config.info.name, e);
 																	}
-																} catch (e) {
-																	Logger.err(config.info.name, e);
 																}
 															}
-														}
-													]);
-											} catch (e) {
-												if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
-													try {
-														fs.rmSync(job.originalFilePath);
-													} catch (e) {}
+														]);
+												} catch (e) {
+													if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
+														try {
+															fs.rmSync(job.originalFilePath);
+														} catch (e) {}
+													}
+													if (!this.settings.compressor.keepTemp) {
+														try {
+															fs.rmSync(job.compressionData.compressedPathPre);
+														} catch (e) {}
+													}
+													throw e;
 												}
-												if (!this.settings.compressor.keepTemp) {
-													try {
-														fs.rmSync(job.compressionData.compressedPathPre);
-													} catch (e) {}
+												if (fs.existsSync(job.compressionData.compressedPathPre)) {
+													audioStats = fs.statSync(job.compressionData.compressedPathPre);
+													audioSize = audioStats ? audioStats.size : 0;
+													if (this.settings.compressor.debug) {
+														Logger.info(config.info.name, "[" + job.file.name + "] Expected audio size: " + (duration * (audioBitrateAdjusted / 8)) + " bytes");
+														Logger.info(config.info.name, "[" + job.file.name + "] Final audio size: " + audioSize + " bytes");
+													}
+												} else {
+													if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
+														try {
+															fs.rmSync(job.originalFilePath);
+														} catch (e) {}
+													}
+													throw new Error("Cannot find FFmpeg output");
 												}
-												throw e;
-											}
-											if (fs.existsSync(job.compressionData.compressedPathPre)) {
-												audioStats = fs.statSync(job.compressionData.compressedPathPre);
-												audioSize = audioStats ? audioStats.size : 0;
-												if (this.settings.compressor.debug) {
-													Logger.info(config.info.name, "[" + job.file.name + "] Expected audio size: " + (duration * (audioBitrateAdjusted / 8)) + " bytes");
-													Logger.info(config.info.name, "[" + job.file.name + "] Final audio size: " + audioSize + " bytes");
-												}
-											} else {
-												if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
-													try {
-														fs.rmSync(job.originalFilePath);
-													} catch (e) {}
-												}
-												throw new Error("Cannot find FFmpeg output");
 											}
 										}
 										fs.renameSync(job.compressionData.compressedPathPre, job.compressionData.compressedPath);
@@ -3154,7 +3153,7 @@ module.exports = (() => {
 										Logger.info(config.info.name, "[" + job.file.name + "] Output frame height: " + (maxVideoHeight < originalHeight || (!originalHeight && maxVideoHeight) ? maxVideoHeight : originalHeight) + " pixels");
 									}
 									try {
-										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_VIDEO_PASS_1_PERCENT', '0'));
+										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_VIDEO_PASS_PERCENT', '1', '0'));
 										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", job.originalFilePath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate, ...(videoFiltersPass1.length > 0 ? ["-vf", videoFiltersPass1.join(",")] : []), "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.basic.encoder.value, "-pass", "1", "-passlogfile", job.compressionData.tempVideoTwoPassPath, "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")], [{
 													filter: str => {
 														return str.includes("time=");
@@ -3166,7 +3165,7 @@ module.exports = (() => {
 																const timeStrParts = timeStr[1].split(':');
 																const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
 																const percent = Math.round((elapsedTime / duration) * 100);
-																toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_VIDEO_PASS_1_PERCENT', percent ? percent : 0));
+																toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_VIDEO_PASS_PERCENT', '1', percent ? percent : 0));
 															}
 														} catch (e) {
 															Logger.err(config.info.name, e);
@@ -3233,7 +3232,7 @@ module.exports = (() => {
 										videoFiltersPass2.unshift("crop=" + autoCropSettingsStr);
 									}
 									try {
-										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_VIDEO_PASS_2_PERCENT', '0'));
+										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_VIDEO_PASS_PERCENT', '2', '0'));
 										await ffmpeg.runWithArgs(["-y", "-ss", startSeconds, "-i", job.originalFilePath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate, ...(videoFiltersPass2.length > 0 ? ["-vf", videoFiltersPass2.join(",")] : []), "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.basic.encoder.value, "-pass", "2", "-passlogfile", job.compressionData.tempVideoTwoPassPath, job.compressionData.tempVideoPath], [{
 													filter: str => {
 														return str.includes("time=");
@@ -3245,7 +3244,7 @@ module.exports = (() => {
 																const timeStrParts = timeStr[1].split(':');
 																const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
 																const percent = Math.round((elapsedTime / duration) * 100);
-																toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_VIDEO_PASS_2_PERCENT', percent ? percent : 0));
+																toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_VIDEO_PASS_PERCENT', '2', percent ? percent : 0));
 															}
 														} catch (e) {
 															Logger.err(config.info.name, e);
