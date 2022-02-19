@@ -23,7 +23,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.5.22",
+			version: "1.5.23",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -32,7 +32,8 @@ module.exports = (() => {
 				title: "Added",
 				type: "added",
 				items: [
-					"Option to save error logs for debugging if compression fails"
+					"Option to save error logs for debugging if compression fails",
+					"Output file information along with logs"
 				]
 			}, {
 				title: "Fixed",
@@ -2717,7 +2718,7 @@ module.exports = (() => {
 						BdApi.showConfirmationModal(i18n.MESSAGES.SAVE_DEBUG_LOG, "", {
 							onConfirm: () => {
 								// Convert logs to blob and trigger file download of blob
-								const downloadUrl = window.URL.createObjectURL(new Blob([job.logs.join("\n")]));
+								const downloadUrl = window.URL.createObjectURL(new Blob([job.logs.join("\n"), ...(job.probeData ? ["\n", job.probeData.data] : [])]));
 								const downloadLink = document.createElement("a");
 								downloadLink.href = downloadUrl;
 								downloadLink.setAttribute('download', `FileCompressorError.log`);
@@ -2821,7 +2822,7 @@ module.exports = (() => {
 										try {
 											toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PASS_PERCENT', '1', '0'));
 											const ffmpegArgs = ["-y", "-t", duration, "-f", "lavfi", "-i", "color=c=black:s=256x144", "-c:v", "libx264", "-tune", "stillimage", "-pix_fmt", "yuv420p", "-vsync", "2", "-r", "1", job.compressionData.videoPath];
-											job.logs.push("Running FFmpeg with " + ffmpegArgs.join(" "));
+											job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
 											await ffmpeg.runWithArgs(ffmpegArgs);
 										} catch (e) {
 											if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
@@ -2880,7 +2881,7 @@ module.exports = (() => {
 									try {
 										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PASS_PERCENT', '1', '0'));
 										const ffmpegArgs = ["-y", "-ss", startSeconds, "-vn", "-i", job.originalFilePath, ...(job.options.advanced.sendAsVideo.value ? ["-i", job.compressionData.videoPath] : []), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:a", audioBitrate, "-maxrate", audioBitrate, "-bufsize", audioBitrate, "-sn", "-map_chapters", "-1", "-c:a", "libopus", "-map", "0:a", ...((outputBitDepth && (outputBitDepth < bitDepth || !bitDepth)) ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, ...(job.options.advanced.sendAsVideo.value ? ["-map", "1:v", "-shortest"] : []), job.compressionData.compressedPathPre];
-										job.logs.push("Running FFmpeg with " + ffmpegArgs.join(" "));
+										job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
 										await ffmpeg.runWithArgs(ffmpegArgs, [{
 													filter: str => {
 														return str.includes("time=");
@@ -2934,7 +2935,7 @@ module.exports = (() => {
 												try {
 													toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PASS_PERCENT', compressionPass, '0'));
 													const ffmpegArgs = ["-y", "-ss", startSeconds, "-vn", "-i", job.originalFilePath, ...(job.options.advanced.sendAsVideo.value ? ["-i", job.compressionData.videoPath] : []), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:a", audioBitrateAdjusted, "-maxrate", audioBitrateAdjusted, "-bufsize", audioBitrateAdjusted, "-sn", "-map_chapters", "-1", "-c:a", "libopus", "-map", "0:a", ...((outputBitDepth && (outputBitDepth < bitDepth || !bitDepth)) ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, ...(job.options.advanced.sendAsVideo.value ? ["-map", "1:v", "-shortest"] : []), job.compressionData.compressedPathPre];
-													job.logs.push("Running FFmpeg with " + ffmpegArgs.join(" "));
+													job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
 													await ffmpeg.runWithArgs(ffmpegArgs, [{
 																filter: str => {
 																	return str.includes("time=");
@@ -3008,8 +3009,8 @@ module.exports = (() => {
 									}
 									if (fs.existsSync(job.compressionData.compressedPath)) {
 										if (fs.existsSync(job.compressionData.compressedPath)) {
-											finalFileStats = fs.statSync(job.compressionData.compressedPath);
-											finalFileSize = finalFileStats ? finalFileStats.size : 0;
+											const finalFileStats = fs.statSync(job.compressionData.compressedPath);
+											const finalFileSize = finalFileStats ? finalFileStats.size : 0;
 											this.jobLoggerInfo(job, "Final file size: " + finalFileSize + " bytes");
 											this.jobLoggerInfo(job, "Upload size cap: " + maxUploadSize + " bytes");
 											if (finalFileSize > maxUploadSize) {
@@ -3223,7 +3224,7 @@ module.exports = (() => {
 										try {
 											toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PERCENT', '0'));
 											const ffmpegArgs = ["-y", "-ss", startSeconds, "-i", job.originalFilePath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:a", audioBitrate, "-maxrate", audioBitrate, "-bufsize", audioBitrate, "-vn", "-sn", "-map_chapters", "-1", "-c:a", "libopus", "-map", "0:a", ...(outputBitDepth && (outputBitDepth < bitDepth || !bitDepth) ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, job.compressionData.tempAudioPath];
-											job.logs.push("Running FFmpeg with " + ffmpegArgs.join(" "));
+											job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
 											await ffmpeg.runWithArgs(ffmpegArgs, [{
 														filter: str => {
 															return str.includes("time=");
@@ -3283,7 +3284,7 @@ module.exports = (() => {
 									try {
 										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_VIDEO_PASS_PERCENT', '1', '0'));
 										const ffmpegArgs = ["-y", "-ss", startSeconds, "-i", job.originalFilePath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate, ...(videoFiltersPass1.length > 0 ? ["-vf", videoFiltersPass1.join(",")] : []), "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.basic.videoEncoder.value, "-pass", "1", "-passlogfile", job.compressionData.tempVideoTwoPassPath, "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")];
-										job.logs.push("Running FFmpeg with " + ffmpegArgs.join(" "));
+										job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
 										await ffmpeg.runWithArgs(ffmpegArgs, [{
 													filter: str => {
 														return str.includes("time=");
@@ -3362,7 +3363,7 @@ module.exports = (() => {
 									try {
 										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_VIDEO_PASS_PERCENT', '2', '0'));
 										const ffmpegArgs = ["-y", "-ss", startSeconds, "-i", job.originalFilePath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate, ...(videoFiltersPass2.length > 0 ? ["-vf", videoFiltersPass2.join(",")] : []), "-an", "-sn", "-map_chapters", "-1", "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.basic.videoEncoder.value, "-pass", "2", "-passlogfile", job.compressionData.tempVideoTwoPassPath, job.compressionData.tempVideoPath];
-										job.logs.push("Running FFmpeg with " + ffmpegArgs.join(" "));
+										job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
 										await ffmpeg.runWithArgs(ffmpegArgs, [{
 													filter: str => {
 														return str.includes("time=");
@@ -3420,12 +3421,12 @@ module.exports = (() => {
 										if (!mkvmerge) {
 											toasts.setToast(job.jobId, i18n.MESSAGES.PACKAGING);
 											const ffmpegArgs = ["-y", ...(!stripAudio ? ["-i", job.compressionData.tempAudioPath] : []), "-i", job.compressionData.tempVideoPath, "-c", "copy", job.compressionData.compressedPathPre];
-											job.logs.push("Running FFmpeg with " + ffmpegArgs.join(" "));
+											job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
 											await ffmpeg.runWithArgs(ffmpegArgs);
 										} else {
 											toasts.setToast(job.jobId, i18n.FORMAT('PACKAGING_PERCENT', '0'));
 											const mkvmergeArgs = ["-o", job.compressionData.compressedPathPre, job.compressionData.tempVideoPath, ...(!stripAudio ? [job.compressionData.tempAudioPath] : [])];
-											job.logs.push("Running MKVmerge with " + mkvmergeArgs.join(" "));
+											job.logs.push("[" + job.file.name + "] Running MKVmerge with " + mkvmergeArgs.join(" "));
 											await mkvmerge.runWithArgs(mkvmergeArgs, str => {
 												return str.includes("Progress: ");
 											}, str => {
@@ -3480,8 +3481,8 @@ module.exports = (() => {
 									}
 									if (fs.existsSync(job.compressionData.compressedPath)) {
 										if (fs.existsSync(job.compressionData.compressedPath)) {
-											finalFileStats = fs.statSync(job.compressionData.compressedPath);
-											finalFileSize = finalFileStats ? finalFileStats.size : 0;
+											const finalFileStats = fs.statSync(job.compressionData.compressedPath);
+											const finalFileSize = finalFileStats ? finalFileStats.size : 0;
 											this.jobLoggerInfo(job, "Final file size: " + finalFileSize + " bytes");
 											this.jobLoggerInfo(job, "Upload size cap: " + maxUploadSize + " bytes");
 											if (finalFileSize > maxUploadSize) {
