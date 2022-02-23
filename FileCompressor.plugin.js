@@ -23,23 +23,22 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.5.23",
+			version: "1.5.24",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
 		},
 		changelog: [{
-				title: "Added",
-				type: "added",
-				items: [
-					"Option to save error logs for debugging if compression fails",
-					"Output file information along with logs"
-				]
-			}, {
 				title: "Fixed",
 				type: "fixed",
 				items: [
-					"Tuned audio encoding"
+					"Gets correct max file size in Nitro boosted servers"
+				]
+			}, {
+				title: "Improved",
+				type: "improved",
+				items: [
+					"Slight efficiency improvement"
 				]
 			}
 		],
@@ -1497,14 +1496,14 @@ module.exports = (() => {
 					`);
 					this.updateToastCSS();
 					toasts.createToast(0);
+					this.getMaxFileSize = BdApi.findModuleByProps("maxFileSize").maxFileSize;
+					this.getCurrentSidebarChannelId = BdApi.findModuleByProps('getCurrentSidebarChannelId').getCurrentSidebarChannelId;
+					this.gotoThread = BdApi.findModuleByProps('gotoThread').gotoThread;
 				}
 
 				onStop() {
 					// Remove patches
 					Patcher.unpatchAll();
-					if (this.originalUploadFunction) {
-						BdApi.findModuleByProps("promptToUpload").promptToUpload = this.originalUploadFunction;
-					}
 					// Remove event listeners
 					DiscordModules.UserSettingsStore.removeChangeListener(this.handleUserSettingsChange);
 					// Remove toasts module
@@ -1583,17 +1582,15 @@ module.exports = (() => {
 				monkeyPatch() {
 					const promptToUploadModule = BdApi.findModuleByProps("promptToUpload");
 					if (promptToUploadModule) {
-						this.originalUploadFunction = promptToUploadModule.promptToUpload;
-						const uploadFunc = this.handleUploadEvent;
-						const originalFunc = this.originalUploadFunction;
-						if (this.originalUploadFunction && this.originalUploadFunction.length === 4) {
-							promptToUploadModule.promptToUpload = function (fileList, channel, draftType, uploadOptions) {
-								if (uploadOptions.fileCompressorCompressedFile) {
-									return originalFunc(fileList, channel, draftType, uploadOptions);
+						this.promptToUpload = promptToUploadModule.promptToUpload;
+						if (this.promptToUpload && this.promptToUpload.length === 4) {
+							Patcher.instead(promptToUploadModule, "promptToUpload", (t, args, originalFunc) => {
+								if (args[3].fileCompressorCompressedFile) {
+									return originalFunc(...args);
 								} else {
-									return uploadFunc(fileList, channel, draftType, uploadOptions);
+									return this.handleUploadEvent(...args);
 								}
-							};
+							});
 						} else {
 							BdApi.showToast(i18n.MESSAGES.ERROR_HOOKING_UPLOAD, {
 								type: "error"
@@ -1603,8 +1600,6 @@ module.exports = (() => {
 							} else {
 								Logger.err(config.info.name, "Unable to hook into Discord upload handler! Method doesn't exist in promptToUpload: " + promptToUploadModule);
 							}
-							promptToUploadModule.promptToUpload = this.originalUploadFunction;
-							this.originalUploadFunction = null;
 						}
 					} else {
 						BdApi.showToast(i18n.MESSAGES.ERROR_HOOKING_UPLOAD, {
@@ -2041,7 +2036,8 @@ module.exports = (() => {
 					// Check account status and update max file upload size
 					const settingsMaxSize = this.settings.upload.maxFileSize != 0 ? this.settings.upload.maxFileSize : 0;
 					try {
-						maxUploadSize = DiscordModules.DiscordConstants.PremiumUserLimits[this.getCurrentUser().premiumType ? this.getCurrentUser().premiumType : 0].fileSize;
+						//maxUploadSize = DiscordModules.DiscordConstants.PremiumUserLimits[this.getCurrentUser().premiumType ? this.getCurrentUser().premiumType : 0].fileSize;
+						maxUploadSize = this.getMaxFileSize(guildId);
 					} catch (e) {
 						Logger.err(config.info.name, e);
 						BdApi.showToast(i18n.MESSAGES.ERROR_GETTING_ACCOUNT_INFO, {
@@ -2106,12 +2102,12 @@ module.exports = (() => {
 					const originalGuildId = this.getCurrentChannel() ? this.getCurrentChannel().guild_id : null;
 					const originalChannelId = this.getCurrentChannel() ? (this.getCurrentChannel().threadMetadata ? this.getCurrentChannel().parent_id : this.getCurrentChannel().id) : null;
 					const originalThreadId = this.getCurrentChannel() ? (this.getCurrentChannel().threadMetadata ? this.getCurrentChannel().id : null) : null;
-					const sidebarThreadId = (this.getCurrentChannel() && !originalThreadId) ? BdApi.findModuleByProps('getCurrentSidebarChannelId').getCurrentSidebarChannelId(originalChannelId) : null;
+					const sidebarThreadId = (this.getCurrentChannel() && !originalThreadId) ? this.getCurrentSidebarChannelId(originalChannelId) : null;
 					if (threadId) {
 						if (threadId !== sidebarThreadId && threadId !== originalThreadId) {
 							if (sidebar) {
 								DiscordModules.NavigationUtils.transitionToThread(!guildId ? "@me" : guildId, channelId);
-								BdApi.findModuleByProps('gotoThread').gotoThread(null, {
+								this.gotoThread(null, {
 									id: threadId
 								});
 							} else {
@@ -2121,7 +2117,7 @@ module.exports = (() => {
 					} else {
 						DiscordModules.NavigationUtils.transitionToGuild(!guildId ? "@me" : guildId, channelId);
 					}
-					if ((guildId ? this.getCurrentChannel().guild_id === guildId : !this.getCurrentChannel().guild_id) && (threadId ? ((this.getCurrentChannel().id === threadId && this.getCurrentChannel().parent_id === channelId) || this.getCurrentChannel().id === channelId && BdApi.findModuleByProps('getCurrentSidebarChannelId').getCurrentSidebarChannelId(this.getCurrentChannel().id) === threadId) : this.getCurrentChannel().id === channelId)) {
+					if ((guildId ? this.getCurrentChannel().guild_id === guildId : !this.getCurrentChannel().guild_id) && (threadId ? ((this.getCurrentChannel().id === threadId && this.getCurrentChannel().parent_id === channelId) || this.getCurrentChannel().id === channelId && this.getCurrentSidebarChannelId(this.getCurrentChannel().id) === threadId) : this.getCurrentChannel().id === channelId)) {
 						return true;
 					} else {
 						BdApi.showToast(i18n.MESSAGES.UNABLE_TO_RETURN_TO_CHANNEL, {
@@ -2139,7 +2135,7 @@ module.exports = (() => {
 					try {
 						const channelObj = threadId ? DiscordModules.ChannelStore.getChannel(threadId) : DiscordModules.ChannelStore.getChannel(channelId);
 						channelObj.fileCompressorCompressedFile = true;
-						BdApi.findModuleByProps("promptToUpload").promptToUpload(files, channelObj, 0, {
+						this.promptToUpload(files, channelObj, 0, {
 							requireConfirm: true,
 							showLargeMessageDialog: true,
 							fileCompressorCompressedFile: true /*Special boolean to mark file as processed and prevent loops*/
