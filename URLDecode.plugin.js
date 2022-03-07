@@ -16,8 +16,8 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.0.4",
-			description: "Automatic URL decoder.",
+			version: "1.0.5",
+			description: "URL/embed decoder for non-ASCII text.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/URLDecode.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/URLDecode.plugin.js"
 		},
@@ -25,7 +25,7 @@ module.exports = (() => {
 				title: "Fixed",
 				type: "fixed",
 				items: [
-					"Remove debug logging."
+					"Fixed code formatting"
 				]
 			}
 		],
@@ -307,7 +307,8 @@ module.exports = (() => {
 				}
 
 				onStart() {
-					Patcher.before(WebpackModules.find(e => e?.default ?.toString().indexOf("childrenMessageContent") > -1), "default", (_, args) => {
+					const msgModule = WebpackModules.find(e => e?.default ?.toString().indexOf("childrenMessageContent") > -1);
+							Patcher.before(msgModule, "default", (_, args) => {
 								for (const item of args) {
 									if (item.childrenMessageContent) {
 										const msg = item.childrenMessageContent;
@@ -341,39 +342,39 @@ module.exports = (() => {
 									}
 								}
 							});
-						}
+				}
 
-						onStop() {
-							Patcher.unpatchAll();
-						}
+				onStop() {
+					Patcher.unpatchAll();
+				}
 
-						decodeText(text) {
-							if (text) {
-								text = text.replace(/\+/g, " ");
-								try {
-									return decodeURIComponent(text);
-								} catch {
-									try {
-										return decodeURIComponent(StripInvalidTrailingEncoding.strip(text.slice(0, -3))) + text.slice(-3);
-									} catch {}
-								}
-							}
-							return text;
+				decodeText(text) {
+					if (text) {
+						text = text.replace(/\+/g, " ");
+						try {
+							return decodeURIComponent(text);
+						} catch {
+							try {
+								return decodeURIComponent(StripInvalidTrailingEncoding.strip(text.slice(0, -3))) + text.slice(-3);
+							} catch {}
 						}
-
-						getSettingsPanel() {
-							const panel = this.buildSettingsPanel();
-							return panel.getElement();
-						}
-
-						saveSettings(category, setting, value) {
-							this.settings[category][setting] = value;
-							PluginUtilities.saveSettings(config.info.name, this.settings);
-						}
-
 					}
+					return text;
+				}
 
-				};
-				return plugin(Plugin, Api);
-			})(global.ZeresPluginLibrary.buildPlugin(config));
-		})();
+				getSettingsPanel() {
+					const panel = this.buildSettingsPanel();
+					return panel.getElement();
+				}
+
+				saveSettings(category, setting, value) {
+					this.settings[category][setting] = value;
+					PluginUtilities.saveSettings(config.info.name, this.settings);
+				}
+
+			}
+
+		};
+		return plugin(Plugin, Api);
+	})(global.ZeresPluginLibrary.buildPlugin(config));
+})();
