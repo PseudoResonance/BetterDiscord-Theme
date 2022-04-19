@@ -16,7 +16,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.0.5",
+			version: "1.0.6",
 			description: "URL/embed decoder for non-ASCII text.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/URLDecode.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/URLDecode.plugin.js"
@@ -25,7 +25,7 @@ module.exports = (() => {
 				title: "Fixed",
 				type: "fixed",
 				items: [
-					"Fixed code formatting"
+					"Fixed unrecognizable URLs turning into empty strings"
 				]
 			}
 		],
@@ -171,7 +171,7 @@ module.exports = (() => {
 				 * @param {string} string
 				 * @param {number} length The length of the string.
 				 * @param {number} shift Position of the rightmost %.
-				 * @return {string}
+				 * @return {string, stripped} Stripped string and stripped portion
 				 */
 				static _strip(string, length, shift) {
 					let end = length - shift;
@@ -190,7 +190,10 @@ module.exports = (() => {
 							if (num % 3 === 0) {
 								if (continuation) {
 									// Someone put extra continuations.
-									return '';
+									return {
+										string: "",
+										stripped: string
+									};
 								}
 
 								break;
@@ -206,7 +209,10 @@ module.exports = (() => {
 						const l = this.toHex(low);
 						if (h === 16 || l === 16) {
 							// Someone put non hex values.
-							return '';
+							return {
+								string: "",
+								stripped: string
+							};
 						}
 
 						// &    %26
@@ -246,13 +252,19 @@ module.exports = (() => {
 									escapes = 12;
 								} else if (num > 0 && num % 3 === 0) {
 									// Someone put random hex values together.
-									return '';
+									return {
+										string: "",
+										stripped: string
+									};
 								}
 							}
 
 							if (num > escapes) {
 								// Someone put extra continuations.
-								return '';
+								return {
+									string: "",
+									stripped: string
+								};
 							}
 
 							if (num < escapes) {
@@ -271,7 +283,10 @@ module.exports = (() => {
 						// Detect possible DOS attacks. Credible strings can never be worse than
 						// the longest (4) escape sequence (3 chars) minus one (the trim).
 						if (num > 4 * 3 - 1) {
-							return '';
+							return {
+								string: "",
+								stripped: string
+							};
 						}
 
 						// Intentionally set a bad hex value
@@ -279,10 +294,16 @@ module.exports = (() => {
 					}
 
 					if (end === length) {
-						return string;
+						return {
+							string,
+							stripped: ""
+						};
 					}
 
-					return string.substr(0, end);
+					return {
+						string: string.substr(0, end),
+						stripped: string.substr(end, length)
+					};
 				}
 
 				static strip(string) {
@@ -291,7 +312,10 @@ module.exports = (() => {
 
 					// If no % in the last 3 chars, then the string wasn't trimmed.
 					if (shift === 3) {
-						return string;
+						return {
+							string,
+							stripped: ""
+						};
 					}
 
 					return this._strip(string, length, shift);
@@ -355,7 +379,15 @@ module.exports = (() => {
 							return decodeURIComponent(text);
 						} catch {
 							try {
-								return decodeURIComponent(StripInvalidTrailingEncoding.strip(text.slice(0, -3))) + text.slice(-3);
+								let suffix = "";
+								if (text.endsWith("...")) {
+									text = text.slice(0, -3);
+									suffix = "...";
+								}
+								const strippedData = StripInvalidTrailingEncoding.strip(text);
+								if (strippedData.string) {
+									return decodeURIComponent(strippedData.string) + suffix;
+								}
 							} catch {}
 						}
 					}
