@@ -21,7 +21,7 @@ module.exports = (() => {
                     github_username: "PseudoResonance"
                 }
             ],
-            version: "1.6",
+            version: "1.6.1",
             description: "Automatically compress files that are too large to send.",
             github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
             github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -38,7 +38,8 @@ module.exports = (() => {
                 title: "Fixed",
                 type: "fixed",
                 items: [
-                    "Fixed plugin saying compressed files were too big for Nitro."
+                    "Fixed plugin saying compressed files were too big for Nitro.",
+					"Remove video compression debug causing failure."
                 ]
             }
         ],
@@ -3544,7 +3545,6 @@ module.exports = (() => {
                                         videoFiltersPass1.push("scale=-1:" + maxVideoHeight + ",scale=trunc(iw/2)*2:" + maxVideoHeight);
                                         videoFiltersPass2.push("scale=-1:" + maxVideoHeight + ",scale=trunc(iw/2)*2:" + maxVideoHeight);
                                     }
-                                    videoBitrate += 610000;
                                     this.jobLoggerInfo(job, "Max frame rate: " + maxFrameRate + " fps");
                                     this.jobLoggerInfo(job, "Target video bitrate: " + videoBitrate + " bits/second");
                                     this.jobLoggerInfo(job, "Max frame height: " + maxVideoHeight + " pixels");
