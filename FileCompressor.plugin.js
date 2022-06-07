@@ -21,7 +21,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.6.2",
+			version: "1.6.3",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -40,7 +40,8 @@ module.exports = (() => {
 				items: [
 					"Fixed plugin saying compressed files were too big for Nitro.",
 					"Remove video compression debug causing failure.",
-					"Fixed error getting max upload size."
+					"Fixed error getting max upload size.",
+					"Fixed dropdowns not working."
 				]
 			}
 		],
@@ -318,7 +319,7 @@ module.exports = (() => {
 			COMPRESSION_OPTIONS_VIDEO_ENCODER_PRESET_PRESERVE_VIDEO: 'Preserve Video',
 			COMPRESSION_OPTIONS_VIDEO_ENCODER_PRESET_BALANCED: 'Balanced',
 			COMPRESSION_OPTIONS_VIDEO_ENCODER_PRESET_PRESERVE_AUDIO: 'Preserve Audio',
-			COMPRESSION_OPTIONS_Audio_ENCODER: 'Audio Encoder',
+			COMPRESSION_OPTIONS_AUDIO_ENCODER: 'Audio Encoder',
 			COMPRESSION_OPTIONS_MAX_HEIGHT: 'Max Video Height (pixels)',
 			COMPRESSION_OPTIONS_MAX_FPS: 'Max Video FPS',
 			COMPRESSION_OPTIONS_INTERLACE_VIDEO: 'Interlace Video',
@@ -424,7 +425,7 @@ module.exports = (() => {
 			COMPRESSION_OPTIONS_VIDEO_ENCODER_PRESET_PRESERVE_VIDEO: '動画を保存',
 			COMPRESSION_OPTIONS_VIDEO_ENCODER_PRESET_BALANCED: 'バランス',
 			COMPRESSION_OPTIONS_VIDEO_ENCODER_PRESET_PRESERVE_AUDIO: '音声を保存',
-			COMPRESSION_OPTIONS_Audio_ENCODER: '音声エンコーダー',
+			COMPRESSION_OPTIONS_AUDIO_ENCODER: '音声エンコーダー',
 			COMPRESSION_OPTIONS_MAX_HEIGHT: '最大動画の高さ（ピクセル）',
 			COMPRESSION_OPTIONS_MAX_FPS: '最大動画のFPS',
 			COMPRESSION_OPTIONS_INTERLACE_VIDEO: '動画をインターレース',
@@ -851,9 +852,9 @@ module.exports = (() => {
 				}
 			};
 			const videoEncoderPresets = {
-				"preserveVideo": "COMPRESSION_OPTIONS_ENCODER_PRESET_PRESERVE_VIDEO",
-				"balanced": "COMPRESSION_OPTIONS_ENCODER_PRESET_BALANCED",
-				"preserveAudio": "COMPRESSION_OPTIONS_ENCODER_PRESET_PRESERVE_AUDIO",
+				"preserveVideo": "COMPRESSION_OPTIONS_VIDEO_ENCODER_PRESET_PRESERVE_VIDEO",
+				"balanced": "COMPRESSION_OPTIONS_VIDEO_ENCODER_PRESET_BALANCED",
+				"preserveAudio": "COMPRESSION_OPTIONS_VIDEO_ENCODER_PRESET_PRESERVE_AUDIO",
 			};
 			// Audio container settings
 			const audioContainerSettings = {
@@ -1012,6 +1013,7 @@ module.exports = (() => {
 
 			// Discord related data
 			const Markdown = BdApi.findModule(m => m?.displayName === "Markdown" && m?.rules);
+			const DiscordDropdown = BdApi.findModuleByDisplayName('SelectTempWrapper');
 
 			// Toast icon SVGs
 			const loadingSvg = `<svg fill="currentColor" width="24" height="24" viewBox="0 0 24 24"><path d="M12,0v2C6.48,2,2,6.48,2,12c0,3.05,1.37,5.78,3.52,7.61l1.15-1.66C5.04,16.48,4,14.36,4,12c0-4.41,3.59-8,8-8v2l2.59-1.55l2.11-1.26L17,3L12,0z"/><path d="M18.48,4.39l-1.15,1.66C18.96,7.52,20,9.64,20,12c0,4.41-3.59,8-8,8v-2l-2.59,1.55L7.3,20.82L7,21l5,3v-2c5.52,0,10-4.48,10-10C22,8.95,20.63,6.22,18.48,4.39z"/></svg>`;
@@ -1568,6 +1570,39 @@ module.exports = (() => {
 					});
 				}
 			};
+
+			const Dropdown = class extends Settings.SettingField {
+				/**
+				 * @param {string} name - name label of the setting
+				 * @param {string} note - help/note to show underneath or above the setting
+				 * @param {*} defaultValue - currently selected value
+				 * @param {Array<module:Settings~DropdownItem>} values - array of all options available
+				 * @param {callable} onChange - callback to perform on setting change, callback item value
+				 * @param {object} [options] - object of options to give to the setting
+				 * @param {boolean} [options.clearable=false] - should be able to empty the field value
+				 * @param {boolean} [options.searchable=false] - should user be able to search the dropdown
+				 * @param {boolean} [options.disabled=false] - should the setting be disabled
+				 */
+				constructor(name, note, defaultValue, values, onChange, options = {}) {
+					const {
+						clearable = false,
+						searchable = false,
+						disabled = false
+					} = options;
+					super(name, note, onChange, DiscordDropdown, {
+						clearable: clearable,
+						searchable: searchable,
+						disabled: disabled,
+						options: values,
+						onChange: dropdown => opt => {
+							dropdown.props.value = opt && opt.value;
+							dropdown.forceUpdate();
+							this.onChange(opt && opt.value);
+						},
+						value: defaultValue
+					});
+				}
+			}
 
 			return class FileCompressor extends Plugin {
 				constructor() {
@@ -2527,22 +2562,33 @@ module.exports = (() => {
 								values: videoEncoderValuesArray
 							},
 							onChange: (value, allCategories, allOptions) => {
+								let originalShow = allOptions.advanced.audioEncoder.inputWrapper.style.display;
 								job.options.advanced.audioEncoder.value = videoEncoderSettings[value].defaultAudioEncoder;
 								allOptions.advanced.audioEncoder.props.value = videoEncoderSettings[value].defaultAudioEncoder;
 								allOptions.advanced.audioEncoder.onRemoved();
 								allOptions.advanced.audioEncoder.onAdded();
+								allOptions.advanced.audioEncoder.inputWrapper.style.display = originalShow;
+
+								originalShow = allOptions.basic.audioEncoder.inputWrapper.style.display;
 								job.options.basic.audioEncoder.value = videoEncoderSettings[value].defaultAudioEncoder;
 								allOptions.basic.audioEncoder.props.value = videoEncoderSettings[value].defaultAudioEncoder;
 								allOptions.basic.audioEncoder.onRemoved();
 								allOptions.basic.audioEncoder.onAdded();
+								allOptions.basic.audioEncoder.inputWrapper.style.display = originalShow;
+
+								originalShow = allOptions.advanced.videoFileFormat.inputWrapper.style.display;
 								job.options.advanced.videoFileFormat.value = videoEncoderSettings[value].defaultContainer;
 								allOptions.advanced.videoFileFormat.props.value = videoEncoderSettings[value].defaultContainer;
 								allOptions.advanced.videoFileFormat.onRemoved();
 								allOptions.advanced.videoFileFormat.onAdded();
+								allOptions.advanced.videoFileFormat.inputWrapper.style.display = originalShow;
+
+								originalShow = allOptions.advanced.audioFileFormat.inputWrapper.style.display;
 								job.options.advanced.audioFileFormat.value = audioEncoderSettings[videoEncoderSettings[value].defaultAudioEncoder].defaultContainer;
 								allOptions.advanced.audioFileFormat.props.value = audioEncoderSettings[videoEncoderSettings[value].defaultAudioEncoder].defaultContainer;
 								allOptions.advanced.audioFileFormat.onRemoved();
 								allOptions.advanced.audioFileFormat.onAdded();
+								allOptions.advanced.audioFileFormat.inputWrapper.style.display = originalShow;
 							}
 						};
 						for (const preset of Object.getOwnPropertyNames(videoEncoderPresets)) {
@@ -2565,14 +2611,19 @@ module.exports = (() => {
 								values: audioEncoderValuesArray
 							},
 							onChange: (value, allCategories, allOptions) => {
+								let originalShow = allOptions.advanced.audioEncoder.inputWrapper.style.display;
 								job.options.advanced.audioEncoder.value = value;
 								allOptions.advanced.audioEncoder.props.value = value;
 								allOptions.advanced.audioEncoder.onRemoved();
 								allOptions.advanced.audioEncoder.onAdded();
+								allOptions.advanced.audioEncoder.inputWrapper.style.display = originalShow;
+
+								originalShow = allOptions.advanced.audioFileFormat.inputWrapper.style.display;
 								job.options.advanced.audioFileFormat.value = audioEncoderSettings[value].defaultContainer;
 								allOptions.advanced.audioFileFormat.props.value = audioEncoderSettings[value].defaultContainer;
 								allOptions.advanced.audioFileFormat.onRemoved();
 								allOptions.advanced.audioFileFormat.onAdded();
+								allOptions.advanced.audioFileFormat.inputWrapper.style.display = originalShow;
 							},
 							tags: ["audioValid", "audioOnly"]
 						};
@@ -2664,14 +2715,19 @@ module.exports = (() => {
 								values: audioEncoderValuesArray
 							},
 							onChange: (value, allCategories, allOptions) => {
+								let originalShow = allOptions.basic.audioEncoder.inputWrapper.style.display;
 								job.options.basic.audioEncoder.value = value;
 								allOptions.basic.audioEncoder.props.value = value;
 								allOptions.basic.audioEncoder.onRemoved();
 								allOptions.basic.audioEncoder.onAdded();
+								allOptions.basic.audioEncoder.inputWrapper.style.display = originalShow;
+
+								originalShow = allOptions.advanced.audioFileFormat.inputWrapper.style.display;
 								job.options.advanced.audioFileFormat.value = audioEncoderSettings[value].defaultContainer;
 								allOptions.advanced.audioFileFormat.props.value = audioEncoderSettings[value].defaultContainer;
 								allOptions.advanced.audioFileFormat.onRemoved();
 								allOptions.advanced.audioFileFormat.onAdded();
+								allOptions.advanced.audioFileFormat.inputWrapper.style.display = originalShow;
 							}
 						};
 						for (const name of Object.getOwnPropertyNames(videoContainerSettings)) {
@@ -2716,7 +2772,8 @@ module.exports = (() => {
 							defaultValue: false,
 							tags: ["audioValid", "audioOnly"],
 							onChange: (value, allCategories, allOptions) => {
-								allOptions.advanced.audioFileFormat.inputWrapper.style.display = (value ? "none" : null);
+								if (job.options.basic.stripVideo.value)
+									allOptions.advanced.audioFileFormat.inputWrapper.style.display = (value ? "none" : null);
 							}
 						};
 						if (await this.showSettings(i18n.FORMAT('COMPRESSION_OPTIONS_TITLE', job.file.name), job.options, job.optionsCategories, this.settings.compressor.promptOptionsVideo))
@@ -2789,10 +2846,12 @@ module.exports = (() => {
 								values: audioEncoderValuesArray
 							},
 							onChange: (value, allCategories, allOptions) => {
+								let originalShow = allOptions.advanced.audioFileFormat.inputWrapper.style.display;
 								job.options.advanced.audioFileFormat.value = audioEncoderSettings[value].defaultContainer;
 								allOptions.advanced.audioFileFormat.props.value = audioEncoderSettings[value].defaultContainer;
 								allOptions.advanced.audioFileFormat.onRemoved();
 								allOptions.advanced.audioFileFormat.onAdded();
+								allOptions.advanced.audioFileFormat.inputWrapper.style.display = originalShow;
 							}
 						};
 						job.options.basic.startTimestamp = {
@@ -2931,7 +2990,7 @@ module.exports = (() => {
 						elem = new Settings.ColorPicker(name, description, defaultValue, onChange, props);
 						break;
 					case "dropdown":
-						elem = new Settings.Dropdown(name, description, defaultValue, props.values, onChange, props);
+						elem = new Dropdown(name, description, defaultValue, props.values, onChange, props);
 						break;
 					case "file":
 						elem = new Settings.FilePicker(name, description, onChange, props);
