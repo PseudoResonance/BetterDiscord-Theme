@@ -21,7 +21,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.6.3",
+			version: "1.6.4",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -41,7 +41,8 @@ module.exports = (() => {
 					"Fixed plugin saying compressed files were too big for Nitro.",
 					"Remove video compression debug causing failure.",
 					"Fixed error getting max upload size.",
-					"Fixed dropdowns not working."
+					"Fixed dropdowns not working.",
+					"Fixed Discord thinking non-Nitro users have Nitro."
 				]
 			}
 		],
@@ -2240,7 +2241,7 @@ module.exports = (() => {
 					// Check account status and update max file upload size
 					const settingsMaxSize = this.settings.upload.maxFileSize != 0 ? this.settings.upload.maxFileSize : 0;
 					try {
-						const premiumUserLimits = DiscordModules.DiscordConstants.PremiumUserLimits[this.getCurrentUser().premiumType ? this.getCurrentUser().premiumType : 0];
+						const premiumUserLimits = DiscordModules.DiscordConstants.PremiumUserLimits[this.getCurrentUser().premiumType];
 						maxUploadSize = premiumUserLimits ? premiumUserLimits.fileSize : DiscordModules.DiscordConstants.MAX_ATTACHMENT_SIZE;
 					} catch (e) {
 						Logger.err(config.info.name, e);
