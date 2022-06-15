@@ -21,7 +21,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.6.4",
+			version: "1.6.5",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -42,7 +42,9 @@ module.exports = (() => {
 					"Remove video compression debug causing failure.",
 					"Fixed error getting max upload size.",
 					"Fixed dropdowns not working.",
-					"Fixed Discord thinking non-Nitro users have Nitro."
+					"Fixed Discord thinking non-Nitro users have Nitro.",
+					"Fixed compression not working when tmp folder is on different drive from cache.",
+					"Fixed Linux not downloading MKVmerge."
 				]
 			}
 		],
@@ -2111,7 +2113,12 @@ module.exports = (() => {
 					}
 					// Rename file for use if checks pass
 					const newPath = filePath.slice(0, -4);
-					fs.renameSync(filePath, newPath);
+					try {
+						fs.renameSync(filePath, newPath);
+					} catch (err) {
+						fs.copyFileSync(filePath, newPath);
+						fs.rmSync(filePath);
+					}
 					toasts.removeToast(tmpJobId);
 					return newPath;
 				}
@@ -3346,7 +3353,12 @@ module.exports = (() => {
 												break;
 											}
 										}
-										fs.renameSync(job.compressionData.compressedPathPre, job.compressionData.compressedPath);
+										try {
+											fs.renameSync(job.compressionData.compressedPathPre, job.compressionData.compressedPath);
+										} catch (err) {
+											fs.copyFileSync(job.compressionData.compressedPathPre, job.compressionData.compressedPath);
+											fs.rmSync(job.compressionData.compressedPathPre);
+										}
 									} else {
 										if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
 											try {
@@ -3789,7 +3801,12 @@ module.exports = (() => {
 										throw e;
 									}
 									if (fs.existsSync(job.compressionData.compressedPathPre)) {
-										fs.renameSync(job.compressionData.compressedPathPre, job.compressionData.compressedPath);
+										try {
+											fs.renameSync(job.compressionData.compressedPathPre, job.compressionData.compressedPath);
+										} catch (err) {
+											fs.copyFileSync(job.compressionData.compressedPathPre, job.compressionData.compressedPath);
+											fs.rmSync(job.compressionData.compressedPathPre);
+										}
 									} else {
 										if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
 											try {
@@ -3946,7 +3963,12 @@ module.exports = (() => {
 																throw e;
 															}
 															if (fs.existsSync(job.compressionData.compressedPathPre)) {
-																fs.renameSync(job.compressionData.compressedPathPre, job.compressionData.compressedPath);
+																try {
+																	fs.renameSync(job.compressionData.compressedPathPre, job.compressionData.compressedPath);
+																} catch (err) {
+																	fs.copyFileSync(job.compressionData.compressedPathPre, job.compressionData.compressedPath);
+																	fs.rmSync(job.compressionData.compressedPathPre);
+																}
 															} else {
 																if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
 																	try {
