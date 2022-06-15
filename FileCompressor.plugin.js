@@ -21,7 +21,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.6.6",
+			version: "1.6.7",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -33,7 +33,8 @@ module.exports = (() => {
 					"Options for audio and video codecs.",
 					"Options for file container format.",
 					"Reduce audio size to compensate if video compression fails.",
-					"Option to prompt to compress all possible files."
+					"Option to prompt to compress all possible files.",
+					"Option to deinterlace video."
 				]
 			}, {
 				title: "Fixed",
@@ -340,6 +341,8 @@ module.exports = (() => {
 			COMPRESSION_OPTIONS_MAX_FPS: 'Max Video FPS',
 			COMPRESSION_OPTIONS_INTERLACE_VIDEO: 'Interlace Video',
 			COMPRESSION_OPTIONS_INTERLACE_VIDEO_DESC: 'Not recommended except for the largest videos.',
+			COMPRESSION_OPTIONS_DEINTERLACE_VIDEO: 'Deinterlace Video',
+			COMPRESSION_OPTIONS_DEINTERLACE_VIDEO_DESC: 'For interlaced videos only.',
 			COMPRESSION_OPTIONS_STRIP_AUDIO: 'Strip Audio',
 			COMPRESSION_OPTIONS_STRIP_AUDIO_DESC: 'Remove all audio from the video.',
 			COMPRESSION_OPTIONS_STRIP_VIDEO: 'Strip Video',
@@ -448,6 +451,8 @@ module.exports = (() => {
 			COMPRESSION_OPTIONS_MAX_FPS: '最大動画のFPS',
 			COMPRESSION_OPTIONS_INTERLACE_VIDEO: '動画をインターレース',
 			COMPRESSION_OPTIONS_INTERLACE_VIDEO_DESC: '最大の動画以外に推奨されません。',
+			COMPRESSION_OPTIONS_DEINTERLACE_VIDEO: '動画をインターレース解除',
+			COMPRESSION_OPTIONS_DEINTERLACE_VIDEO_DESC: 'インターレース動画のみ。',
 			COMPRESSION_OPTIONS_STRIP_AUDIO: '音声を消去する',
 			COMPRESSION_OPTIONS_STRIP_AUDIO_DESC: '動画から全ての音声を消去する。',
 			COMPRESSION_OPTIONS_STRIP_VIDEO: '動画を消去する',
@@ -2575,13 +2580,16 @@ module.exports = (() => {
 							});
 							writeStream.destroy();
 						}
-						job.probeData = await ffmpeg.runProbeWithArgs(["-v", "error", "-show_format", "-show_streams", "-print_format", "json", job.originalFilePath]);
+						const ffprobeOut = await ffmpeg.runProbeWithArgs(["-v", "error", "-show_format", "-show_streams", "-print_format", "json", job.originalFilePath]);
+						job.probeDataRaw = ffprobeOut.data;
+						job.probeData = JSON.parse(ffprobeOut.data);
 						for (const name of Object.getOwnPropertyNames(videoEncoderSettings)) {
 							videoEncoderValuesArray.push({
 								value: name,
 								label: name
 							});
 						}
+						console.log(job.probeData);
 						job.options.basic.videoEncoder = {
 							name: i18n.MESSAGES.COMPRESSION_OPTIONS_VIDEO_ENCODER,
 							type: "dropdown",
@@ -2683,7 +2691,29 @@ module.exports = (() => {
 							name: i18n.MESSAGES.COMPRESSION_OPTIONS_INTERLACE_VIDEO,
 							description: i18n.MESSAGES.COMPRESSION_OPTIONS_INTERLACE_VIDEO_DESC,
 							type: "switch",
-							defaultValue: false
+							defaultValue: false,
+							onChange: (value, allCategories, allOptions) => {
+								let originalShow = allOptions.advanced.deinterlace.inputWrapper.style.display;
+								job.options.advanced.deinterlace.value = !value;
+								allOptions.advanced.deinterlace.props.value = !value;
+								allOptions.advanced.deinterlace.onRemoved();
+								allOptions.advanced.deinterlace.onAdded();
+								allOptions.advanced.deinterlace.inputWrapper.style.display = originalShow;
+							}
+						};
+						job.options.advanced.deinterlace = {
+							name: i18n.MESSAGES.COMPRESSION_OPTIONS_DEINTERLACE_VIDEO,
+							description: i18n.MESSAGES.COMPRESSION_OPTIONS_DEINTERLACE_VIDEO_DESC,
+							type: "switch",
+							defaultValue: false,
+							onChange: (value, allCategories, allOptions) => {
+								let originalShow = allOptions.advanced.interlace.inputWrapper.style.display;
+								job.options.advanced.interlace.value = !value;
+								allOptions.advanced.interlace.props.value = !value;
+								allOptions.advanced.interlace.onRemoved();
+								allOptions.advanced.interlace.onAdded();
+								allOptions.advanced.interlace.inputWrapper.style.display = originalShow;
+							}
 						};
 						job.options.basic.stripAudio = {
 							name: i18n.MESSAGES.COMPRESSION_OPTIONS_STRIP_AUDIO,
@@ -2859,7 +2889,9 @@ module.exports = (() => {
 							});
 							writeStream.destroy();
 						}
-						job.probeData = await ffmpeg.runProbeWithArgs(["-v", "error", "-show_format", "-show_streams", "-print_format", "json", job.originalFilePath]);
+						ffprobeOut = await ffmpeg.runProbeWithArgs(["-v", "error", "-show_format", "-show_streams", "-print_format", "json", job.originalFilePath]);
+						job.probeDataRaw = ffprobeOut.data;
+						job.probeData = JSON.parse(ffprobeOut.data);
 						for (const name of Object.getOwnPropertyNames(audioEncoderSettings)) {
 							audioEncoderValuesArray.push({
 								value: name,
@@ -3105,7 +3137,7 @@ module.exports = (() => {
 						BdApi.showConfirmationModal(i18n.MESSAGES.SAVE_DEBUG_LOG, "", {
 							onConfirm: () => {
 								// Convert logs to blob and trigger file download of blob
-								const downloadUrl = window.URL.createObjectURL(new Blob([job.logs.join("\n"), ...(job.probeData ? ["\n", job.probeData.data] : []), ...(job.probeDataFinal ? ["\n", job.probeDataFinal.data] : [])]));
+								const downloadUrl = window.URL.createObjectURL(new Blob([job.logs.join("\n"), ...(job.probeDataRaw ? ["\n", job.probeDataRaw] : []), ...(job.probeDataFinalRaw ? ["\n", job.probeDataFinalRaw] : [])]));
 								const downloadLink = document.createElement("a");
 								downloadLink.href = downloadUrl;
 								downloadLink.setAttribute('download', `FileCompressorError.log`);
@@ -3174,18 +3206,17 @@ module.exports = (() => {
 							}
 							toasts.setToast(job.jobId, i18n.MESSAGES.CALCULATING);
 							if (job.probeData) {
-								const probeOutputData = JSON.parse(job.probeData.data);
 								try {
 									let audioStreamIndex = -1;
-									for (const streamData of probeOutputData.streams) {
+									for (const streamData of job.probeData.streams) {
 										if (streamData.codec_type == "audio") {
 											audioStreamIndex = streamData.index;
 											break;
 										}
 									}
-									const originalDuration = probeOutputData.format.duration ? parseFloat(probeOutputData.format.duration) : 0;
-									const bitDepth = probeOutputData.streams[audioStreamIndex].bits_per_raw_sample ? parseInt(probeOutputData.streams[audioStreamIndex].bits_per_raw_sample) : null;
-									const numChannels = probeOutputData.streams[audioStreamIndex].channels ? parseInt(probeOutputData.streams[audioStreamIndex].channels) : null;
+									const originalDuration = job.probeData.format.duration ? parseFloat(job.probeData.format.duration) : 0;
+									const bitDepth = job.probeData.streams[audioStreamIndex].bits_per_raw_sample ? parseInt(job.probeData.streams[audioStreamIndex].bits_per_raw_sample) : null;
+									const numChannels = job.probeData.streams[audioStreamIndex].channels ? parseInt(job.probeData.streams[audioStreamIndex].channels) : null;
 									if (originalDuration <= 0)
 										throw new Error("Invalid file duration");
 									let duration = originalDuration;
@@ -3399,7 +3430,9 @@ module.exports = (() => {
 											this.jobLoggerInfo(job, "Final file size: " + finalFileSize + " bytes");
 											this.jobLoggerInfo(job, "Upload size cap: " + job.maxSize + " bytes");
 											if (finalFileSize > job.maxSize) {
-												job.probeDataFinal = await ffmpeg.runProbeWithArgs(["-v", "error", "-show_format", "-show_streams", "-print_format", "json", job.compressionData.compressedPath]);
+												const ffprobeOut = await ffmpeg.runProbeWithArgs(["-v", "error", "-show_format", "-show_streams", "-print_format", "json", job.compressionData.compressedPath]);
+												job.probeDataFinalRaw = ffprobeOut.data;
+												job.probeDataFinal = JSON.parse(ffprobeOut.data);
 												throw new Error("File bigger than allowed by Discord");
 											}
 										}
@@ -3492,17 +3525,16 @@ module.exports = (() => {
 							}
 							toasts.setToast(job.jobId, i18n.MESSAGES.CALCULATING);
 							if (job.probeData) {
-								const probeOutputData = JSON.parse(job.probeData.data);
 								try {
 									let audioStreamIndex = -1;
 									let videoStreamIndex = -1;
-									for (const streamData of probeOutputData.streams) {
+									for (const streamData of job.probeData.streams) {
 										if (streamData.codec_type == "audio") {
 											audioStreamIndex = streamData.index;
 											break;
 										}
 									}
-									for (const streamData of probeOutputData.streams) {
+									for (const streamData of job.probeData.streams) {
 										if (streamData.codec_type == "video") {
 											videoStreamIndex = streamData.index;
 											break;
@@ -3523,13 +3555,17 @@ module.exports = (() => {
 										videoFiltersPass1.push("interlace=lowpass=2");
 										videoFiltersPass2.push("interlace=lowpass=2");
 									}
+									if (job.options.advanced.deinterlace.value) {
+										videoFiltersPass1.push("yadif=mode=1");
+										videoFiltersPass2.push("yadif=mode=1");
+									}
 									const cappedFileSize = Math.floor((job.options.basic.sizeCap.value ? parseInt(job.options.basic.sizeCap.value) : job.maxSize)) - 150000;
-									const frameRateMatchesSplit = probeOutputData.streams[videoStreamIndex].r_frame_rate ? probeOutputData.streams[videoStreamIndex].r_frame_rate.split('/') : null;
-									const originalDuration = probeOutputData.format.duration ? parseFloat(probeOutputData.format.duration) : 0;
-									const originalHeight = probeOutputData.streams[videoStreamIndex].height ? parseInt(probeOutputData.streams[videoStreamIndex].height) : null;
-									const colorPrimaries = probeOutputData.streams[videoStreamIndex].color_primaries ? probeOutputData.streams[videoStreamIndex].color_primaries : null;
-									const bitDepth = audioStreamIndex >= 0 && probeOutputData.streams[audioStreamIndex].bits_per_raw_sample ? parseInt(probeOutputData.streams[audioStreamIndex].bits_per_raw_sample) : null;
-									const numChannels = audioStreamIndex >= 0 && probeOutputData.streams[audioStreamIndex].channels ? parseInt(probeOutputData.streams[audioStreamIndex].channels) : null;
+									const frameRateMatchesSplit = job.probeData.streams[videoStreamIndex].r_frame_rate ? job.probeData.streams[videoStreamIndex].r_frame_rate.split('/') : null;
+									const originalDuration = job.probeData.format.duration ? parseFloat(job.probeData.format.duration) : 0;
+									const originalHeight = job.probeData.streams[videoStreamIndex].height ? parseInt(job.probeData.streams[videoStreamIndex].height) : null;
+									const colorPrimaries = job.probeData.streams[videoStreamIndex].color_primaries ? job.probeData.streams[videoStreamIndex].color_primaries : null;
+									const bitDepth = audioStreamIndex >= 0 && job.probeData.streams[audioStreamIndex].bits_per_raw_sample ? parseInt(job.probeData.streams[audioStreamIndex].bits_per_raw_sample) : null;
+									const numChannels = audioStreamIndex >= 0 && job.probeData.streams[audioStreamIndex].channels ? parseInt(job.probeData.streams[audioStreamIndex].channels) : null;
 									const isHDR = hdrColorPrimaries.includes(colorPrimaries);
 									if (isHDR) {
 										videoFiltersPass1.push("zscale=transfer=linear,tonemap=hable,zscale=transfer=bt709");
@@ -4021,7 +4057,9 @@ module.exports = (() => {
 														}
 													}
 												} else {
-													job.probeDataFinal = await ffmpeg.runProbeWithArgs(["-v", "error", "-show_format", "-show_streams", "-print_format", "json", job.compressionData.compressedPath]);
+													const ffprobeOut = await ffmpeg.runProbeWithArgs(["-v", "error", "-show_format", "-show_streams", "-print_format", "json", job.compressionData.compressedPath]);
+													job.probeDataFinalRaw = ffprobeOut.data;
+													job.probeDataFinal = JSON.parse(ffprobeOut.data);
 													throw new Error("File bigger than allowed by Discord");
 												}
 											}
