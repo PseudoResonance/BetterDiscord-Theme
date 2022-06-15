@@ -21,7 +21,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.6.5",
+			version: "1.6.6",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -32,7 +32,8 @@ module.exports = (() => {
 				items: [
 					"Options for audio and video codecs.",
 					"Options for file container format.",
-					"Reduce audio size to compensate if video compression fails."
+					"Reduce audio size to compensate if video compression fails.",
+					"Option to prompt to compress all possible files."
 				]
 			}, {
 				title: "Fixed",
@@ -74,6 +75,16 @@ module.exports = (() => {
 							return i18n.MESSAGES.SETTINGS_IMMEDIATE_UPLOAD_DESC
 						},
 						id: 'immediateUpload',
+						type: 'switch',
+						value: false
+					}, {
+						get name() {
+							return i18n.MESSAGES.SETTINGS_COMPRESS_ALL
+						},
+						get note() {
+							return i18n.MESSAGES.SETTINGS_COMPRESS_ALL_DESC
+						},
+						id: 'compressAll',
 						type: 'switch',
 						value: false
 					}, {
@@ -270,6 +281,8 @@ module.exports = (() => {
 			SETTINGS_AUTO_CHANNEL_SWITCH_DESC: 'Automatically switch to the required channel when a file is ready to be uploaded.',
 			SETTINGS_IMMEDIATE_UPLOAD: 'Immediate Upload',
 			SETTINGS_IMMEDIATE_UPLOAD_DESC: 'Immediately upload files without showing a preview.',
+			SETTINGS_COMPRESS_ALL: 'Compress All',
+			SETTINGS_COMPRESS_ALL_DESC: 'Prompt to compress all compressible files.',
 			SETTINGS_MAX_FILE_SIZE: 'Max File Size (bytes)',
 			SETTINGS_MAX_FILE_SIZE_DESC: 'Default to this maximum file size for slower networks.',
 			SETTINGS_COMPRESSOR_CATEGORY: 'Compressor Settings',
@@ -376,6 +389,8 @@ module.exports = (() => {
 			SETTINGS_AUTO_CHANNEL_SWITCH_DESC: 'ファイルアップロードの準備ができたら自動的でチャネルにジャンプ。',
 			SETTINGS_IMMEDIATE_UPLOAD: '直接アップロード',
 			SETTINGS_IMMEDIATE_UPLOAD_DESC: 'プレビューなしで直接アップロード。',
+			SETTINGS_COMPRESS_ALL: 'すべてを圧縮',
+			SETTINGS_COMPRESS_ALL_DESC: 'すべての圧縮可能なファイルを圧縮するプロンプト。',
 			SETTINGS_MAX_FILE_SIZE: '最大ファイルサイズ（bytes）',
 			SETTINGS_MAX_FILE_SIZE_DESC: '低速ネットワークの場合で最大ファイルサイズのデフォルト。',
 			SETTINGS_COMPRESSOR_CATEGORY: '圧縮設定',
@@ -2265,7 +2280,7 @@ module.exports = (() => {
 					let queuedFiles = 0;
 					for (let i = 0; i < files.length; i++) {
 						const file = files[i];
-						if (file.size > uploadSizeCap) {
+						if (file.size > uploadSizeCap || this.settings.upload.compressAll) {
 							// If file is returned, it was incompressible
 							let type = file.type;
 							if (!type && file.path)
@@ -2412,8 +2427,13 @@ module.exports = (() => {
 						}
 						toasts.setToast(job.jobId);
 					}
-					if (!await this.populateCompressionOptions(job, cacheFile))
+					if (!await this.populateCompressionOptions(job, cacheFile)) {
+						// If compression is cancelled, check if file is small enough to be sent anyways
+						if (job.file.size <= job.maxSize) {
+							this.sendUploadFileList(this.wrapFileInList(job.file), job.guildId, job.channelId, job.threadId, job.isSidebar);
+						}
 						return false;
+					}
 					// If user wants to use cached options & cached file exists
 					if (cacheFile && job.options.cache.useCache.value) {
 						this.sendUploadFileList(this.wrapFileInList(cacheFile), job.guildId, job.channelId, job.threadId, job.isSidebar);
@@ -2470,7 +2490,7 @@ module.exports = (() => {
 						name: i18n.MESSAGES.COMPRESSION_OPTIONS_SIZE_CAP,
 						description: i18n.MESSAGES.COMPRESSION_OPTIONS_SIZE_CAP_DESC,
 						type: "textbox",
-						defaultValue: (this.settings.upload.maxFileSize != 0 ? this.settings.upload.maxFileSize : ""),
+						defaultValue: job.maxSize,
 						validation: value => {
 							return (!value || !isNaN(value) && !isNaN(parseInt(value)) && value > 0);
 						}
@@ -3219,7 +3239,7 @@ module.exports = (() => {
 											throw new Error("Cannot find FFmpeg output");
 										}
 									}
-									const cappedFileSize = Math.floor((job.options.basic.sizeCap.value && parseInt(job.options.basic.sizeCap.value) < job.maxSize ? parseInt(job.options.basic.sizeCap.value) : job.maxSize)) - 10000 - emptyVideoSize;
+									const cappedFileSize = Math.floor((job.options.basic.sizeCap.value ? parseInt(job.options.basic.sizeCap.value) : job.maxSize)) - 10000 - emptyVideoSize;
 									let audioBitrate = Math.floor((cappedFileSize * 8) / duration);
 									audioBitrate = audioEncoderSettings[job.options.basic.audioEncoder.value].encoderOptions.bitRateMinClampFunction(audioBitrate);
 									let outputChannels = audioEncoderSettings[job.options.basic.audioEncoder.value].encoderOptions.numChannelsFunction(audioBitrate, numChannels);
@@ -3503,7 +3523,7 @@ module.exports = (() => {
 										videoFiltersPass1.push("interlace=lowpass=2");
 										videoFiltersPass2.push("interlace=lowpass=2");
 									}
-									const cappedFileSize = Math.floor((job.options.basic.sizeCap.value && parseInt(job.options.basic.sizeCap.value) < job.maxSize ? parseInt(job.options.basic.sizeCap.value) : job.maxSize)) - 150000;
+									const cappedFileSize = Math.floor((job.options.basic.sizeCap.value ? parseInt(job.options.basic.sizeCap.value) : job.maxSize)) - 150000;
 									const frameRateMatchesSplit = probeOutputData.streams[videoStreamIndex].r_frame_rate ? probeOutputData.streams[videoStreamIndex].r_frame_rate.split('/') : null;
 									const originalDuration = probeOutputData.format.duration ? parseFloat(probeOutputData.format.duration) : 0;
 									const originalHeight = probeOutputData.streams[videoStreamIndex].height ? parseInt(probeOutputData.streams[videoStreamIndex].height) : null;
