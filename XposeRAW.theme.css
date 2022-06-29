@@ -1,7 +1,7 @@
 /**
  * @name XposeRAW
  * @author PseudoResonance
- * @version 3.1.4
+ * @version 3.1.5
  * @description Custom theme.
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeRAW.theme.css
  */
@@ -19,7 +19,7 @@
  */
 
 :root, .theme-dark, .theme-light {
-	--xposeVersion:"3.1.4";
+	--xposeVersion:"3.1.5";
 	--blur-radius:10px;
 }
 
@@ -767,11 +767,21 @@ div:not([class*="translate-"]) > .layerContainer-2v_Sit [role="dialog"]:not(#emo
 /* Image Preview */
 .layerContainer-2v_Sit [role="dialog"] [class*="downloadLink-"], .layerContainer-2v_Sit [role="dialog"] [class*="operations-"] {
 	position:relative;
+	top:0;
 }
 
 .layerContainer-2v_Sit [role="dialog"] [class*="imageWrapper-"] {
 	margin-left:auto;
 	margin-right:auto;
+	min-width:0;
+}
+
+.layerContainer-2v_Sit [role="dialog"] [class*="gallery-"] {
+	pointer-events:none;
+}
+
+.layerContainer-2v_Sit [role="dialog"] [class*="imageWrapper-"] ~ *, .layerContainer-2v_Sit [role="dialog"] [class*="imageWrapper-"] {
+	pointer-events:auto;
 }
 
 .layerContainer-2v_Sit [role="dialog"]:not(#emoji-picker-tab-panel) [class*="gallery-"]:not(#foo) {
