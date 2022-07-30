@@ -21,32 +21,16 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.6.7",
+			version: "1.6.8",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
 		},
 		changelog: [{
-				title: "Added",
-				type: "added",
-				items: [
-					"Options for audio and video codecs.",
-					"Options for file container format.",
-					"Reduce audio size to compensate if video compression fails.",
-					"Option to prompt to compress all possible files.",
-					"Option to deinterlace video."
-				]
-			}, {
 				title: "Fixed",
 				type: "fixed",
 				items: [
-					"Fixed plugin saying compressed files were too big for Nitro.",
-					"Remove video compression debug causing failure.",
-					"Fixed error getting max upload size.",
-					"Fixed dropdowns not working.",
-					"Fixed Discord thinking non-Nitro users have Nitro.",
-					"Fixed compression not working when tmp folder is on different drive from cache.",
-					"Fixed Linux not downloading MKVmerge."
+					"Fixed plugin not compressing audio files properly."
 				]
 			}
 		],
@@ -2505,6 +2489,7 @@ module.exports = (() => {
 					let audioEncoderValuesArray = [];
 					let videoFileFormatValuesArray = [];
 					let audioFileFormatValuesArray = [];
+					let ffprobeOut = null;
 					switch (job.type) {
 					case "image":
 						job.options.basic.sizeMultiplier = {
@@ -2580,7 +2565,7 @@ module.exports = (() => {
 							});
 							writeStream.destroy();
 						}
-						const ffprobeOut = await ffmpeg.runProbeWithArgs(["-v", "error", "-show_format", "-show_streams", "-print_format", "json", job.originalFilePath]);
+						ffprobeOut = await ffmpeg.runProbeWithArgs(["-v", "error", "-show_format", "-show_streams", "-print_format", "json", job.originalFilePath]);
 						job.probeDataRaw = ffprobeOut.data;
 						job.probeData = JSON.parse(ffprobeOut.data);
 						for (const name of Object.getOwnPropertyNames(videoEncoderSettings)) {
