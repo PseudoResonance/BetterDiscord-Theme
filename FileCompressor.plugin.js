@@ -21,7 +21,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.6.9",
+			version: "1.6.10",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -30,7 +30,13 @@ module.exports = (() => {
 				title: "Fixed",
 				type: "fixed",
 				items: [
-					"Fixed loading with OpenAsar."
+					"Fixed operation with latest Discord update"
+				]
+			}, {
+				title: "Known Bugs",
+				type: "improved",
+				items: [
+					"Issues with localization"
 				]
 			}
 		],
@@ -1652,12 +1658,12 @@ module.exports = (() => {
 					// Monkey patch to hook into upload events
 					this.monkeyPatch();
 					// Add event listeners
-					DiscordModules.UserSettingsStore.addChangeListener(this.handleUserSettingsChange);
+					DiscordModules.UserSettingsStore?.addChangeListener(this.handleUserSettingsChange); //TODO Fix listener
 					// Setup cache
 					this.updateCache();
 					// Setup toasts
 					toasts = new Toasts();
-					i18n.updateLocale(DiscordModules.UserSettingsStore.locale);
+					i18n.updateLocale(DiscordModules.UserSettingsStore?.locale ?? i18n.DEFAULT_LOCALE); //TODO Fix loading
 					PluginUtilities.addStyle('FileCompressor-CSS', `
 						#pseudocompressor-toasts {
 							position:fixed;
@@ -1707,16 +1713,34 @@ module.exports = (() => {
 					`);
 					this.updateToastCSS();
 					toasts.createToast(0);
-					this.getMaxFileSize = BdApi.findModuleByProps("maxFileSize").maxFileSize;
-					this.getCurrentSidebarChannelId = BdApi.findModuleByProps('getCurrentSidebarChannelId').getCurrentSidebarChannelId;
-					this.gotoThread = BdApi.findModuleByProps('gotoThread').gotoThread;
+					this.getMaxFileSize = (...args) => {
+						const func = BdApi.findModuleByProps("maxFileSize").maxFileSize;
+						if (func) {
+							this.getMaxFileSize = func;
+						}
+						return func(...args);
+					}
+					this.getCurrentSidebarChannelId = (...args) => {
+						const func = BdApi.findModuleByProps('getCurrentSidebarChannelId').getCurrentSidebarChannelId;
+						if (func) {
+							this.getCurrentSidebarChannelId = func;
+						}
+						return func(...args);
+					}
+					this.gotoThread = (...args) => {
+						const func = BdApi.findModuleByProps('gotoThread').gotoThread;
+						if (func) {
+							this.gotoThread = func;
+						}
+						return func(...args);
+					}
 				}
 
 				onStop() {
 					// Remove patches
 					Patcher.unpatchAll();
 					// Remove event listeners
-					DiscordModules.UserSettingsStore.removeChangeListener(this.handleUserSettingsChange);
+					DiscordModules.UserSettingsStore?.removeChangeListener(this.handleUserSettingsChange); //TODO Fix listener
 					// Remove toasts module
 					if (toasts)
 						toasts.remove();
@@ -2473,7 +2497,7 @@ module.exports = (() => {
 							type: "switch",
 							defaultValue: true,
 							onChange: (value, allCategories, allOptions) => {
-								for (const[key, category]of Object.entries(allCategories)) {
+								for (const [key, category] of Object.entries(allCategories)) {
 									if (key != "cache") {
 										category.style.display = (value ? "none" : null);
 									}
@@ -2721,9 +2745,9 @@ module.exports = (() => {
 							defaultValue: false,
 							tags: ["audioValid"],
 							onChange: (value, allCategories, allOptions) => {
-								for (const[key, category]of Object.entries(allOptions)) {
+								for (const [key, category] of Object.entries(allOptions)) {
 									if (key != "cache") {
-										for (const[categoryOption, element]of Object.entries(category)) {
+										for (const [categoryOption, element] of Object.entries(category)) {
 											if (element.tags.includes("audioOnly")) {
 												element.inputWrapper.style.display = (value ? null : "none");
 											} else if (!element.tags.includes("audioValid")) {
@@ -2739,7 +2763,7 @@ module.exports = (() => {
 							type: "textbox",
 							defaultValue: "",
 							validation: value => {
-								for (const[index, val]of value.split(':').entries())
+								for (const [index, val] of value.split(':').entries())
 									if (index > 2 || parseFloat(val) == NaN)
 										return false
 										return true;
@@ -2751,7 +2775,7 @@ module.exports = (() => {
 							type: "textbox",
 							defaultValue: "",
 							validation: value => {
-								for (const[index, val]of value.split(':').entries())
+								for (const [index, val] of value.split(':').entries())
 									if (index > 2 || parseFloat(val) == NaN)
 										return false
 										return true;
@@ -2912,7 +2936,7 @@ module.exports = (() => {
 							type: "textbox",
 							defaultValue: "",
 							validation: value => {
-								for (const[index, val]of value.split(':').entries())
+								for (const [index, val] of value.split(':').entries())
 									if (index > 2 || parseFloat(val) == NaN)
 										return false
 										return true;
@@ -2923,7 +2947,7 @@ module.exports = (() => {
 							type: "textbox",
 							defaultValue: "",
 							validation: value => {
-								for (const[index, val]of value.split(':').entries())
+								for (const [index, val] of value.split(':').entries())
 									if (index > 2 || parseFloat(val) == NaN)
 										return false
 										return true;
@@ -2994,17 +3018,17 @@ module.exports = (() => {
 								}
 							}
 							// Add elements to SettingGroups
-							for (const[key, value]of Object.entries(settingsElements)) {
+							for (const [key, value] of Object.entries(settingsElements)) {
 								settingsGroups[key] = new Settings.SettingGroup(optionsCategories[key].name, {
 									shown: optionsCategories[key].shown,
 									collapsible: true
 								}).append(...value);
 							}
 							// Convert elements to HTML SettingPanel objects
-							for (const[key, value]of Object.entries(settingsGroups))
+							for (const [key, value] of Object.entries(settingsGroups))
 								settingsPanels[key] = Settings.SettingPanel.build(null, value);
 							// Convert HTML to React elements
-							for (const[key, value]of Object.entries(settingsPanels))
+							for (const [key, value] of Object.entries(settingsPanels))
 								settingsPanelsReact[key] = ReactTools.createWrappedElement(value);
 							// Run all onChange functions with default values for setup
 							for (const category in options) {
@@ -3215,13 +3239,13 @@ module.exports = (() => {
 									let duration = originalDuration;
 									const startSecondsSplit = job.options.basic.startTimestamp.value.split(':');
 									let startSeconds = 0;
-									for (const[index, val]of startSecondsSplit.entries())
+									for (const [index, val] of startSecondsSplit.entries())
 										startSeconds += Math.pow(60, (startSecondsSplit.length - (index + 1))) * (index + 1 == startSecondsSplit.length ? parseFloat(val) : parseInt(val));
 									if (startSeconds < 0 || isNaN(startSeconds) || startSeconds >= duration)
 										startSeconds = 0;
 									const endSecondsSplit = job.options.basic.endTimestamp.value.split(':');
 									let endSeconds = 0;
-									for (const[index, val]of endSecondsSplit.entries())
+									for (const [index, val] of endSecondsSplit.entries())
 										endSeconds += Math.pow(60, (endSecondsSplit.length - (index + 1))) * (index + 1 == endSecondsSplit.length ? parseFloat(val) : parseInt(val));
 									endSeconds -= startSeconds;
 									if (endSeconds <= 0 || isNaN(endSeconds) || endSeconds > duration)
@@ -3571,13 +3595,13 @@ module.exports = (() => {
 									let duration = originalDuration;
 									const startSecondsSplit = job.options.basic.startTimestamp.value.split(':');
 									let startSeconds = 0;
-									for (const[index, val]of startSecondsSplit.entries())
+									for (const [index, val] of startSecondsSplit.entries())
 										startSeconds += Math.pow(60, (startSecondsSplit.length - (index + 1))) * (index + 1 == startSecondsSplit.length ? parseFloat(val) : parseInt(val));
 									if (startSeconds < 0 || isNaN(startSeconds) || startSeconds >= duration)
 										startSeconds = 0;
 									const endSecondsSplit = job.options.basic.endTimestamp.value.split(':');
 									let endSeconds = 0;
-									for (const[index, val]of endSecondsSplit.entries())
+									for (const [index, val] of endSecondsSplit.entries())
 										endSeconds += Math.pow(60, (endSecondsSplit.length - (index + 1))) * (index + 1 == endSecondsSplit.length ? parseFloat(val) : parseInt(val));
 									endSeconds -= startSeconds;
 									if (endSeconds <= 0 || isNaN(endSeconds) == NaN || endSeconds > duration)
@@ -4217,7 +4241,7 @@ module.exports = (() => {
 				}
 
 				async handleUserSettingsChange() {
-					i18n.updateLocale(DiscordModules.UserSettingsStore.locale);
+					i18n.updateLocale(DiscordModules.UserSettingsStore?.locale ?? i18n.DEFAULT_LOCALE); //TODO Fix loading
 				}
 
 			};
