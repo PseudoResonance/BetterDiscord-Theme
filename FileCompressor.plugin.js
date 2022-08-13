@@ -1,8 +1,12 @@
 /**
  * @name FileCompressor
+ * @author PseudoResonance
+ * @version 1.6.11
+ * @description Automatically compress files that are too large to send.
  * @authorLink https://github.com/PseudoResonance
  * @donate https://bit.ly/3hAnec5
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js
+ * @updateUrl https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js
  */
 
 //TODO Allow for the selection of different cached files from runs with different options
@@ -21,7 +25,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.6.10",
+			version: "1.6.11",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -30,7 +34,8 @@ module.exports = (() => {
 				title: "Fixed",
 				type: "fixed",
 				items: [
-					"Fixed operation with latest Discord update"
+					"Fixed operation with latest Discord update",
+					"Fixed plugin meta"
 				]
 			}, {
 				title: "Known Bugs",
@@ -525,13 +530,6 @@ module.exports = (() => {
 	return !global.ZeresPluginLibrary ? class {
 		constructor() {
 			this._config = config;
-		}
-
-		getName = () => config.info.name;
-		getAuthor = () => config.info.description;
-		getVersion = () => config.info.version;
-
-		load() {
 			BdApi.showConfirmationModal("Library Missing", `The library plugin needed for ${config.info.name} is missing. Please click Download Now to install it.`, {
 				confirmText: "Download Now",
 				cancelText: "Cancel",
@@ -544,6 +542,10 @@ module.exports = (() => {
 				}
 			});
 		}
+
+		getName = () => config.info.name;
+		getAuthor = () => config.info.description;
+		getVersion = () => config.info.version;
 
 		start() {}
 		stop() {}
