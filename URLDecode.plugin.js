@@ -1,8 +1,12 @@
 /**
  * @name URLDecode
+ * @author PseudoResonance
+ * @version 1.0.7
+ * @description URL/embed decoder for non-ASCII text.
  * @authorLink https://github.com/PseudoResonance
  * @donate https://bit.ly/3hAnec5
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/URLDecode.plugin.js
+ * @updateUrl https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/URLDecode.plugin.js
  */
 
 module.exports = (() => {
@@ -16,7 +20,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.0.6",
+			version: "1.0.7",
 			description: "URL/embed decoder for non-ASCII text.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/URLDecode.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/URLDecode.plugin.js"
@@ -25,7 +29,7 @@ module.exports = (() => {
 				title: "Fixed",
 				type: "fixed",
 				items: [
-					"Fixed unrecognizable URLs turning into empty strings"
+					"Fixed plugin meta"
 				]
 			}
 		],
@@ -54,13 +58,6 @@ module.exports = (() => {
 	return !global.ZeresPluginLibrary ? class {
 		constructor() {
 			this._config = config;
-		}
-
-		getName = () => config.info.name;
-		getAuthor = () => config.info.description;
-		getVersion = () => config.info.version;
-
-		load() {
 			BdApi.showConfirmationModal("Library Missing", `The library plugin needed for ${config.info.name} is missing. Please click Download Now to install it.`, {
 				confirmText: "Download Now",
 				cancelText: "Cancel",
