@@ -25,7 +25,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.6.11",
+			version: "1.6.12",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -35,13 +35,8 @@ module.exports = (() => {
 				type: "fixed",
 				items: [
 					"Fixed operation with latest Discord update",
-					"Fixed plugin meta"
-				]
-			}, {
-				title: "Known Bugs",
-				type: "improved",
-				items: [
-					"Issues with localization"
+					"Fixed plugin meta",
+					"Fixed plugin localization"
 				]
 			}
 		],
@@ -1660,12 +1655,12 @@ module.exports = (() => {
 					// Monkey patch to hook into upload events
 					this.monkeyPatch();
 					// Add event listeners
-					DiscordModules.UserSettingsStore?.addChangeListener(this.handleUserSettingsChange); //TODO Fix listener
+					WebpackModules.getByProps("locale", "initialize")?.addChangeListener(this.handleUserSettingsChange);
 					// Setup cache
 					this.updateCache();
 					// Setup toasts
 					toasts = new Toasts();
-					i18n.updateLocale(DiscordModules.UserSettingsStore?.locale ?? i18n.DEFAULT_LOCALE); //TODO Fix loading
+					i18n.updateLocale(DiscordModules.LocaleManager._chosenLocale ?? i18n.DEFAULT_LOCALE);
 					PluginUtilities.addStyle('FileCompressor-CSS', `
 						#pseudocompressor-toasts {
 							position:fixed;
@@ -1742,7 +1737,7 @@ module.exports = (() => {
 					// Remove patches
 					Patcher.unpatchAll();
 					// Remove event listeners
-					DiscordModules.UserSettingsStore?.removeChangeListener(this.handleUserSettingsChange); //TODO Fix listener
+					WebpackModules.getByProps("locale", "initialize")?.removeChangeListener(this.handleUserSettingsChange);
 					// Remove toasts module
 					if (toasts)
 						toasts.remove();
@@ -4243,7 +4238,7 @@ module.exports = (() => {
 				}
 
 				async handleUserSettingsChange() {
-					i18n.updateLocale(DiscordModules.UserSettingsStore?.locale ?? i18n.DEFAULT_LOCALE); //TODO Fix loading
+					i18n.updateLocale(DiscordModules.LocaleManager._chosenLocale ?? i18n.DEFAULT_LOCALE);
 				}
 
 			};
