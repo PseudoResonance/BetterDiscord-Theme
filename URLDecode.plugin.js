@@ -1,7 +1,7 @@
 /**
  * @name URLDecode
  * @author PseudoResonance
- * @version 1.0.8
+ * @version 1.0.9
  * @description URL/embed decoder for non-ASCII text.
  * @authorLink https://github.com/PseudoResonance
  * @donate https://bit.ly/3hAnec5
@@ -20,7 +20,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.0.8",
+			version: "1.0.9",
 			description: "URL/embed decoder for non-ASCII text.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/URLDecode.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/URLDecode.plugin.js"
@@ -345,7 +345,7 @@ module.exports = (() => {
 																	arr[index] = arr[index].replace(elem.props.href, newUrl);
 																}
 															});
-														} else if (elem.props && elem.props.renderTextElement) {
+														} else if (elem.props && elem.props.renderTextElement && !elem.props.renderTextElementURLDecode) {
 															const func = elem.props.renderTextElement;
 															elem.props.renderTextElement = (e, t) => {
 																if (!(e instanceof String || typeof e === "string") && e.props && e.props.href) {
@@ -359,6 +359,7 @@ module.exports = (() => {
 																}
 																return func(e, t);
 															};
+															elem.props.renderTextElementURLDecode = true;
 														}
 													}
 												}
