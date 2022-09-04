@@ -1,7 +1,7 @@
 /**
  * @name URLDecode
  * @author PseudoResonance
- * @version 1.0.7
+ * @version 1.0.8
  * @description URL/embed decoder for non-ASCII text.
  * @authorLink https://github.com/PseudoResonance
  * @donate https://bit.ly/3hAnec5
@@ -20,16 +20,16 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.0.7",
+			version: "1.0.8",
 			description: "URL/embed decoder for non-ASCII text.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/URLDecode.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/URLDecode.plugin.js"
 		},
 		changelog: [{
-				title: "Fixed",
-				type: "fixed",
+				title: "Added",
+				type: "added",
 				items: [
-					"Fixed plugin meta"
+					"Decode spoilered URLs"
 				]
 			}
 		],
@@ -345,6 +345,20 @@ module.exports = (() => {
 																	arr[index] = arr[index].replace(elem.props.href, newUrl);
 																}
 															});
+														} else if (elem.props && elem.props.renderTextElement) {
+															const func = elem.props.renderTextElement;
+															elem.props.renderTextElement = (e, t) => {
+																if (!(e instanceof String || typeof e === "string") && e.props && e.props.href) {
+																	const newUrl = this.decodeText(e.props.href);
+																	e.props.title = newUrl;
+																	e.props.children.forEach((element, index, arr) => {
+																		if (element instanceof String || typeof element === "string") {
+																			arr[index] = arr[index].replace(e.props.href, newUrl);
+																		}
+																	});
+																}
+																return func(e, t);
+															};
 														}
 													}
 												}
@@ -361,6 +375,7 @@ module.exports = (() => {
 											}
 										}
 									}
+									return;
 								}
 							});
 				}
