@@ -1,7 +1,7 @@
 /**
  * @name FileCompressor
  * @author PseudoResonance
- * @version 1.6.12
+ * @version 1.6.13
  * @description Automatically compress files that are too large to send.
  * @authorLink https://github.com/PseudoResonance
  * @donate https://bit.ly/3hAnec5
@@ -25,7 +25,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.6.12",
+			version: "1.6.13",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -34,9 +34,7 @@ module.exports = (() => {
 				title: "Fixed",
 				type: "fixed",
 				items: [
-					"Fixed operation with latest Discord update",
-					"Fixed plugin meta",
-					"Fixed plugin localization"
+					"Fixed operation with latest Discord update"
 				]
 			}
 		],
@@ -1710,6 +1708,13 @@ module.exports = (() => {
 					`);
 					this.updateToastCSS();
 					toasts.createToast(0);
+					this.getUserMaxFileSize = (...args) => {
+						const func = BdApi.findModuleByProps("getUserMaxFileSize").getUserMaxFileSize;
+						if (func) {
+							this.getUserMaxFileSize = func;
+						}
+						return func(...args);
+					}
 					this.getMaxFileSize = (...args) => {
 						const func = BdApi.findModuleByProps("maxFileSize").maxFileSize;
 						if (func) {
@@ -2281,8 +2286,7 @@ module.exports = (() => {
 					// Check account status and update max file upload size
 					const settingsMaxSize = this.settings.upload.maxFileSize != 0 ? this.settings.upload.maxFileSize : 0;
 					try {
-						const premiumUserLimits = DiscordModules.DiscordConstants.PremiumUserLimits[this.getCurrentUser().premiumType];
-						maxUploadSize = premiumUserLimits ? premiumUserLimits.fileSize : DiscordModules.DiscordConstants.MAX_ATTACHMENT_SIZE;
+						maxUploadSize = this.getUserMaxFileSize(this.getCurrentUser());
 					} catch (e) {
 						Logger.err(config.info.name, e);
 						BdApi.showToast(i18n.MESSAGES.ERROR_GETTING_ACCOUNT_INFO, {
