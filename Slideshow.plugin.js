@@ -1,11 +1,12 @@
 /**
  * @name Slideshow
- * @description Turns a transparent Discord background into a slideshow.
  * @author PseudoResonance
+ * @version 5.0.0
+ * @description Turns a transparent Discord background into a slideshow.
  * @authorLink https://github.com/PseudoResonance
  * @donate https://bit.ly/3hAnec5
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/Slideshow.plugin.js
- * @version 5.0.0
+ * @updateUrl https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/Slideshow.plugin.js
  */
 
 const BackgroundFill = {
