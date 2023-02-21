@@ -1,7 +1,7 @@
 /**
  * @name FileCompressor
  * @author PseudoResonance
- * @version 1.6.13
+ * @version 2.0.0
  * @description Automatically compress files that are too large to send.
  * @authorLink https://github.com/PseudoResonance
  * @donate https://bit.ly/3hAnec5
@@ -25,7 +25,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "1.6.13",
+			version: "2.0.0",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -34,7 +34,19 @@ module.exports = (() => {
 				title: "Fixed",
 				type: "fixed",
 				items: [
-					"Fixed operation with latest Discord update"
+					"Fixed image compression with latest Discord update"
+				]
+			}, {
+				title: "Added",
+				type: "added",
+				items: [
+					"Images are now compressed by converting to WebP, and decreasing the compression quality each iteration"
+				]
+			}, {
+				title: "Broken",
+				type: "removed",
+				items: [
+					"Video and audio compression do not work and will cause issues"
 				]
 			}
 		],
@@ -314,8 +326,10 @@ module.exports = (() => {
 			COMPRESSION_OPTIONS_USE_CACHE_DESC: 'Use the previously cached file.',
 			COMPRESSION_OPTIONS_SIZE_CAP: 'Size Cap (bytes)',
 			COMPRESSION_OPTIONS_SIZE_CAP_DESC: 'Max file size to compress under.',
-			COMPRESSION_OPTIONS_SIZE_MULTIPLIER: 'Iterative Size Multiplier',
-			COMPRESSION_OPTIONS_SIZE_MULTIPLIER_DESC: 'Amount to multiply image size by with each attempt.',
+			COMPRESSION_OPTIONS_MINIMUM_PIXELS: 'Minimum Total Pixels in Image',
+			COMPRESSION_OPTIONS_MINIMUM_PIXELS_DESC: 'Image is downscaled until it is smaller than this size. (Width × Height)',
+			COMPRESSION_OPTIONS_QUALITY_STEP: 'Image Quality Step (0-1)',
+			COMPRESSION_OPTIONS_QUALITY_STEP_DESC: 'Each iteration, the image quality is reduced by this amount.',
 			COMPRESSION_OPTIONS_MAX_ITERATIONS: 'Max Iterations',
 			COMPRESSION_OPTIONS_MAX_ITERATIONS_DESC: 'Maximum number of attempts to resize image.',
 			COMPRESSION_OPTIONS_FILE_FORMAT: 'File Format',
@@ -424,8 +438,10 @@ module.exports = (() => {
 			COMPRESSION_OPTIONS_USE_CACHE_DESC: '以前にキャッシュされたファイルを使用する。',
 			COMPRESSION_OPTIONS_SIZE_CAP: '最大ファイルサイズ（bytes）',
 			COMPRESSION_OPTIONS_SIZE_CAP_DESC: '圧縮するときの最大なファイルサイズ。',
-			COMPRESSION_OPTIONS_SIZE_MULTIPLIER: '試行ごとに画像のサイズ変更係数',
-			COMPRESSION_OPTIONS_SIZE_MULTIPLIER_DESC: '試行ごとに画像のサイズがこの係数で乗算します。',
+			COMPRESSION_OPTIONS_MINIMUM_PIXELS: '画像の最小ピクセル数',
+			COMPRESSION_OPTIONS_MINIMUM_PIXELS_DESC: 'このサイズより小さくなるまで画像のサイズが縮小されます。　（横×縦）',
+			COMPRESSION_OPTIONS_QUALITY_STEP: '試行ごとに画像の画質ステップ　（0-1）',
+			COMPRESSION_OPTIONS_QUALITY_STEP_DESC: '試行ごとに画像の画質がこの量で低下します。',
 			COMPRESSION_OPTIONS_MAX_ITERATIONS: '最大試行回数',
 			COMPRESSION_OPTIONS_MAX_ITERATIONS_DESC: '画像圧縮の最大試行回数。',
 			COMPRESSION_OPTIONS_FILE_FORMAT: 'ファイル形式',
@@ -562,19 +578,11 @@ module.exports = (() => {
 			// Node modules
 			const fs = require('fs');
 			const path = require('path');
-			const childProcess = require('child_process');
+			//const childProcess = require('child_process');
 			const cryptoModule = require('crypto');
-			const uuidv4 = (() => {
-				try {
-					return require('uuid/v4');
-				} catch {
-					return () => {
-						return cryptoModule.randomBytes(16).toString("hex");
-					};
-				}
-			})();
-			const mime = require('mime-types');
-			const osModule = require('os');
+			const uuidv4 = () => cryptoModule.randomBytes(16).toString("hex");
+			//const mime = require('mime-types');
+			//const osModule = require('os');
 
 			// Cache container
 			let cache = null;
@@ -1342,7 +1350,7 @@ module.exports = (() => {
 							recursive: true
 						});
 					}
-					fs.accessSync(this.cachePath, fs.constants.R_OK | fs.constants.W_OK);
+					//fs.accessSync(this.cachePath, fs.constants.R_OK | fs.constants.W_OK); //TODO Access check
 					this.clear();
 				}
 
@@ -1382,28 +1390,32 @@ module.exports = (() => {
 				}
 
 				getFileKey(file) {
+					/**
 					if (file) {
-						if (file.path && file.size && file.lastModified) {
-							return file.size + file.lastModified + file.path;
-						}
+					if (file.path && file.size && file.lastModified) {
+					return file.size + file.lastModified + file.path;
+					}
 					}
 					return null;
+					 */
 				}
 
 				getFile(fileKey) {
+					/**
 					if (fileKey) {
-						let entry = this.cacheLookup.get(fileKey);
-						if (entry) {
-							if (fs.existsSync(entry.path)) {
-								return new File([fs.readFileSync(entry.path).buffer], entry.name, {
-									type: mime.contentType(entry.path)
-								});
-							} else {
-								this.removeFile(fileKey);
-							}
-						}
+					let entry = this.cacheLookup.get(fileKey);
+					if (entry) {
+					if (fs.existsSync(entry.path)) {
+					return new File([fs.readFileSync(entry.path).buffer], entry.name, {
+					type: mime.contentType(entry.path)
+					});
+					} else {
+					this.removeFile(fileKey);
+					}
+					}
 					}
 					return null;
+					 */
 				}
 
 				getCachePath() {
@@ -1411,85 +1423,93 @@ module.exports = (() => {
 				}
 
 				async saveAndCache(file, fileKey) {
+					/**
 					if (fileKey) {
-						try {
-							let nameSplit = file.name.split('.');
-							let extension = nameSplit[nameSplit.length - 1];
-							for (let i = 0; i < 5; i++) {
-								let filePath = path.join(this.cachePath, uuidv4().replace(/-/g, "") + "." + extension);
-								if (!fs.existsSync(filePath)) {
-									let fr = new FileReader();
-									fr.readAsBinaryString(file);
-									fr.onloadend = e => {
-										fs.writeFileSync(filePath, fr.result, {
-											encoding: 'binary'
-										});
-										this.addToCache(filePath, file.name, fileKey);
-									};
-									fr.onerror = e => {
-										Logger.err(config.info.name, fr.error);
-										BdApi.showToast(i18n.MESSAGES.ERROR_CACHING, {
-											type: "error"
-										});
-									};
-									return;
-								}
-							}
-							Logger.err(config.info.name, "Unable to find unused UUID for cache");
-							BdApi.showToast(i18n.MESSAGES.ERROR_CACHING, {
-								type: "error"
-							});
-						} catch (err) {
-							Logger.err(config.info.name, err);
-							BdApi.showToast(i18n.MESSAGES.ERROR_CACHING, {
-								type: "error"
-							});
-						}
+					try {
+					let nameSplit = file.name.split('.');
+					let extension = nameSplit[nameSplit.length - 1];
+					for (let i = 0; i < 5; i++) {
+					let filePath = path.join(this.cachePath, uuidv4().replace(/-/g, "") + "." + extension);
+					if (!fs.existsSync(filePath)) {
+					let fr = new FileReader();
+					fr.readAsBinaryString(file);
+					fr.onloadend = e => {
+					fs.writeFileSync(filePath, fr.result, {
+					encoding: 'binary'
+					});
+					this.addToCache(filePath, file.name, fileKey);
+					};
+					fr.onerror = e => {
+					Logger.err(config.info.name, fr.error);
+					BdApi.showToast(i18n.MESSAGES.ERROR_CACHING, {
+					type: "error"
+					});
+					};
+					return;
 					}
+					}
+					Logger.err(config.info.name, "Unable to find unused UUID for cache");
+					BdApi.showToast(i18n.MESSAGES.ERROR_CACHING, {
+					type: "error"
+					});
+					} catch (err) {
+					Logger.err(config.info.name, err);
+					BdApi.showToast(i18n.MESSAGES.ERROR_CACHING, {
+					type: "error"
+					});
+					}
+					}
+					 */
 				}
 
 				addToCache(path, name, fileKey) {
+					/**
 					if (fileKey) {
-						let entry = {
-							path: path,
-							name: name,
-							fileKey: fileKey
-						};
-						this.cache.push(entry);
-						this.cacheLookup.set(fileKey, entry);
+					let entry = {
+					path: path,
+					name: name,
+					fileKey: fileKey
+					};
+					this.cache.push(entry);
+					this.cacheLookup.set(fileKey, entry);
 					}
+					 */
 				}
 
 				removeFile(fileKey) {
+					/**
 					if (fileKey) {
-						let entry = this.cacheLookup.get(fileKey);
-						if (entry) {
-							this.cacheLookup.delete(fileKey);
-							let index = this.cache.indexOf(entry);
-							if (index >= 0) {
-								this.cache.splice(index, 1);
-							}
-						}
+					let entry = this.cacheLookup.get(fileKey);
+					if (entry) {
+					this.cacheLookup.delete(fileKey);
+					let index = this.cache.indexOf(entry);
+					if (index >= 0) {
+					this.cache.splice(index, 1);
 					}
+					}
+					}
+					 */
 				}
 
 				clear() {
+					/** //TODO Fix cache
 					if (this.cacheLookup != null) {
-						this.cacheLookup.clear();
+					this.cacheLookup.clear();
 					}
 					this.cache = [];
 					fs.readdir(this.cachePath, (err, files) => {
-						if (err)
-							throw err;
-						for (const file of files) {
-							fs.unlink(path.join(this.cachePath, file), err => {
-								if (err) {
-									Logger.err(config.info.name, "Error deleting temp file: " + file);
-									Logger.err(config.info.name, err);
-								}
-							});
-						}
+					if (err)
+					throw err;
+					for (const file of files) {
+					fs.unlink(path.join(this.cachePath, file), err => {
+					if (err) {
+					Logger.err(config.info.name, "Error deleting temp file: " + file);
+					Logger.err(config.info.name, err);
+					}
 					});
+					}
+					});
+					 */
 				}
 			}
 
@@ -1708,19 +1728,23 @@ module.exports = (() => {
 					`);
 					this.updateToastCSS();
 					toasts.createToast(0);
-					this.getUserMaxFileSize = (...args) => {
-						const func = BdApi.findModuleByProps("getUserMaxFileSize").getUserMaxFileSize;
-						if (func) {
-							this.getUserMaxFileSize = func;
+					let getMaxFileSizeKey = null;
+					const setGetMaxFileSizeKey = (val) => {
+						getMaxFileSizeKey = val;
+					};
+					const getMaxFileSizeModule = ZeresPluginLibrary.WebpackModules.getModule((m) => {
+						for (k in m) {
+							if (typeof m[k] === 'function') {
+								s = m[k].toString();
+								if (s.includes("getUserMaxFileSize") && s.includes("premiumTier")) {
+									setGetMaxFileSizeKey(k);
+									return true;
+								}
+							}
 						}
-						return func(...args);
-					}
+					});
 					this.getMaxFileSize = (...args) => {
-						const func = BdApi.findModuleByProps("maxFileSize").maxFileSize;
-						if (func) {
-							this.getMaxFileSize = func;
-						}
-						return func(...args);
+						return getMaxFileSizeModule[getMaxFileSizeKey](...args);
 					}
 					this.getCurrentSidebarChannelId = (...args) => {
 						const func = BdApi.findModuleByProps('getCurrentSidebarChannelId').getCurrentSidebarChannelId;
@@ -1816,18 +1840,33 @@ module.exports = (() => {
 					}
 				}
 
-				monkeyPatch() {
-					const promptToUploadModule = BdApi.findModuleByProps("promptToUpload");
+				async monkeyPatch() {
+					let promptToUploadKey = null;
+					const setPromptToUploadKey = (val) => {
+						promptToUploadKey = val;
+					};
+					const promptToUploadModule = await BdApi.Webpack.waitForModule((m) => {
+						for (k in m) {
+							if (typeof m[k] === 'function') {
+								s = m[k].toString();
+								if (s.includes("instantBatchUpload") && s.includes("showLargeMessageDialog")) {
+									setPromptToUploadKey(k);
+									return true;
+								}
+							}
+						}
+					});
 					if (promptToUploadModule) {
-						this.promptToUpload = promptToUploadModule.promptToUpload;
-						if (this.promptToUpload && this.promptToUpload.length === 4) {
-							Patcher.instead(promptToUploadModule, "promptToUpload", (t, args, originalFunc) => {
+						this.promptToUpload = promptToUploadModule[promptToUploadKey];
+						if (this.promptToUpload && this.promptToUpload.length === 3) {
+							Patcher.instead(promptToUploadModule, promptToUploadKey, (t, args, originalFunc) => {
 								if (args[3].fileCompressorCompressedFile) {
 									return originalFunc(...args);
 								} else {
 									return this.handleUploadEvent(...args);
 								}
 							});
+							Logger.info(config.info.name, "Successfully hooked into Discord upload handler!");
 						} else {
 							BdApi.showToast(i18n.MESSAGES.ERROR_HOOKING_UPLOAD, {
 								type: "error"
@@ -1844,19 +1883,21 @@ module.exports = (() => {
 						});
 						Logger.err(config.info.name, "Unable to hook into Discord upload handler! promptToUpload module doesn't exist!");
 					}
+					/**
 					Patcher.instead(WebpackModules.find(m => m.prototype.activateUploadDialogue && m.displayName === "FileInput").prototype, "activateUploadDialogue", (t, args, originalFunc) => {
-						// Run custom file selector
-						FileSelector.open().then(fileList => {
-							// If selector returns file list, run Discord's onChange
-							t.props.onChange({
-								currentTarget: {
-									files: [...fileList]
-								},
-								stopPropagation: () => {},
-								preventDefault: () => {}
-							});
-						});
+					// Run custom file selector
+					FileSelector.open().then(fileList => {
+					// If selector returns file list, run Discord's onChange
+					t.props.onChange({
+					currentTarget: {
+					files: [...fileList]
+					},
+					stopPropagation: () => {},
+					preventDefault: () => {}
 					});
+					});
+					});
+					 */
 				}
 
 				updateCache() {
@@ -1874,6 +1915,7 @@ module.exports = (() => {
 						BdApi.showToast(i18n.MESSAGES.ERROR_CACHE_SETUP, {
 							type: "error"
 						});
+						Logger.err(config.info.name, "Error setting up cache!", err);
 					}
 				}
 
@@ -2285,16 +2327,16 @@ module.exports = (() => {
 				processUploadFileList(files, guildId, channelId, threadId, sidebar) {
 					// Check account status and update max file upload size
 					const settingsMaxSize = this.settings.upload.maxFileSize != 0 ? this.settings.upload.maxFileSize : 0;
+					let maxDiscordSize = 8388608;
 					try {
-						maxUploadSize = this.getUserMaxFileSize(this.getCurrentUser());
+						maxDiscordSize = this.getMaxFileSize(guildId);
 					} catch (e) {
 						Logger.err(config.info.name, e);
 						BdApi.showToast(i18n.MESSAGES.ERROR_GETTING_ACCOUNT_INFO, {
 							type: "error"
 						});
-						maxUploadSize = 8388608;
+						maxDiscordSize = 8388608;
 					}
-					const maxDiscordSize = Math.max(this.getMaxFileSize(guildId), maxUploadSize);
 					const uploadSizeCap = (settingsMaxSize > 0 && settingsMaxSize < maxDiscordSize) ? settingsMaxSize : maxDiscordSize;
 					// Synthetic DataTransfer to generate FileList
 					const originalDt = new DataTransfer();
@@ -2525,11 +2567,20 @@ module.exports = (() => {
 					let ffprobeOut = null;
 					switch (job.type) {
 					case "image":
-						job.options.basic.sizeMultiplier = {
-							name: i18n.MESSAGES.COMPRESSION_OPTIONS_SIZE_MULTIPLIER,
-							description: i18n.MESSAGES.COMPRESSION_OPTIONS_SIZE_MULTIPLIER_DESC,
+						job.options.basic.minPixels = {
+							name: i18n.MESSAGES.COMPRESSION_OPTIONS_MINIMUM_PIXELS,
+							description: i18n.MESSAGES.COMPRESSION_OPTIONS_MINIMUM_PIXELS_DESC,
 							type: "textbox",
-							defaultValue: 0.9,
+							defaultValue: 10000000,
+							validation: value => {
+								return (!value || !isNaN(value) && !isNaN(parseInt(value)) && value > 0);
+							}
+						};
+						job.options.basic.qualityStep = {
+							name: i18n.MESSAGES.COMPRESSION_OPTIONS_QUALITY_STEP,
+							description: i18n.MESSAGES.COMPRESSION_OPTIONS_QUALITY_STEP_DESC,
+							type: "textbox",
+							defaultValue: 0.05,
 							validation: value => {
 								return (!isNaN(value) && !isNaN(parseFloat(value)) && value < 1 && value > 0);
 							}
@@ -4173,7 +4224,7 @@ module.exports = (() => {
 						outputData: null,
 						width: img.naturalWidth,
 						height: img.naturalHeight,
-						iterations: 0
+						iterations: (job.file.type === 'image/webp' ? 0 : -1) // Start at -1 so that when the value is incremented, the first compression pass will simply convert to webp.
 					};
 					if (await this.compressImageLoop(job, image)) {
 						toasts.setToast(job.jobId, i18n.MESSAGES.PACKAGING);
@@ -4192,7 +4243,14 @@ module.exports = (() => {
 				async compressImageLoop(job, image) {
 					image.iterations++;
 					toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_TRY_NUMBER', image.iterations));
-					image.outputData = await this.compressImageCanvas(image, job.options);
+					this.jobLoggerInfo(job, "Original File Type: " + job.file.type);
+					if (image.iterations >= 0 && image.width * image.height >= job.options.basic.minPixels.value) {
+						const sizeMultiplier = Math.sqrt(job.options.basic.minPixels.value / (image.width * image.height));
+						const targetWidth = Math.floor(image.width * sizeMultiplier);
+						const targetHeight = Math.floor(image.height * sizeMultiplier);
+						this.jobLoggerInfo(job, "Image has " + (image.width * image.height) + " pixels. Reducing to " + (targetWidth * targetHeight) + " (" + targetWidth + "x" + targetHeight + ")");
+					}
+					image.outputData = await this.compressImageCanvas(job, image);
 					if (image.outputData.size >= job.maxSize) {
 						if (image.iterations >= job.options.basic.maxIterations.value) {
 							throw new Error("Max iterations reached while compressing image");
@@ -4205,17 +4263,25 @@ module.exports = (() => {
 				}
 
 				// Compress HTML canvas to target size
-				async compressImageCanvas(image, options) {
+				async compressImageCanvas(job, image) {
 					const canvas = document.createElement("canvas");
 					const context = canvas.getContext("2d");
-					const multiplier = Math.pow(options.basic.sizeMultiplier.value, image.iterations);
-					canvas.width = Math.round(image.width * multiplier);
-					canvas.height = Math.round(image.height * multiplier);
+					if (image.iterations >= 0 && image.width * image.height >= job.options.basic.minPixels.value) {
+						const sizeMultiplier = Math.sqrt(job.options.basic.minPixels.value / (image.width * image.height));
+						canvas.width = Math.floor(image.width * sizeMultiplier);
+						canvas.height = Math.floor(image.height * sizeMultiplier);
+					} else {
+						canvas.width = image.width;
+						canvas.height = image.height;
+					}
+					const targetType = 'image/webp';
+					const targetQuality = 1 - (image.iterations * job.options.basic.qualityStep.value);
+					this.jobLoggerInfo(job, "Attempting to compress to " + targetType + " of quality: " + targetQuality);
 					context.drawImage(image.data, 0, 0, canvas.width, canvas.height);
 					return new Promise((resolve, reject) => {
 						canvas.toBlob((blob) => {
 							resolve(blob);
-						}, image.file.type);
+						}, targetType, targetQuality);
 					});
 				}
 
