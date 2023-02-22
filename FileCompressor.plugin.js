@@ -1,7 +1,7 @@
 /**
  * @name FileCompressor
  * @author PseudoResonance
- * @version 2.0.1
+ * @version 2.0.2
  * @description Automatically compress files that are too large to send.
  * @authorLink https://github.com/PseudoResonance
  * @donate https://bit.ly/3hAnec5
@@ -25,7 +25,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "2.0.1",
+			version: "2.0.2",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -35,7 +35,8 @@ module.exports = (() => {
 				type: "fixed",
 				items: [
 					"Fixed image compression with latest Discord update",
-					"Fixed video and audio compression with companion app"
+					"Fixed video and audio compression with companion app",
+					"Increased timeouts - should result in less compression failures"
 				]
 			}, {
 				title: "Added",
@@ -998,7 +999,7 @@ module.exports = (() => {
 				async getTempFolder() {
 					const data = await this.sendMessage({
 						type: 'tmpDir'
-					}, 1000);
+					}, 5000);
 					if (data.type === 'tmpDir') {
 						if ('tmpDir' in data) {
 							return data.tmpDir;
@@ -1011,7 +1012,7 @@ module.exports = (() => {
 				async getMimeType(path) {
 					const data = await this.sendMessage({
 						type: 'mime'
-					}, 1000);
+					}, 5000);
 					if (data.type === 'mime') {
 						if ('mimetype' in data) {
 							return data.mimetype;
@@ -1025,7 +1026,7 @@ module.exports = (() => {
 					const data = await this.sendMessage({
 						type: 'appStatus',
 						appName: appName
-					}, 1000);
+					}, 5000);
 					if (data.type === 'appStatus' && data.appName === appName) {
 						return data.status;
 					}
@@ -1048,7 +1049,7 @@ module.exports = (() => {
 								type: 'runApp',
 								appName: app,
 								args: args
-							}, 1000).then((msg) => {
+							}, 5000).then((msg) => {
 								if (!(msg.data.type === 'runApp' && msg.data.appName === app) || msg.data.result !== true) {
 									if (msg.data.error) {
 										reject(msg.data.error);
@@ -1101,7 +1102,7 @@ module.exports = (() => {
 								type: 'execApp',
 								appName: app,
 								args: args
-							}, 1000).then((msg) => {
+							}, 5000).then((msg) => {
 								if (!(msg.type === 'execApp' && msg.appName === app) || msg.result !== true) {
 									if (msg.error) {
 										reject(msg.error);
