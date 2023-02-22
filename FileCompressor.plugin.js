@@ -1,7 +1,7 @@
 /**
  * @name FileCompressor
  * @author PseudoResonance
- * @version 2.0.0
+ * @version 2.0.1
  * @description Automatically compress files that are too large to send.
  * @authorLink https://github.com/PseudoResonance
  * @donate https://bit.ly/3hAnec5
@@ -25,7 +25,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "2.0.0",
+			version: "2.0.1",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -34,7 +34,8 @@ module.exports = (() => {
 				title: "Fixed",
 				type: "fixed",
 				items: [
-					"Fixed image compression with latest Discord update"
+					"Fixed image compression with latest Discord update",
+					"Fixed video and audio compression with companion app"
 				]
 			}, {
 				title: "Added",
@@ -46,7 +47,7 @@ module.exports = (() => {
 				title: "Broken",
 				type: "removed",
 				items: [
-					"Video and audio compression do not work and will cause issues"
+					"Several features are still broken such as automatic channel switcing"
 				]
 			}
 		],
@@ -201,64 +202,24 @@ module.exports = (() => {
 						value: ""
 					}, {
 						get name() {
-							return i18n.MESSAGES.SETTINGS_FFMPEG
+							return i18n.MESSAGES.SETTINGS_COMPANION_APP
 						},
 						get note() {
-							return i18n.MESSAGES.SETTINGS_FFMPEG_DESC
+							return i18n.MESSAGES.SETTINGS_COMPANION_APP_DESC
 						},
-						id: 'ffmpeg',
+						id: 'companionApp',
 						type: 'switch',
 						value: false
 					}, {
 						get name() {
-							return i18n.MESSAGES.SETTINGS_FFMPEG_DOWNLOAD
+							return i18n.MESSAGES.SETTINGS_COMPANION_PORT
 						},
 						get note() {
-							return i18n.MESSAGES.SETTINGS_FFMPEG_DOWNLOAD_DESC
+							return i18n.MESSAGES.SETTINGS_COMPANION_PORT_DESC
 						},
-						id: 'ffmpegDownload',
-						type: 'switch',
-						value: true
-					}, {
-						get name() {
-							return i18n.MESSAGES.SETTINGS_FFMPEG_PATH
-						},
-						get note() {
-							return i18n.MESSAGES.SETTINGS_FFMPEG_PATH_DESC
-						},
-						id: 'ffmpegPath',
+						id: 'companionPort',
 						type: 'textbox',
-						value: ""
-					}, {
-						get name() {
-							return i18n.MESSAGES.SETTINGS_MKVMERGE
-						},
-						get note() {
-							return i18n.MESSAGES.SETTINGS_MKVMERGE_DESC
-						},
-						id: 'mkvmerge',
-						type: 'switch',
-						value: false
-					}, {
-						get name() {
-							return i18n.MESSAGES.SETTINGS_MKVMERGE_DOWNLOAD
-						},
-						get note() {
-							return i18n.MESSAGES.SETTINGS_MKVMERGE_DOWNLOAD_DESC
-						},
-						id: 'mkvmergeDownload',
-						type: 'switch',
-						value: true
-					}, {
-						get name() {
-							return i18n.MESSAGES.SETTINGS_MKVMERGE_PATH
-						},
-						get note() {
-							return i18n.MESSAGES.SETTINGS_MKVMERGE_PATH_DESC
-						},
-						id: 'mkvmergePath',
-						type: 'textbox',
-						value: ""
+						value: 38494
 					}, {
 						get name() {
 							return i18n.MESSAGES.SETTINGS_KEEP_TEMP
@@ -304,18 +265,10 @@ module.exports = (() => {
 			SETTINGS_CONCURRENT_THREADS_DESC: 'Number of compression jobs that can be processing simultaneously.',
 			SETTINGS_CACHE_PATH: 'Cache Location',
 			SETTINGS_CACHE_PATH_DESC: 'Custom file cache location to use (Leave empty to use default location).',
-			SETTINGS_FFMPEG: 'Use FFmpeg',
-			SETTINGS_FFMPEG_DESC: 'Enable the use of FFmpeg for compressing video and audio.',
-			SETTINGS_FFMPEG_DOWNLOAD: 'Download FFmpeg',
-			SETTINGS_FFMPEG_DOWNLOAD_DESC: 'Should FFmpeg be automatically downloaded? Disable this to use a custom installation.',
-			SETTINGS_FFMPEG_PATH: 'FFmpeg Install Location',
-			SETTINGS_FFMPEG_PATH_DESC: 'Custom FFmpeg install location to use (Leave empty to use default location).',
-			SETTINGS_MKVMERGE: 'Use MKVmerge',
-			SETTINGS_MKVMERGE_DESC: 'Enable the use of MKVmerge for compressing video.',
-			SETTINGS_MKVMERGE_DOWNLOAD: 'Download MKVmerge',
-			SETTINGS_MKVMERGE_DOWNLOAD_DESC: 'Should MKVmerge be automatically downloaded? Disable this to use a custom installation.',
-			SETTINGS_MKVMERGE_PATH: 'MKVmerge Install Location',
-			SETTINGS_MKVMERGE_PATH_DESC: 'Custom MKVmerge install location to use (Leave empty to use default location).',
+			SETTINGS_COMPANION_APP: 'Use Companion App',
+			SETTINGS_COMPANION_APP_DESC: 'Use companion app for video/audio compression.',
+			SETTINGS_COMPANION_PORT: 'Companion App Port',
+			SETTINGS_COMPANION_PORT_DESC: 'Port used to connect to companion app.',
 			SETTINGS_KEEP_TEMP: 'Keep Temp Files',
 			SETTINGS_KEEP_TEMP_DESC: 'Retain temporary files after compression.',
 			COMPRESSION_OPTIONS_TITLE: '{$0$} Compression Options',
@@ -416,18 +369,10 @@ module.exports = (() => {
 			SETTINGS_CONCURRENT_THREADS_DESC: '同時で圧縮できるジョブの数。',
 			SETTINGS_CACHE_PATH: 'キャッシュの所在',
 			SETTINGS_CACHE_PATH_DESC: 'ファイルキャッシュの所在（デフォルト使うには空のまま）。',
-			SETTINGS_FFMPEG: 'FFmpegを使用',
-			SETTINGS_FFMPEG_DESC: '動画と音声の圧縮にFFmpegを使用。',
-			SETTINGS_FFMPEG_DOWNLOAD: 'FFmpegをダウンロード',
-			SETTINGS_FFMPEG_DOWNLOAD_DESC: 'FFmpegを自動的にダウンロード？カスタムインストール所在使うには無効します。',
-			SETTINGS_FFMPEG_PATH: 'FFmpegのインストール所在',
-			SETTINGS_FFMPEG_PATH_DESC: 'FFmpegのインストール所在（デフォルト使うには空のまま）。',
-			SETTINGS_MKVMERGE: 'MKVmergeを使用',
-			SETTINGS_MKVMERGE_DESC: '動画の圧縮にMKVmergeを使用。',
-			SETTINGS_MKVMERGE_DOWNLOAD: 'MKVmergeをダウンロード',
-			SETTINGS_MKVMERGE_DOWNLOAD_DESC: 'MKVmergeを自動的にダウンロード？カスタムインストール所在使うには無効します。',
-			SETTINGS_MKVMERGE_PATH: 'MKVmergeのインストール所在',
-			SETTINGS_MKVMERGE_PATH_DESC: 'MKVmergeのインストール所在（デフォルト使うには空のまま）。',
+			SETTINGS_COMPANION_APP: 'コンパニオンアプリを使用する',
+			SETTINGS_COMPANION_APP_DESC: '動画と音声を圧縮するためにコンパニオンアプリを使用する。',
+			SETTINGS_COMPANION_PORT: 'コンパニオンアプリのポート',
+			SETTINGS_COMPANION_PORT_DESC: 'コンパニオンアプリへの通信ポート。',
 			SETTINGS_KEEP_TEMP: '一時ファイルを保持',
 			SETTINGS_KEEP_TEMP_DESC: '圧縮後に一時ファイルを保持する。',
 			COMPRESSION_OPTIONS_TITLE: '{$0$}　圧縮設定',
@@ -578,149 +523,13 @@ module.exports = (() => {
 			// Node modules
 			const fs = require('fs');
 			const path = require('path');
-			//const childProcess = require('child_process');
+			const EventEmitter = require('events');
 			const cryptoModule = require('crypto');
 			const uuidv4 = () => cryptoModule.randomBytes(16).toString("hex");
-			//const mime = require('mime-types');
-			//const osModule = require('os');
 
 			// Cache container
 			let cache = null;
 
-			// FFmpeg container
-			let ffmpeg = null;
-			// FFmpeg library constants
-			const ffmpegConstants = {
-				name: "FFmpeg",
-				version: "5.0",
-				sourceUrl: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/5.0/ffmpeg-source.zip",
-				license: "GPL Version 2",
-				licenseUrl: "https://www.gnu.org/licenses/old-licenses/gpl-2.0.html",
-				downloadUrls: {
-					FFmpeg: {
-						win_amd64: {
-							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/5.0/ffmpeg-win-amd64.exe",
-							size: 119959040,
-							hash: "4ca02c7908169391cbd95435b986b8b9296706cfe48164475c9abb88f684d6bd6fa841a971fbcc27e630fa67282aba5a57b007bb3fa0ab1f7c626d9c28cfcac9"
-						},
-						darwin_amd64: {
-							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/5.0/ffmpeg-darwin-amd64",
-							size: 78138880,
-							hash: "50e09b80001ff2387cbc66cdc4784630e9ef47a87c27a2e0dc52fb6e776653e663547b95f87a7574c9f2c3c80d007c0ba33c3a90917db429855cf788e8794f76"
-						},
-						linux_i686: {
-							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/5.0/ffmpeg-linux-i686",
-							size: 50856012,
-							hash: "c22abe13fada3790900ace3d01c1453862c9c87fecfa60877d11bfe41fc8805d9677a6d0db3d5def24bb9e03760b32014ffbd4b9f9d0f0dbc88161002dba51a2"
-						},
-						linux_amd64: {
-							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/5.0/ffmpeg-linux-amd64",
-							size: 78317376,
-							hash: "ee247090c8ad936a702bc1ee214fe2aab6c6b2043703a951e2ff073db55eb0999c6824a12f60ed324b7d197fe2c0c9e713fd26d86aa74e07cf305a74552a62a1"
-						},
-						linux_armhf: {
-							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/5.0/ffmpeg-linux-armhf",
-							size: 30711516,
-							hash: "dce6817062c787888995b7ff21e9623d0d648744db5b0b13f99ea86ac24470a551748d0608c601e0d384a6f186aef5244e49bdb70a39b0f69d99fc1e5c9fe2de"
-						},
-						linux_arm64: {
-							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/5.0/ffmpeg-linux-arm64",
-							size: 49628720,
-							hash: "3d499d52e74803af75c4f8cc6e5f0ef8942205d0314a06edd6ccc76ee8aa80a9440a8d848f7f5c6028cc4222ea70a20530ef1bd8e635d9d36e9d67890775d115"
-						}
-					},
-					FFprobe: {
-						win_amd64: {
-							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/5.0/ffprobe-win-amd64.exe",
-							size: 119863296,
-							hash: "5b9ccb803f12b5cea98913aa8647f3b7995c9092d5e0bf95963a6df5f13f380d031ad1c2f5a0f967f6d0c4970d566492f3f9339d58abc00fb9745f9841f2861f"
-						},
-						darwin_amd64: {
-							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/5.0/ffprobe-darwin-amd64",
-							size: 78073216,
-							hash: "23d68f33bb53c2fd91cb69f135635cf82b50174b56556f39475146fb9c17ed7b7333817ba767509481da4c624f84a38dc11f1b94277116c0b4f15e2b12b26d97"
-						},
-						linux_i686: {
-							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/5.0/ffprobe-linux-i686",
-							size: 50724300,
-							hash: "1d2e67859245563e3c530e8f23b4d41d08d5d05214046655d14fe605e1d706c13cce92e102d3594207504a58f6a875dd0986aeecf0fe9307159097e5e1691fe0"
-						},
-						linux_amd64: {
-							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/5.0/ffprobe-linux-amd64",
-							size: 78215520,
-							hash: "93832f28a8eff04d72930aad457022bc0455f9a3909d50bd3f043fe9e444549dc2b8945a623555bd5e927d2880d0bc90b95b55dc72d078dc614fe87ed26ef4dc"
-						},
-						linux_armhf: {
-							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/5.0/ffprobe-linux-armhf",
-							size: 30624652,
-							hash: "edc28aa8e0eda8e2cfc64ac002f58a9cfa3c4cd929f24b85175c404c400185988b3fef5ccbf03b4a9dd3de9a7ec0cc0db67964bbc142c440c53f2f46b97638d4"
-						},
-						linux_arm64: {
-							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/5.0/ffprobe-linux-arm64",
-							size: 49543216,
-							hash: "3c43d3c78cd5e2f1604f26b1052846a4e9a07c8f6efb26d6e3572c6a423bda95e0a68759d1d2dd96c11b3d62454a9753da61d0e0e49e29eb029bb29b51a53412"
-						}
-					}
-				}
-			};
-			// MKVmerge container
-			let mkvmerge = null;
-			// MKVmerge library constants
-			const mkvmergeConstants = {
-				name: "MKVmerge",
-				version: "58.0.0",
-				sourceUrl: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-source.tar.xz",
-				license: "GPL Version 2",
-				licenseUrl: "https://www.gnu.org/licenses/old-licenses/gpl-2.0.html",
-				downloadUrls: {
-					MKVmerge: {
-						win_amd64: {
-							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-win-amd64.exe",
-							size: 12389416,
-							hash: "ff4f1b349de9e440121f7dc7de94d90f638709bd2f336e9ab28237e86febe6ab493c5b2737b1c02e40ba75378dd045daf653d6dff4df71055b05faa558e893b2"
-						},
-						darwin_amd64: {
-							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-darwin-amd64",
-							size: 10417720,
-							hash: "59c574561f6567222adda67b01fefcafba3cc03a61c8b4565789411cca9b0b43a6705857ef0f639babe119d0a63f93ff8d0974d4c90d8021c7f2d5df8e44fb4f"
-						},
-						darwin_arm64: {
-							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-darwin-arm64",
-							size: 9618112,
-							hash: "a7ddb746a7f25f17ca02d38ee8f9b0f59045268e52c429070c1ca6c74c40476c82d657890d181e10ed104784ec085959876562cd218e7eefa237229855d259fe"
-						},
-						linux_i686: {
-							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-linux-i686",
-							size: 13558924,
-							hash: "ef845b83a59ea0a93ecfcd593abbb066593137e820678242d7a2010c9da1fb9925f9726eca34077bf474df8fdab4c2190fc316c153a76fac656463eb50e7a5a7"
-						},
-						linux_amd64: {
-							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-linux-amd64",
-							size: 13070840,
-							hash: "b14ea5ede6019fd612985ddd864925326ad5ae5c6f4851a8701cde555d4ef499d61b67c2a382f5ef4fc313f9ad9aba17847eb3820766d0c4bcc97ff40d0c89b8"
-						},
-						linux_armhf: {
-							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-linux-armhf",
-							size: 8573116,
-							hash: "b428b35c36a2f4e43ac16369be6212724787e926041b49826e429f4c806805b25cb346c2a2d4cbe563c29294fd04985263a9786e5c933b585cc0e0ed530bdbaf"
-						},
-						linux_arm64: {
-							url: "https://github.com/PseudoResonance/BetterDiscord-Theme/releases/download/58.0.0/mkvmerge-linux-arm64",
-							size: 11509304,
-							hash: "03223a4a3b6baf55d26ff582a6f79857db4fa41bad24074ee267d9f2b592e36ff337b952f03c60508888737c34fe79258bd31ea49337c04131f8e82b3cd90ae9"
-						}
-					}
-				}
-			};
-			const librarySuffixes = {
-				win_amd64: "-win-amd64.exe",
-				darwin_amd64: "-darwin-amd64",
-				darwin_arm64: "-darwin-arm64",
-				linux_i686: "-linux-i686",
-				linux_amd64: "-linux-amd64",
-				linux_armhf: "-linux-armhf",
-				linux_arm64: "-linux-arm64"
-			};
 			// Video container settings
 			const videoContainerSettings = {
 				"mkv": {
@@ -1025,6 +834,10 @@ module.exports = (() => {
 			// Persistent toasts container
 			let toasts = null;
 
+			// Companion app manager
+			let companion = null;
+			const companionUuid = uuidv4();
+
 			// Temp folder
 			let tempDataPath = null;
 
@@ -1046,291 +859,276 @@ module.exports = (() => {
 			// Original Discord upload function before patch
 			let originalUploadFunction = null;
 
-			// Account upload cap
-			let maxUploadSize = 8388608;
-
-			const FFmpeg = class {
-				constructor(ffmpegFolder) {
-					if (fs.existsSync(ffmpegFolder)) {
-						this.ffmpeg = path.join(ffmpegFolder, "ffmpeg");
-						this.ffprobe = path.join(ffmpegFolder, "ffprobe");
-						if (process.platform == "win32") {
-							this.ffmpeg += ".exe";
-							this.ffprobe += ".exe";
-						}
-						if (!fs.existsSync(this.ffmpeg) || !fs.existsSync(this.ffprobe)) {
-							this.ffmpeg = path.join(ffmpegFolder, "ffmpeg");
-							switch (process.platform) {
-							case "win32":
-								this.ffmpeg += librarySuffixes["win_amd64"];
-								break;
-							case "darwin":
-								this.ffmpeg += librarySuffixes["darwin_amd64"];
-								break;
-							default:
-								switch (process.arch) {
-								case "arm":
-									this.ffmpeg += librarySuffixes["linux_armhf"];
-									break;
-								case "arm64":
-									this.ffmpeg += librarySuffixes["linux_arm64"];
-									break;
-								case "x64":
-									this.ffmpeg += librarySuffixes["linux_amd64"];
-									break;
-								case "ia32":
-								case "x32":
-								default:
-									this.ffmpeg += librarySuffixes["linux_i686"];
-									break;
-								}
-							}
-							this.ffprobe = path.join(ffmpegFolder, "ffprobe");
-							switch (process.platform) {
-							case "win32":
-								this.ffprobe += librarySuffixes["win_amd64"];
-								break;
-							case "darwin":
-								this.ffprobe += librarySuffixes["darwin_amd64"];
-								break;
-							default:
-								switch (process.arch) {
-								case "arm":
-									this.ffprobe += librarySuffixes["linux_armhf"];
-									break;
-								case "arm64":
-									this.ffprobe += librarySuffixes["linux_arm64"];
-									break;
-								case "x64":
-									this.ffprobe += librarySuffixes["linux_amd64"];
-									break;
-								case "ia32":
-								case "x32":
-								default:
-									this.ffprobe += librarySuffixes["linux_i686"];
-									break;
-								}
-								break;
-							}
-						}
-						if (fs.existsSync(this.ffmpeg) && fs.existsSync(this.ffprobe)) {
-							Logger.info(config.info.name, 'Running FFmpeg -version');
-							Logger.debug(config.info.name, childProcess.execFileSync(this.ffmpeg, ["-version"], {
-									timeout: 10000
-								}).toString());
-						} else {
-							throw new Error("FFmpeg not found");
-						}
-					} else {
-						throw new Error("FFmpeg not found");
-					}
+			const Companion = class {
+				constructor(settings) {
+					this.settings = settings;
+					this.closed = false;
+					this.inUse = false;
+					this.ready = false;
+					this.messages = {};
+					this.jobs = {};
 				}
 
-				runWithArgs(args, outputFilters = []) {
-					return new Promise((resolve, reject) => {
-						const filterArr = [];
-						const processArr = [];
-						for (const key in outputFilters) {
-							if (typeof(outputFilters[key].filter) == "function" && typeof(outputFilters[key].process) == "function") {
-								filterArr.push(outputFilters[key].filter);
-								processArr.push(outputFilters[key].process);
-							}
-						}
-						if (fs.existsSync(this.ffmpeg)) {
-							const rollingOutputBuffer = [];
-							Logger.info(config.info.name, 'Running FFmpeg ' + args.join(' '));
-							const process = childProcess.spawn(this.ffmpeg, args);
-							osModule.setPriority(process.pid, 10);
-							process.on('error', err => {
-								Logger.err(config.info.name, err);
-								reject(err);
-								const index = runningProcesses?.indexOf(process);
-								if (index > -1)
-									runningProcesses?.splice(index, 1);
-							});
-							process.on('exit', (code, signal) => {
-								if (code == 0) {
-									resolve(true);
-								} else {
-									Logger.err(config.info.name, rollingOutputBuffer.join("\r\n"));
-									reject();
-								}
-								const index = runningProcesses?.indexOf(process);
-								if (index > -1)
-									runningProcesses?.splice(index, 1);
-							});
-							process.stderr.on('data', data => {
-								const str = data.toString();
-								// Keep rolling buffer of output strings to output errors if FFmpeg crashes
-								if (rollingOutputBuffer.length >= 10)
-									rollingOutputBuffer.shift();
-								rollingOutputBuffer.push(str);
-								for (let index = 0; index < filterArr.length; index++) {
-									if (filterArr[index](str)) {
-										processArr[index](str);
-									}
-								}
-							});
-							runningProcesses?.push(process);
-						} else {
-							throw new Error("FFmpeg not found");
-						}
-					});
-				}
+				openConnection() {
+					return Promise.race([new Promise((resolve, reject) => {
+								if (this.settings.compressor.companionApp && !isNaN(this.settings.compressor.companionPort) && !isNaN(parseInt(this.settings.compressor.companionPort)) && this.settings.compressor.companionPort > 0) {
+									this.ws = new WebSocket('ws://localhost:' + this.settings.compressor.companionPort);
 
-				runProbeWithArgs(args) {
-					return new Promise((resolve, reject) => {
-						if (fs.existsSync(this.ffprobe)) {
-							Logger.info(config.info.name, 'Running FFprobe ' + args.join(' '));
-							const process = childProcess.execFile(this.ffprobe, args, (err, stdout, stderr) => {
-								if (err) {
-									Logger.err(config.info.name, stderr);
-									reject(err);
-								}
-								try {
-									resolve({
-										data: stdout,
-										error: err
-									});
-								} catch (e) {
-									Logger.err(config.info.name, e);
-									reject(e);
-								}
-								const index = runningProcesses?.indexOf(process);
-								if (index > -1)
-									runningProcesses?.splice(index, 1);
-							});
-							osModule.setPriority(process.pid, 10);
-							runningProcesses?.push(process);
-						} else {
-							throw new Error("FFprobe not found");
-						}
-					});
-				}
+									this.ws.onopen = () => {
+										Logger.info(config.info.name, "Connection to companion app opened.");
+										this.ws.send(companionUuid);
+									};
 
-				checkFFmpeg() {
-					return fs.existsSync(this.ffmpeg) && fs.existsSync(this.ffprobe);
-				}
-			};
-
-			const MKVmerge = class {
-				constructor(mkvmergeFolder) {
-					if (fs.existsSync(mkvmergeFolder)) {
-						this.mkvmerge = path.join(mkvmergeFolder, "mkvmerge");
-						if (process.platform == "win32") {
-							this.mkvmerge += ".exe";
-						}
-						if (!fs.existsSync(this.mkvmerge)) {
-							this.mkvmerge = path.join(mkvmergeFolder, "mkvmerge");
-							switch (process.platform) {
-							case "win32":
-								this.mkvmerge += librarySuffixes["win_amd64"];
-								break;
-							case "darwin":
-								switch (process.arch) {
-								case "arm":
-								case "arm64":
-									this.mkvmerge += librarySuffixes["darwin_arm64"];
-									break;
-								case "x64":
-								default:
-									try {
-										if (childProcess.execSync("sysctl -n sysctl.proc_translated").toString().startsWith("1")) {
-											this.mkvmerge += librarySuffixes["darwin_arm64"];
-											break;
+									this.ws.onmessage = (e) => {
+										if (!this.ready) {
+											if (companionUuid === e.data) {
+												this.ready = true;
+												Logger.info(config.info.name, "Connection to companion app ready.");
+												resolve();
+											}
+										} else {
+											const data = JSON.parse(e.data);
+											if (data.id) {
+												if (data.id in this.messages) {
+													this.messages[data.id](data.data);
+													delete this.messages[data.id];
+												} else if (data.id in this.jobs) {
+													this.jobs[data.id](data.data);
+												}
+											}
 										}
-									} catch {}
-									this.mkvmerge += librarySuffixes["darwin_amd64"];
-									break;
+									};
+
+									this.ws.onclose = (e) => {
+										if (this.inUse && !this.closed) {
+											Logger.err(config.info.name, "Connection to companion app closed. Retrying connection in 1 second.", e);
+											setTimeout(() => {
+												this.openConnection();
+											}, 1000);
+										} else {
+											Logger.err(config.info.name, "Connection to companion app closed.", e);
+											reject(e);
+										}
+									};
+
+									this.ws.onerror = (e) => {
+										this.ws.close();
+										if (this.inUse && !this.closed) {
+											Logger.err(config.info.name, "Error while communicating with companion app. Retrying connection in 1 second.", e);
+											setTimeout(() => {
+												this.openConnection();
+											}, 1000);
+										} else {
+											Logger.err(config.info.name, "Error while communicating with companion app.", e);
+											reject(e);
+										}
+									};
+								} else {
+									reject("Companion app support disabled or invalid companion app port.");
 								}
-								break;
-							default:
-								switch (process.arch) {
-								case "arm":
-									this.mkvmerge += librarySuffixes["linux_armhf"];
-									break;
-								case "arm64":
-									this.mkvmerge += librarySuffixes["linux_arm64"];
-									break;
-								case "x64":
-									this.mkvmerge += librarySuffixes["linux_amd64"];
-									break;
-								case "ia32":
-								case "x32":
-								default:
-									this.mkvmerge += librarySuffixes["linux_i686"];
-									break;
-								}
-								break;
-							}
-						}
-						if (fs.existsSync(this.mkvmerge)) {
-							Logger.info(config.info.name, 'Running MKVmerge --version');
-							Logger.debug(config.info.name, childProcess.execFileSync(this.mkvmerge, ["--version"], {
-									timeout: 10000
-								}).toString());
+							}), new Promise((resolve, reject) => {
+								setTimeout(() => {
+									reject("Connection handshake timed out!");
+								}, 5000);
+							})]);
+				}
+
+				closeConnection() {
+					this.closed = true;
+					this.ws?.close();
+				}
+
+				async sendMessage(data, timeout) {
+					return Promise.race([new Promise((resolve, reject) => {
+								const msg = {
+									id: uuidv4(),
+									data: data
+								};
+								this.messages[msg.id] = resolve;
+								this.ws.send(JSON.stringify(msg));
+							}), new Promise((resolve, reject) => {
+								setTimeout(() => {
+									reject("Message timed out!");
+								}, timeout);
+							})]);
+				}
+
+				async sendJob(data, timeout) {
+					this.inUse = true;
+					return Promise.race([new Promise((resolve, reject) => {
+								const msg = {
+									id: uuidv4(),
+									data: data
+								};
+								const emitter = new EventEmitter();
+								this.messages[msg.id] = (result) => {
+									resolve({
+										id: msg.id,
+										emitter: emitter,
+										data: result
+									})
+								};
+								this.jobs[msg.id] = (packet) => {
+									switch (packet.type) {
+									case 'error':
+										emitter.emit('error', packet.error);
+										delete this.jobs[msg.id];
+										if (Object.keys(this.jobs).length == 0)
+											this.inUse = false;
+										break;
+									case 'exit':
+										emitter.emit('exit', packet.code, packet.signal);
+										delete this.jobs[msg.id];
+										if (Object.keys(this.jobs).length === 0)
+											this.inUse = false;
+										break;
+									case 'data':
+										emitter.emit('data', packet.data);
+										break;
+									}
+								};
+								this.ws.send(JSON.stringify(msg));
+							}), new Promise((resolve, reject) => {
+								setTimeout(() => {
+									reject("Message timed out!");
+								}, timeout);
+							})]);
+				}
+
+				async getTempFolder() {
+					const data = await this.sendMessage({
+						type: 'tmpDir'
+					}, 1000);
+					if (data.type === 'tmpDir') {
+						if ('tmpDir' in data) {
+							return data.tmpDir;
 						} else {
-							throw new Error("MKVmerge not found");
+							return null;
 						}
-					} else {
-						throw new Error("MKVmerge not found");
 					}
 				}
 
-				runWithArgs(args, outputFilters = []) {
-					return new Promise((resolve, reject) => {
-						const filterArr = [];
-						const processArr = [];
-						for (const key in outputFilters) {
-							if (typeof(outputFilters[key].filter) == "function" && typeof(outputFilters[key].process) == "function") {
-								filterArr.push(outputFilters[key].filter);
-								processArr.push(outputFilters[key].process);
-							}
-						}
-						if (fs.existsSync(this.mkvmerge)) {
-							const rollingOutputBuffer = [];
-							Logger.info(config.info.name, 'Running MKVmerge ' + args.join(' '));
-							const process = childProcess.spawn(this.mkvmerge, args);
-							osModule.setPriority(process.pid, 10);
-							process.on('error', err => {
-								Logger.err(config.info.name, err);
-								reject(err);
-								const index = runningProcesses?.indexOf(process);
-								if (index > -1)
-									runningProcesses?.splice(index, 1);
-							});
-							process.on('exit', (code, signal) => {
-								if (code == 0) {
-									resolve(true);
-								} else {
-									Logger.err(config.info.name, rollingOutputBuffer.join("\r\n"));
-									reject();
-								}
-								const index = runningProcesses?.indexOf(process);
-								if (index > -1)
-									runningProcesses?.splice(index, 1);
-							});
-							process.stdout.on('data', data => {
-								const str = data.toString();
-								// Keep rolling buffer of output strings to output errors if MKVmerge crashes
-								if (rollingOutputBuffer.length >= 10)
-									rollingOutputBuffer.shift();
-								rollingOutputBuffer.push(str);
-								for (let index = 0; index < filterArr.length; index++) {
-									if (filterArr[index](str)) {
-										processArr[index](str);
-									}
-								}
-							});
-							runningProcesses?.push(process);
+				async getMimeType(path) {
+					const data = await this.sendMessage({
+						type: 'mime'
+					}, 1000);
+					if (data.type === 'mime') {
+						if ('mimetype' in data) {
+							return data.mimetype;
 						} else {
-							throw new Error("MKVmerge not found");
+							return null;
 						}
-					});
+					}
 				}
 
-				checkMKVmerge() {
-					return fs.existsSync(this.mkvmerge);
+				async requestAppStatus(appName) {
+					const data = await this.sendMessage({
+						type: 'appStatus',
+						appName: appName
+					}, 1000);
+					if (data.type === 'appStatus' && data.appName === appName) {
+						return data.status;
+					}
+				}
+
+				async runWithArgs(app, args, outputFilters = []) {
+					const filterArr = [];
+					const processArr = [];
+					for (const key in outputFilters) {
+						if (typeof(outputFilters[key].filter) == "function" && typeof(outputFilters[key].process) == "function") {
+							filterArr.push(outputFilters[key].filter);
+							processArr.push(outputFilters[key].process);
+						}
+					}
+					if (await this.requestAppStatus(app)) {
+						return new Promise((resolve, reject) => {
+							const rollingOutputBuffer = [];
+							Logger.info(config.info.name, 'Running ' + app + ' ' + args.join(' '));
+							this.sendJob({
+								type: 'runApp',
+								appName: app,
+								args: args
+							}, 1000).then((msg) => {
+								if (!(msg.data.type === 'runApp' && msg.data.appName === app) || msg.data.result !== true) {
+									if (msg.data.error) {
+										reject(msg.data.error);
+									}
+								} else if (msg.data.result === true) {
+									msg.emitter.on('error', err => {
+										Logger.err(config.info.name, err);
+										reject(err);
+										runningProcesses = runningProcesses.filter(p => p !== process);
+									});
+									msg.emitter.on('exit', (code, signal) => {
+										if (code == 0) {
+											resolve(true);
+										} else {
+											Logger.err(config.info.name, rollingOutputBuffer.join("\r\n"));
+											reject();
+										}
+										runningProcesses = runningProcesses.filter(p => p !== process);
+									});
+									msg.emitter.on('data', data => {
+										const str = data;
+										// Keep rolling buffer of output strings to output errors if FFmpeg crashes
+										if (rollingOutputBuffer.length >= 10)
+											rollingOutputBuffer.shift();
+										rollingOutputBuffer.push(str);
+										for (let index = 0; index < filterArr.length; index++) {
+											if (filterArr[index](str)) {
+												processArr[index](str);
+											}
+										}
+									});
+									runningProcesses?.push(msg.id);
+								} else {
+									reject();
+								}
+							}).catch((e) => {
+								reject(e);
+							});
+						});
+					} else {
+						throw new Error(app + " not found");
+					}
+				}
+
+				async execWithArgs(app, args) {
+					if (await this.requestAppStatus(app)) {
+						return new Promise((resolve, reject) => {
+							Logger.info(config.info.name, 'Running ' + app + ' ' + args.join(' '));
+							this.sendMessage({
+								type: 'execApp',
+								appName: app,
+								args: args
+							}, 1000).then((msg) => {
+								if (!(msg.type === 'execApp' && msg.appName === app) || msg.result !== true) {
+									if (msg.error) {
+										reject(msg.error);
+									}
+								} else if (msg.result === true) {
+									if (msg.data.err) {
+										Logger.err(config.info.name, msg.data.stderr);
+										reject(msg.data.err);
+									}
+									resolve({
+										data: msg.data.stdout,
+										error: msg.data.err
+									});
+								} else {
+									reject();
+								}
+							}).catch((e) => {
+								reject(e);
+							});
+						});
+					} else {
+						throw new Error(app + " not found");
+					}
+				}
+
+				checkCompanion() {
+					return this.ws && this.ws.readyState == WebSocket.OPEN && this.ready;
 				}
 			};
 
@@ -1390,32 +1188,28 @@ module.exports = (() => {
 				}
 
 				getFileKey(file) {
-					/**
 					if (file) {
-					if (file.path && file.size && file.lastModified) {
-					return file.size + file.lastModified + file.path;
-					}
+						if (file.path && file.size && file.lastModified) {
+							return file.size + file.lastModified + file.path;
+						}
 					}
 					return null;
-					 */
 				}
 
-				getFile(fileKey) {
-					/**
+				async getFile(fileKey) {
 					if (fileKey) {
-					let entry = this.cacheLookup.get(fileKey);
-					if (entry) {
-					if (fs.existsSync(entry.path)) {
-					return new File([fs.readFileSync(entry.path).buffer], entry.name, {
-					type: mime.contentType(entry.path)
-					});
-					} else {
-					this.removeFile(fileKey);
-					}
-					}
+						let entry = this.cacheLookup.get(fileKey);
+						if (entry) {
+							if (fs.existsSync(entry.path)) {
+								return new File([fs.readFileSync(entry.path, null).buffer], entry.name, {
+									type: await companion.getMimeType(entry.path)
+								});
+							} else {
+								this.removeFile(fileKey);
+							}
+						}
 					}
 					return null;
-					 */
 				}
 
 				getCachePath() {
@@ -1423,93 +1217,85 @@ module.exports = (() => {
 				}
 
 				async saveAndCache(file, fileKey) {
-					/**
 					if (fileKey) {
-					try {
-					let nameSplit = file.name.split('.');
-					let extension = nameSplit[nameSplit.length - 1];
-					for (let i = 0; i < 5; i++) {
-					let filePath = path.join(this.cachePath, uuidv4().replace(/-/g, "") + "." + extension);
-					if (!fs.existsSync(filePath)) {
-					let fr = new FileReader();
-					fr.readAsBinaryString(file);
-					fr.onloadend = e => {
-					fs.writeFileSync(filePath, fr.result, {
-					encoding: 'binary'
-					});
-					this.addToCache(filePath, file.name, fileKey);
-					};
-					fr.onerror = e => {
-					Logger.err(config.info.name, fr.error);
-					BdApi.showToast(i18n.MESSAGES.ERROR_CACHING, {
-					type: "error"
-					});
-					};
-					return;
+						try {
+							let nameSplit = file.name.split('.');
+							let extension = nameSplit[nameSplit.length - 1];
+							for (let i = 0; i < 5; i++) {
+								let filePath = path.join(this.cachePath, uuidv4().replace(/-/g, "") + "." + extension);
+								if (!fs.existsSync(filePath)) {
+									let fr = new FileReader();
+									fr.readAsBinaryString(file);
+									fr.onloadend = e => {
+										fs.writeFileSync(filePath, fr.result, {
+											encoding: 'binary'
+										});
+										this.addToCache(filePath, file.name, fileKey);
+									};
+									fr.onerror = e => {
+										Logger.err(config.info.name, fr.error);
+										BdApi.showToast(i18n.MESSAGES.ERROR_CACHING, {
+											type: "error"
+										});
+									};
+									return;
+								}
+							}
+							Logger.err(config.info.name, "Unable to find unused UUID for cache");
+							BdApi.showToast(i18n.MESSAGES.ERROR_CACHING, {
+								type: "error"
+							});
+						} catch (err) {
+							Logger.err(config.info.name, err);
+							BdApi.showToast(i18n.MESSAGES.ERROR_CACHING, {
+								type: "error"
+							});
+						}
 					}
-					}
-					Logger.err(config.info.name, "Unable to find unused UUID for cache");
-					BdApi.showToast(i18n.MESSAGES.ERROR_CACHING, {
-					type: "error"
-					});
-					} catch (err) {
-					Logger.err(config.info.name, err);
-					BdApi.showToast(i18n.MESSAGES.ERROR_CACHING, {
-					type: "error"
-					});
-					}
-					}
-					 */
 				}
 
 				addToCache(path, name, fileKey) {
-					/**
 					if (fileKey) {
-					let entry = {
-					path: path,
-					name: name,
-					fileKey: fileKey
-					};
-					this.cache.push(entry);
-					this.cacheLookup.set(fileKey, entry);
+						let entry = {
+							path: path,
+							name: name,
+							fileKey: fileKey
+						};
+						this.cache.push(entry);
+						this.cacheLookup.set(fileKey, entry);
 					}
-					 */
 				}
 
 				removeFile(fileKey) {
-					/**
 					if (fileKey) {
-					let entry = this.cacheLookup.get(fileKey);
-					if (entry) {
-					this.cacheLookup.delete(fileKey);
-					let index = this.cache.indexOf(entry);
-					if (index >= 0) {
-					this.cache.splice(index, 1);
+						let entry = this.cacheLookup.get(fileKey);
+						if (entry) {
+							this.cacheLookup.delete(fileKey);
+							let index = this.cache.indexOf(entry);
+							if (index >= 0) {
+								this.cache.splice(index, 1);
+							}
+						}
 					}
-					}
-					}
-					 */
 				}
 
 				clear() {
-					/** //TODO Fix cache
 					if (this.cacheLookup != null) {
-					this.cacheLookup.clear();
+						this.cacheLookup.clear();
 					}
 					this.cache = [];
-					fs.readdir(this.cachePath, (err, files) => {
-					if (err)
-					throw err;
-					for (const file of files) {
-					fs.unlink(path.join(this.cachePath, file), err => {
-					if (err) {
-					Logger.err(config.info.name, "Error deleting temp file: " + file);
-					Logger.err(config.info.name, err);
-					}
+					fs.readdir(this.cachePath, null, (err, files) => {
+						if (err)
+							throw err;
+						for (const file of files) {
+							fs.unlink(path.join(this.cachePath, file), err => {
+								if (err) {
+									Logger.err(config.info.name, "Error deleting temp file: " + file);
+									Logger.err(config.info.name, err);
+								}
+							});
+						}
 					});
-					}
-					});
-					 */
 				}
 			}
 
@@ -1648,9 +1434,7 @@ module.exports = (() => {
 					this.updateToastCSS = this.updateToastCSS.bind(this);
 					this.monkeyPatch = this.monkeyPatch.bind(this);
 					this.updateCache = this.updateCache.bind(this);
-					this.initFfmpeg = this.initFfmpeg.bind(this);
-					this.downloadLibrary = this.downloadLibrary.bind(this);
-					this.downloadFile = this.downloadFile.bind(this);
+					this.initCompanion = this.initCompanion.bind(this);
 					this.initTempFolder = this.initTempFolder.bind(this);
 					this.handleUploadEvent = this.handleUploadEvent.bind(this);
 					this.sendUploadFileList = this.sendUploadFileList.bind(this);
@@ -1733,9 +1517,9 @@ module.exports = (() => {
 						getMaxFileSizeKey = val;
 					};
 					const getMaxFileSizeModule = ZeresPluginLibrary.WebpackModules.getModule((m) => {
-						for (k in m) {
+						for (const k in m) {
 							if (typeof m[k] === 'function') {
-								s = m[k].toString();
+								let s = m[k].toString();
 								if (s.includes("getUserMaxFileSize") && s.includes("premiumTier")) {
 									setGetMaxFileSizeKey(k);
 									return true;
@@ -1774,10 +1558,8 @@ module.exports = (() => {
 					// Remove file selector module
 					FileSelector.remove();
 					// Killing running processes
-					runningProcesses.filter(process => {
-						process.kill("SIGKILL");
-						return false;
-					});
+					//TODO Stop running processes when shutdown
+					companion?.closeConnection();
 					processingQueue = [];
 					runningJobs = [];
 					// Clear cache
@@ -1846,9 +1628,9 @@ module.exports = (() => {
 						promptToUploadKey = val;
 					};
 					const promptToUploadModule = await BdApi.Webpack.waitForModule((m) => {
-						for (k in m) {
+						for (const k in m) {
 							if (typeof m[k] === 'function') {
-								s = m[k].toString();
+								let s = m[k].toString();
 								if (s.includes("instantBatchUpload") && s.includes("showLargeMessageDialog")) {
 									setPromptToUploadKey(k);
 									return true;
@@ -1883,6 +1665,7 @@ module.exports = (() => {
 						});
 						Logger.err(config.info.name, "Unable to hook into Discord upload handler! promptToUpload module doesn't exist!");
 					}
+					//TODO Fix file selector button
 					/**
 					Patcher.instead(WebpackModules.find(m => m.prototype.activateUploadDialogue && m.displayName === "FileInput").prototype, "activateUploadDialogue", (t, args, originalFunc) => {
 					// Run custom file selector
@@ -1919,365 +1702,33 @@ module.exports = (() => {
 					}
 				}
 
-				initFfmpeg() {
+				initCompanion() {
 					return new Promise((resolve, reject) => {
-						let ffmpegPath = this.settings.compressor.ffmpegPath ? this.settings.compressor.ffmpegPath : path.join(BdApi.Plugins.folder, "compressorlibraries");
-						let noFfmpeg = false;
-						let installedFfmpeg = BdApi.getData(config.info.name, "ffmpeg.version");
-						if (installedFfmpeg && installedFfmpeg != ffmpegConstants.version) {
-							noFfmpeg = true;
-						} else {
-							if (this.settings.compressor.ffmpeg) {
-								if (!ffmpeg || !ffmpeg.checkFFmpeg()) {
-									try {
-										ffmpeg = new FFmpeg(ffmpegPath);
-										resolve(true);
-									} catch (err) {
-										Logger.err(config.info.name, err);
-										noFfmpeg = true;
-										ffmpeg = null;
-									}
-								}
-							} else {
-								noFfmpeg = true;
-								ffmpeg = null;
-							}
-						}
-						if (noFfmpeg) {
-							if (this.settings.compressor.ffmpegDownload) {
-								BdApi.showConfirmationModal(i18n.FORMAT('LIBRARY_VERSION_REQUIRED', ffmpegConstants.name, ffmpegConstants.version),
-									DiscordModules.React.createElement("div", {},
-										[
-											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_REQUIRED_COMPRESSION', config.info.name, ffmpegConstants.name)),
-											DiscordModules.React.createElement("hr"),
-											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_REQUIRED_CUSTOM_INSTALL', config.info.name, ffmpegConstants.name)),
-											DiscordModules.React.createElement("hr"),
-											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_SOURCE_LOCATION', ffmpegConstants.name, ffmpegConstants.version, ffmpegConstants.sourceUrl)),
-											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_LICENSE_INFO', ffmpegConstants.name, ffmpegConstants.license, ffmpegConstants.licenseUrl))
-										]), {
-									danger: false,
-									onConfirm: () => {
-										let ffmpegPromise,
-										ffprobePromise;
+						let noCompanion = false;
+						if (this.settings.compressor.companionApp && !isNaN(this.settings.compressor.companionPort) && !isNaN(parseInt(this.settings.compressor.companionPort)) && this.settings.compressor.companionPort > 0) {
+							if (!companion || !companion.checkCompanion()) {
+								try {
+									companion = new Companion(this.settings);
+									(async() => {
 										try {
-											this.saveSettings("compressor", "ffmpeg", true);
-											ffmpegPromise = this.downloadLibrary(ffmpegPath, ffmpegConstants.downloadUrls, "FFmpeg");
-											ffmpegPromise.then(filePath => {
-												try {
-													fs.chmodSync(filePath, 755);
-												} catch (ex) {
-													Logger.err(config.info.name, "Unable to download FFmpeg", ex);
-													BdApi.showToast(i18n.FORMAT('ERROR_DOWNLOADING_PROGRAM', 'FFmpeg'), {
-														type: "error"
-													});
-													reject(ex);
-												}
-											}).catch(ex => {
-												Logger.err(config.info.name, "Unable to download FFmpeg", ex);
-												BdApi.showToast(i18n.FORMAT('ERROR_DOWNLOADING_PROGRAM', 'FFmpeg'), {
-													type: "error"
-												});
-												reject(ex);
-											});
+											await companion.openConnection();
+											resolve(true);
 										} catch (e) {
-											Logger.err(config.info.name, "Unable to download FFmpeg", e);
-											BdApi.showToast(i18n.FORMAT('ERROR_DOWNLOADING_PROGRAM', 'FFmpeg'), {
-												type: "error"
-											});
 											reject(e);
 										}
-										try {
-											ffprobePromise = this.downloadLibrary(ffmpegPath, ffmpegConstants.downloadUrls, "FFprobe");
-											ffprobePromise.then(filePath => {
-												try {
-													fs.chmodSync(filePath, 755);
-												} catch (ex) {
-													Logger.err(config.info.name, "Unable to download FFprobe", ex);
-													BdApi.showToast(i18n.FORMAT('ERROR_DOWNLOADING_PROGRAM', 'FFprobe'), {
-														type: "error"
-													});
-													reject(ex);
-												}
-											}).catch(ex => {
-												Logger.err(config.info.name, "Unable to download FFprobe", ex);
-												BdApi.showToast(i18n.FORMAT('ERROR_DOWNLOADING_PROGRAM', 'FFprobe'), {
-													type: "error"
-												});
-												reject(ex);
-											});
-										} catch (e) {
-											Logger.err(config.info.name, "Unable to download FFprobe", e);
-											BdApi.showToast(i18n.FORMAT('ERROR_DOWNLOADING_PROGRAM', 'FFprobe'), {
-												type: "error"
-											});
-											reject(e);
-										}
-										Promise.all([ffmpegPromise, ffprobePromise]).then(() => {
-											BdApi.saveData(config.info.name, "ffmpeg.version", ffmpegConstants.version);
-											resolve(this.initFfmpeg());
-										});
-									},
-									onCancel: () => {
-										reject();
-									},
-									confirmText: i18n.MESSAGES.INSTALL_AUTOMATICALLY,
-									cancelText: i18n.MESSAGES.CANCEL
-								});
-							} else {
-								Modals.showAlertModal(i18n.FORMAT('LIBRARY_VERSION_REQUIRED', "FFmpeg", ffmpegConstants.version), i18n.FORMAT('LIBRARY_CUSTOM_PATH_INVALID', config.info.name, "FFmpeg"));
-								reject();
-							}
-						}
-					});
-				}
-
-				initMkvmerge() {
-					return new Promise((resolve, reject) => {
-						let mkvmergePath = this.settings.compressor.mkvmergePath ? this.settings.compressor.mkvmergePath : path.join(BdApi.Plugins.folder, "compressorlibraries");
-						let noMkvmerge = false;
-						let installedMkvmerge = BdApi.getData(config.info.name, "mkvmerge.version");
-						if (installedMkvmerge && installedMkvmerge != mkvmergeConstants.version) {
-							noMkvmerge = true;
-						} else {
-							if (this.settings.compressor.mkvmerge) {
-								if (!mkvmerge || !mkvmerge.checkMKVmerge()) {
-									try {
-										mkvmerge = new MKVmerge(mkvmergePath);
-										resolve(true);
-									} catch (err) {
-										Logger.err(config.info.name, err);
-										noMkvmerge = true;
-										mkvmerge = null;
-									}
+									})();
+								} catch (err) {
+									Logger.err(config.info.name, err);
+									noCompanion = true;
+									companion = null;
 								}
-							} else {
-								noMkvmerge = true;
-								mkvmerge = null;
 							}
 						}
-						if (noMkvmerge) {
-							if (this.settings.compressor.mkvmergeDownload) {
-								BdApi.showConfirmationModal(i18n.FORMAT('LIBRARY_VERSION_REQUIRED', mkvmergeConstants.name, mkvmergeConstants.version),
-									DiscordModules.React.createElement("div", {},
-										[
-											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_REQUIRED_COMPRESSION', config.info.name, mkvmergeConstants.name)),
-											DiscordModules.React.createElement("hr"),
-											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_REQUIRED_CUSTOM_INSTALL', config.info.name, mkvmergeConstants.name)),
-											DiscordModules.React.createElement("hr"),
-											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_SOURCE_LOCATION', mkvmergeConstants.name, mkvmergeConstants.version, mkvmergeConstants.sourceUrl)),
-											DiscordModules.React.createElement(Markdown, {}, i18n.FORMAT('LIBRARY_LICENSE_INFO', mkvmergeConstants.name, mkvmergeConstants.license, mkvmergeConstants.licenseUrl))
-										]), {
-									danger: false,
-									onConfirm: () => {
-										try {
-											this.saveSettings("compressor", "mkvmerge", true);
-											this.downloadLibrary(mkvmergePath, mkvmergeConstants.downloadUrls, "MKVmerge").then(filePath => {
-												try {
-													fs.chmodSync(filePath, 755);
-													BdApi.saveData(config.info.name, "mkvmerge.version", mkvmergeConstants.version);
-													resolve(this.initMkvmerge());
-												} catch (ex) {
-													Logger.err(config.info.name, "Unable to download MKVmerge", ex);
-													BdApi.showToast(i18n.FORMAT('ERROR_DOWNLOADING_PROGRAM', 'MKVmerge'), {
-														type: "error"
-													});
-													reject(ex);
-												}
-											}).catch(ex => {
-												Logger.err(config.info.name, "Unable to download MKVmerge", ex);
-												BdApi.showToast(i18n.FORMAT('ERROR_DOWNLOADING_PROGRAM', 'MKVmerge'), {
-													type: "error"
-												});
-												reject(ex);
-											});
-										} catch (e) {
-											Logger.err(config.info.name, "Unable to download MKVmerge", e);
-											BdApi.showToast(i18n.FORMAT('ERROR_DOWNLOADING_PROGRAM', 'MKVmerge'), {
-												type: "error"
-											});
-											reject(e);
-										}
-									},
-									onCancel: () => {
-										reject();
-									},
-									confirmText: i18n.MESSAGES.INSTALL_AUTOMATICALLY,
-									cancelText: i18n.MESSAGES.CANCEL
-								});
-							} else {
-								Modals.showAlertModal(i18n.FORMAT('LIBRARY_VERSION_REQUIRED', "MKVmerge", mkvmergeConstants.version), i18n.FORMAT('LIBRARY_CUSTOM_PATH_INVALID', config.info.name, "MKVmerge"));
-								reject();
-							}
+						if (noCompanion) {
+							Modals.showAlertModal(i18n.FORMAT('LIBRARY_VERSION_REQUIRED', "FileCompressorCompanion", "1.0.0"), i18n.FORMAT('LIBRARY_CUSTOM_PATH_INVALID', config.info.name, "FileCompressorCompanion"));
+							reject();
 						}
 					});
-				}
-
-				async downloadLibrary(downloadPath, downloadUrls, name) {
-					fs.mkdirSync(downloadPath, {
-						recursive: true
-					});
-					let dlInfo = "";
-					switch (process.platform) {
-					case "win32":
-						dlInfo = downloadUrls[name].win_amd64;
-						break;
-					case "darwin":
-						switch (process.arch) {
-						case "arm":
-						case "arm64":
-							dlInfo = downloadUrls[name].darwin_arm64;
-							if (!dlInfo)
-								dlInfo = downloadUrls[name].darwin_amd64;
-							break;
-						case "x64":
-						default:
-							try {
-								if (childProcess.execSync("sysctl -n sysctl.proc_translated").toString().startsWith("1")) {
-									dlInfo = downloadUrls[name].darwin_arm64;
-									if (!dlInfo)
-										dlInfo = downloadUrls[name].darwin_amd64;
-									break;
-								}
-							} catch {}
-							dlInfo = downloadUrls[name].darwin_amd64;
-							break;
-						}
-						break;
-					default:
-						switch (process.arch) {
-						case "arm":
-							dlInfo = downloadUrls[name].linux_armhf;
-							break;
-						case "arm64":
-							dlInfo = downloadUrls[name].linux_arm64;
-							break;
-						case "x64":
-							dlInfo = downloadUrls[name].linux_amd64;
-							break;
-						case "ia32":
-						case "x32":
-						default:
-							dlInfo = downloadUrls[name].linux_i686;
-							break;
-						}
-						break;
-					}
-					// Wait for file download to complete - .tmp appended to filename to prevent it from being run accidentally until verified
-					const tmpJobId = "-" + uuidv4().replace(/-/g, "");
-					toasts.createToast(tmpJobId);
-					const filePath = await this.downloadFile(tmpJobId, dlInfo.url, downloadPath, name);
-					// Check file size
-					const fileStats = fs.statSync(filePath);
-					const fileSize = fileStats ? fileStats.size : 0;
-					if (fileSize !== dlInfo.size) {
-						toasts.removeToast(tmpJobId);
-						try {
-							fs.rmSync(filePath);
-						} catch (e) {
-							Logger.err(config.info.name, "Error deleting " + filePath, e);
-						}
-						throw new Error("Size for downloaded " + name + " does not match! Downloaded: " + fileSize + " Expected: " + dlInfo.size);
-					}
-					// Wait until file is hashed
-					const fileHash = await this.hashDownloadedFile(tmpJobId, filePath, fileSize);
-					toasts.setToast(tmpJobId);
-					// Check file hash
-					if (fileHash !== dlInfo.hash) {
-						toasts.removeToast(tmpJobId);
-						try {
-							fs.rmSync(filePath);
-						} catch (e) {
-							Logger.err(config.info.name, "Error deleting " + filePath, e);
-						}
-						throw new Error("Hash for downloaded " + name + " does not match! Calculated: " + fileHash + " Expected: " + dlInfo.hash);
-					}
-					// Rename file for use if checks pass
-					const newPath = filePath.slice(0, -4);
-					try {
-						fs.renameSync(filePath, newPath);
-					} catch (err) {
-						fs.copyFileSync(filePath, newPath);
-						fs.rmSync(filePath);
-					}
-					toasts.removeToast(tmpJobId);
-					return newPath;
-				}
-
-				hashDownloadedFile(jobId, file, fileSize) {
-					return new Promise((resolve, reject) => {
-						let bytesProcessed = 0;
-						const hash = cryptoModule.createHash('sha512');
-						const fileReadStream = fs.createReadStream(file);
-						toasts.setToast(jobId, i18n.FORMAT('HASHING_PERCENT', '0'));
-						fileReadStream.on('end', () => {
-							try {
-								resolve(hash.digest('hex'));
-							} catch (err) {
-								Logger.err(config.info.name, err);
-								reject();
-							}
-						});
-						fileReadStream.on('error', (e) => {
-							reject(new Error("Error while hashing " + file, {
-									cause: e
-								}));
-						});
-						fileReadStream.on('data', (chunk) => {
-							bytesProcessed += chunk.length;
-							const percent = Math.round((bytesProcessed / fileSize) * 100);
-							toasts.setToast(jobId, i18n.FORMAT('HASHING_PERCENT', percent ? percent : 0));
-						});
-						fileReadStream.pipe(hash);
-					});
-				}
-
-				downloadFile(jobId, downloadUrl, downloadPath, name) {
-					return new Promise((resolve, reject) => {
-						const toastsModule = toasts;
-						const https = require('https');
-						const req = https.request(downloadUrl);
-						req.on('response', result => {
-							if (result.statusCode === 200) {
-								const regexp = /filename=(.*?)(?=;|$)/gi;
-								const originalFileName = regexp.exec(result.headers['content-disposition'])[1];
-								const totalLength = result.headers['content-length'];
-								let writtenLength = 0;
-								const fileStream = fs.createWriteStream(path.join(downloadPath, originalFileName + ".tmp"));
-								toastsModule.setToast(jobId, i18n.FORMAT('DOWNLOADING_PROGRAM_PERCENT', name, '0'));
-								result.on('data', chunk => {
-									writtenLength += chunk.length;
-									const percent = Math.round((writtenLength / totalLength) * 100);
-									toastsModule.setToast(jobId, i18n.FORMAT('DOWNLOADING_PROGRAM_PERCENT', name, percent ? percent : 0));
-								});
-								result.pipe(fileStream);
-								fileStream.on('error', (e) => {
-									// Handle write errors
-									reject(new Error("Error while downloading " + downloadUrl + " for " + name, {
-											cause: e
-										}));
-								});
-								fileStream.on('finish', function () {
-									// The file has been downloaded
-									toastsModule.removeToast(jobId);
-									resolve(path.join(downloadPath, originalFileName + ".tmp"));
-								});
-							} else if (result.statusCode === 302) {
-								const location = result.headers['location'];
-								if (location) {
-									resolve(this.downloadFile(jobId, location, downloadPath, name));
-								} else {
-									reject(new Error("Invalid file URL: " + downloadUrl + " for downloading " + name));
-								}
-							} else {
-								reject(new Error("Server returned " + result.statusCode + " at " + downloadUrl + " for downloading " + name));
-							}
-						});
-						req.end();
-					});
-				}
-
-				getCurrentUser() {
-					return DiscordModules.UserStore.getCurrentUser();
 				}
 
 				getCurrentChannel() {
@@ -2285,16 +1736,13 @@ module.exports = (() => {
 				}
 
 				async initTempFolder() {
-					if (!this.tempDataPath) {
-						this.tempDataPath = require('os').tmpdir.apply();
+					const path = await companion.getTempFolder();
+					if (path) {
+						this.tempDataPath = path;
+						return true;
+					} else {
+						return false;
 					}
-					if (fs.existsSync(this.tempDataPath)) {
-						try {
-							fs.accessSync(this.tempDataPath, fs.constants.R_OK | fs.constants.W_OK);
-							return true;
-						} catch (e) {}
-					}
-					return false;
 				}
 
 				async handleUploadEvent(fileList, channel, draftType, uploadOptions) {
@@ -2324,7 +1772,7 @@ module.exports = (() => {
 					}
 				}
 
-				processUploadFileList(files, guildId, channelId, threadId, sidebar) {
+				async processUploadFileList(files, guildId, channelId, threadId, sidebar) {
 					// Check account status and update max file upload size
 					const settingsMaxSize = this.settings.upload.maxFileSize != 0 ? this.settings.upload.maxFileSize : 0;
 					let maxDiscordSize = 8388608;
@@ -2348,7 +1796,7 @@ module.exports = (() => {
 							// If file is returned, it was incompressible
 							let type = file.type;
 							if (!type && file.path)
-								type = mime.contentType(file.path);
+								type = await companion.getMimeType(file.path);
 							const tempFile = this.checkIsCompressible(file, type ? type.split('/')[0] : "", maxDiscordSize, guildId, channelId, threadId, sidebar);
 							// Check if no files will be uploaded, and if so, trigger Discord's file too large modal by passing through large file
 							if (tempFile) {
@@ -2485,7 +1933,7 @@ module.exports = (() => {
 							});
 						}
 						try {
-							cacheFile = cache.getFile(job.fileKey);
+							cacheFile = await cache.getFile(job.fileKey);
 						} catch (err) {
 							Logger.err(config.info.name, err);
 						}
@@ -2598,10 +2046,10 @@ module.exports = (() => {
 							return true;
 						break;
 					case "video":
-						if (!ffmpeg || !ffmpeg.checkFFmpeg()) {
-							await this.initFfmpeg();
+						if (!companion || !companion.checkCompanion()) {
+							await this.initCompanion();
 						}
-						if (!(ffmpeg && ffmpeg.checkFFmpeg())) {
+						if (!companion || !companion.checkCompanion()) {
 							return false;
 						}
 						job.originalFilePath = job.file.path;
@@ -2649,7 +2097,7 @@ module.exports = (() => {
 							});
 							writeStream.destroy();
 						}
-						ffprobeOut = await ffmpeg.runProbeWithArgs(["-v", "error", "-show_format", "-show_streams", "-print_format", "json", job.originalFilePath]);
+						ffprobeOut = await companion.execWithArgs('ffprobe', ["-v", "error", "-show_format", "-show_streams", "-print_format", "json", job.originalFilePath.replace(/\\/g, '/')]);
 						job.probeDataRaw = ffprobeOut.data;
 						job.probeData = JSON.parse(ffprobeOut.data);
 						for (const name of Object.getOwnPropertyNames(videoEncoderSettings)) {
@@ -2658,7 +2106,6 @@ module.exports = (() => {
 								label: name
 							});
 						}
-						console.log(job.probeData);
 						job.options.basic.videoEncoder = {
 							name: i18n.MESSAGES.COMPRESSION_OPTIONS_VIDEO_ENCODER,
 							type: "dropdown",
@@ -2907,10 +2354,10 @@ module.exports = (() => {
 							return true;
 						break;
 					case "audio":
-						if (!ffmpeg || !ffmpeg.checkFFmpeg()) {
-							await this.initFfmpeg();
+						if (!companion || !companion.checkCompanion()) {
+							await this.initCompanion();
 						}
-						if (!(ffmpeg && ffmpeg.checkFFmpeg())) {
+						if (!companion || !companion.checkCompanion()) {
 							return false;
 						}
 						job.originalFilePath = job.file.path;
@@ -2958,7 +2405,7 @@ module.exports = (() => {
 							});
 							writeStream.destroy();
 						}
-						ffprobeOut = await ffmpeg.runProbeWithArgs(["-v", "error", "-show_format", "-show_streams", "-print_format", "json", job.originalFilePath]);
+						ffprobeOut = await companion.execWithArgs('ffprobe', ["-v", "error", "-show_format", "-show_streams", "-print_format", "json", job.originalFilePath.replace(/\\/g, '/')]);
 						job.probeDataRaw = ffprobeOut.data;
 						job.probeData = JSON.parse(ffprobeOut.data);
 						for (const name of Object.getOwnPropertyNames(audioEncoderSettings)) {
@@ -3119,7 +2566,7 @@ module.exports = (() => {
 						elem = new Settings.ColorPicker(name, description, defaultValue, onChange, props);
 						break;
 					case "dropdown":
-						elem = new Dropdown(name, description, defaultValue, props.values, onChange, props);
+						elem = new Settings.Dropdown(name, description, defaultValue, props.values, onChange, props);
 						break;
 					case "file":
 						elem = new Settings.FilePicker(name, description, onChange, props);
@@ -3259,10 +2706,10 @@ module.exports = (() => {
 
 				// Main function to compress a given audio file
 				async compressAudio(job) {
-					if (!ffmpeg || !ffmpeg.checkFFmpeg()) {
-						await this.initFfmpeg();
+					if (!companion || !companion.checkCompanion()) {
+						await this.initCompanion();
 					}
-					if (ffmpeg && ffmpeg.checkFFmpeg()) {
+					if (companion && companion.checkCompanion()) {
 						if (await this.initTempFolder()) {
 							const videoContainer = audioEncoderSettings[job.options.basic.audioEncoder.value].defaultVideoContainer;
 							job.compressionData.compressedPathPre = path.join(this.tempDataPath, uuidv4().replace(/-/g, ""));
@@ -3310,9 +2757,9 @@ module.exports = (() => {
 										endSeconds = startSeconds + duration;
 										try {
 											toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PASS_PERCENT', '1', '0'));
-											const ffmpegArgs = ["-y", "-t", duration, "-f", "lavfi", "-i", "color=c=black:s=256x144", "-c:v", "libx264", "-tune", "stillimage", "-pix_fmt", "yuv420p", "-vsync", "2", "-r", "1", job.compressionData.videoPath];
+											const ffmpegArgs = ["-y", "-t", duration, "-f", "lavfi", "-i", "color=c=black:s=256x144", "-c:v", "libx264", "-tune", "stillimage", "-pix_fmt", "yuv420p", "-vsync", "2", "-r", "1", job.compressionData.videoPath.replace(/\\/g, '/')];
 											job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
-											await ffmpeg.runWithArgs(ffmpegArgs);
+											await companion.runWithArgs('ffmpeg', ffmpegArgs);
 										} catch (e) {
 											if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
 												try {
@@ -3358,9 +2805,9 @@ module.exports = (() => {
 									this.jobLoggerInfo(job, "Output bit depth: " + (outputBitDepth ? outputBitDepth : bitDepth) + " bits");
 									try {
 										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PASS_PERCENT', '1', '0'));
-										const ffmpegArgs = ["-y", "-ss", startSeconds, "-vn", "-i", job.originalFilePath, ...(job.options.advanced.sendAsVideo.value ? ["-i", job.compressionData.videoPath] : []), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:a", audioBitrate, "-maxrate", audioBitrate, "-bufsize", audioBitrate / 2, "-sn", "-map_chapters", "-1", "-c:a", job.options.basic.audioEncoder.value, "-map", "0:" + audioStreamIndex, ...((outputBitDepth && (outputBitDepth < bitDepth || !bitDepth)) ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, ...(job.options.advanced.sendAsVideo.value ? ["-map", "1:v", "-shortest"] : []), "-f", finalFileContainer.containerFormat, job.compressionData.compressedPathPre];
+										const ffmpegArgs = ["-y", "-ss", startSeconds, "-vn", "-i", job.originalFilePath.replace(/\\/g, '/'), ...(job.options.advanced.sendAsVideo.value ? ["-i", job.compressionData.videoPath.replace(/\\/g, '/')] : []), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:a", audioBitrate, "-maxrate", audioBitrate, "-bufsize", audioBitrate / 2, "-sn", "-map_chapters", "-1", "-c:a", job.options.basic.audioEncoder.value, "-map", "0:" + audioStreamIndex, ...((outputBitDepth && (outputBitDepth < bitDepth || !bitDepth)) ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, ...(job.options.advanced.sendAsVideo.value ? ["-map", "1:v", "-shortest"] : []), "-f", finalFileContainer.containerFormat, job.compressionData.compressedPathPre.replace(/\\/g, '/')];
 										job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
-										await ffmpeg.runWithArgs(ffmpegArgs, [{
+										await companion.runWithArgs('ffmpeg', ffmpegArgs, [{
 													filter: str => {
 														return str.includes("time=");
 													},
@@ -3412,9 +2859,9 @@ module.exports = (() => {
 												this.jobLoggerInfo(job, "Adjusted target audio bitrate per channel: " + (audioBitrateAdjusted / outputChannels) + " bits/second");
 												try {
 													toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PASS_PERCENT', compressionPass, '0'));
-													const ffmpegArgs = ["-y", "-ss", startSeconds, "-vn", "-i", job.originalFilePath, ...(job.options.advanced.sendAsVideo.value ? ["-i", job.compressionData.videoPath] : []), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:a", audioBitrateAdjusted, "-maxrate", audioBitrateAdjusted, "-bufsize", audioBitrateAdjusted / 2, "-sn", "-map_chapters", "-1", "-c:a", job.options.basic.audioEncoder.value, "-map", "0:" + audioStreamIndex, ...((outputBitDepth && (outputBitDepth < bitDepth || !bitDepth)) ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, ...(job.options.advanced.sendAsVideo.value ? ["-map", "1:v", "-shortest"] : []), "-f", finalFileContainer.containerFormat, job.compressionData.compressedPathPre];
+													const ffmpegArgs = ["-y", "-ss", startSeconds, "-vn", "-i", job.originalFilePath.replace(/\\/g, '/'), ...(job.options.advanced.sendAsVideo.value ? ["-i", job.compressionData.videoPath.replace(/\\/g, '/')] : []), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:a", audioBitrateAdjusted, "-maxrate", audioBitrateAdjusted, "-bufsize", audioBitrateAdjusted / 2, "-sn", "-map_chapters", "-1", "-c:a", job.options.basic.audioEncoder.value, "-map", "0:" + audioStreamIndex, ...((outputBitDepth && (outputBitDepth < bitDepth || !bitDepth)) ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, ...(job.options.advanced.sendAsVideo.value ? ["-map", "1:v", "-shortest"] : []), "-f", finalFileContainer.containerFormat, job.compressionData.compressedPathPre.replace(/\\/g, '/')];
 													job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
-													await ffmpeg.runWithArgs(ffmpegArgs, [{
+													await companion.runWithArgs('ffmpeg', ffmpegArgs, [{
 																filter: str => {
 																	return str.includes("time=");
 																},
@@ -3499,7 +2946,7 @@ module.exports = (() => {
 											this.jobLoggerInfo(job, "Final file size: " + finalFileSize + " bytes");
 											this.jobLoggerInfo(job, "Upload size cap: " + job.maxSize + " bytes");
 											if (finalFileSize > job.maxSize) {
-												const ffprobeOut = await ffmpeg.runProbeWithArgs(["-v", "error", "-show_format", "-show_streams", "-print_format", "json", job.compressionData.compressedPath]);
+												const ffprobeOut = await companion.execWithArgs('ffprobe', ["-v", "error", "-show_format", "-show_streams", "-print_format", "json", job.compressionData.compressedPath.replace(/\\/g, '/')]);
 												job.probeDataFinalRaw = ffprobeOut.data;
 												job.probeDataFinal = JSON.parse(ffprobeOut.data);
 												throw new Error("File bigger than allowed by Discord");
@@ -3508,7 +2955,7 @@ module.exports = (() => {
 										if (cache) {
 											cache.addToCache(job.compressionData.compressedPath, job.compressionData.name + "." + finalFileContainer.fileTypeDiscord, job.fileKey);
 										}
-										const retFile = new File([fs.readFileSync(job.compressionData.compressedPath).buffer], job.compressionData.name + "." + finalFileContainer.fileTypeDiscord, {
+										const retFile = new File([fs.readFileSync(job.compressionData.compressedPath, null).buffer], job.compressionData.name + "." + finalFileContainer.fileTypeDiscord, {
 											type: job.file.type
 										});
 										if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
@@ -3571,13 +3018,10 @@ module.exports = (() => {
 
 				// Main function to compress a given video
 				async compressVideo(job) {
-					if (!ffmpeg || !ffmpeg.checkFFmpeg()) {
-						await this.initFfmpeg();
+					if (!companion || !companion.checkCompanion()) {
+						await this.initCompanion();
 					}
-					if (!mkvmerge || !mkvmerge.checkMKVmerge()) {
-						await this.initMkvmerge();
-					}
-					if (ffmpeg && ffmpeg.checkFFmpeg()) {
+					if (companion && companion.checkCompanion()) {
 						if (await this.initTempFolder()) {
 							let stripAudio = job.options.basic.stripAudio.value && job.options.basic.stripVideo.value ? false : job.options.basic.stripAudio.value;
 							const stripVideo = job.options.basic.stripAudio.value && job.options.basic.stripVideo.value ? false : job.options.basic.stripVideo.value;
@@ -3690,9 +3134,9 @@ module.exports = (() => {
 										this.jobLoggerInfo(job, "Output audio bit depth: " + (outputBitDepth ? outputBitDepth : bitDepth) + " bits");
 										try {
 											toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PERCENT', '0'));
-											const ffmpegArgs = ["-y", "-ss", startSeconds, "-i", job.originalFilePath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:a", audioBitrate, "-maxrate", audioBitrate, "-bufsize", audioBitrate / 2, "-vn", "-sn", "-map_chapters", "-1", "-c:a", job.options.advanced.audioEncoder.value, "-map", "0:" + audioStreamIndex, ...(outputBitDepth && (outputBitDepth < bitDepth || !bitDepth) ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, "-f", audioContainerSettings[audioContainer].containerFormat, job.compressionData.tempAudioPath];
+											const ffmpegArgs = ["-y", "-ss", startSeconds, "-i", job.originalFilePath.replace(/\\/g, '/'), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:a", audioBitrate, "-maxrate", audioBitrate, "-bufsize", audioBitrate / 2, "-vn", "-sn", "-map_chapters", "-1", "-c:a", job.options.advanced.audioEncoder.value, "-map", "0:" + audioStreamIndex, ...(outputBitDepth && (outputBitDepth < bitDepth || !bitDepth) ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, "-f", audioContainerSettings[audioContainer].containerFormat, job.compressionData.tempAudioPath.replace(/\\/g, '/')];
 											job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
-											await ffmpeg.runWithArgs(ffmpegArgs, [{
+											await companion.runWithArgs('ffmpeg', ffmpegArgs, [{
 														filter: str => {
 															return str.includes("time=");
 														},
@@ -3750,9 +3194,9 @@ module.exports = (() => {
 									this.jobLoggerInfo(job, "Output frame height: " + (maxVideoHeight < originalHeight || (!originalHeight && maxVideoHeight) ? maxVideoHeight : originalHeight) + " pixels");
 									try {
 										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_VIDEO_PASS_PERCENT', '1', '0'));
-										const ffmpegArgs = ["-y", "-ss", startSeconds, "-i", job.originalFilePath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate / 2, ...(videoFiltersPass1.length > 0 ? ["-vf", videoFiltersPass1.join(",")] : []), "-an", "-sn", "-map_chapters", "-1", "-map", "0:" + videoStreamIndex, "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.basic.videoEncoder.value, ...videoEncoderSettings[job.options.basic.videoEncoder.value].encoderFlags, "-pass", "1", "-passlogfile", job.compressionData.tempVideoTwoPassPath, "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")];
+										const ffmpegArgs = ["-y", "-ss", startSeconds, "-i", job.originalFilePath.replace(/\\/g, '/'), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate / 2, ...(videoFiltersPass1.length > 0 ? ["-vf", videoFiltersPass1.join(",")] : []), "-an", "-sn", "-map_chapters", "-1", "-map", "0:" + videoStreamIndex, "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.basic.videoEncoder.value, ...videoEncoderSettings[job.options.basic.videoEncoder.value].encoderFlags, "-pass", "1", "-passlogfile", job.compressionData.tempVideoTwoPassPath, "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")];
 										job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
-										await ffmpeg.runWithArgs(ffmpegArgs, [{
+										await companion.runWithArgs('ffmpeg', ffmpegArgs, [{
 													filter: str => {
 														return str.includes("time=");
 													},
@@ -3829,9 +3273,9 @@ module.exports = (() => {
 									}
 									try {
 										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_VIDEO_PASS_PERCENT', '2', '0'));
-										const ffmpegArgs = ["-y", "-ss", startSeconds, "-i", job.originalFilePath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate / 2, ...(videoFiltersPass2.length > 0 ? ["-vf", videoFiltersPass2.join(",")] : []), "-an", "-sn", "-map_chapters", "-1", "-map", "0:" + videoStreamIndex, "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.basic.videoEncoder.value, ...videoEncoderSettings[job.options.basic.videoEncoder.value].encoderFlags, "-pass", "2", "-passlogfile", job.compressionData.tempVideoTwoPassPath, "-f", videoContainerSettings[videoContainer].containerFormat, job.compressionData.tempVideoPath];
+										const ffmpegArgs = ["-y", "-ss", startSeconds, "-i", job.originalFilePath.replace(/\\/g, '/'), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate / 2, ...(videoFiltersPass2.length > 0 ? ["-vf", videoFiltersPass2.join(",")] : []), "-an", "-sn", "-map_chapters", "-1", "-map", "0:" + videoStreamIndex, "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.basic.videoEncoder.value, ...videoEncoderSettings[job.options.basic.videoEncoder.value].encoderFlags, "-pass", "2", "-passlogfile", job.compressionData.tempVideoTwoPassPath.replace(/\\/g, '/'), "-f", videoContainerSettings[videoContainer].containerFormat, job.compressionData.tempVideoPath.replace(/\\/g, '/')];
 										job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
-										await ffmpeg.runWithArgs(ffmpegArgs, [{
+										await companion.runWithArgs('ffmpeg', ffmpegArgs, [{
 													filter: str => {
 														return str.includes("time=");
 													},
@@ -3885,16 +3329,16 @@ module.exports = (() => {
 										this.jobLoggerInfo(job, "Final video only size: " + videoSize + " bytes");
 									}
 									try {
-										if (!mkvmerge || job.options.advanced.videoFileFormat.value != "mkv") {
+										if (!(await companion.requestAppStatus('mkvmerge')) || job.options.advanced.videoFileFormat.value != "mkv") {
 											toasts.setToast(job.jobId, i18n.MESSAGES.PACKAGING);
-											const ffmpegArgs = ["-y", ...(!stripAudio ? ["-i", job.compressionData.tempAudioPath] : []), "-i", job.compressionData.tempVideoPath, "-c", "copy", "-f", videoContainerSettings[job.options.advanced.videoFileFormat.value].containerFormat, job.compressionData.compressedPathPre];
+											const ffmpegArgs = ["-y", ...(!stripAudio ? ["-i", job.compressionData.tempAudioPath.replace(/\\/g, '/')] : []), "-i", job.compressionData.tempVideoPath.replace(/\\/g, '/'), "-c", "copy", "-f", videoContainerSettings[job.options.advanced.videoFileFormat.value].containerFormat, job.compressionData.compressedPathPre.replace(/\\/g, '/')];
 											job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
-											await ffmpeg.runWithArgs(ffmpegArgs);
+											await companion.runWithArgs('ffmpeg', ffmpegArgs);
 										} else {
 											toasts.setToast(job.jobId, i18n.FORMAT('PACKAGING_PERCENT', '0'));
-											const mkvmergeArgs = ["-o", job.compressionData.compressedPathPre, job.compressionData.tempVideoPath, ...(!stripAudio ? [job.compressionData.tempAudioPath] : [])];
+											const mkvmergeArgs = ["-o", job.compressionData.compressedPathPre.replace(/\\/g, '/'), job.compressionData.tempVideoPath.replace(/\\/g, '/'), ...(!stripAudio ? [job.compressionData.tempAudioPath.replace(/\\/g, '/')] : [])];
 											job.logs.push("[" + job.file.name + "] Running MKVmerge with " + mkvmergeArgs.join(" "));
-											await mkvmerge.runWithArgs(mkvmergeArgs, str => {
+											await companion.runWithArgs('mkvmerge', mkvmergeArgs, str => {
 												return str.includes("Progress: ");
 											}, str => {
 												try {
@@ -3970,9 +3414,9 @@ module.exports = (() => {
 															this.jobLoggerInfo(job, "Adjusted target audio bitrate per channel: " + (audioBitrateAdjusted / outputChannels) + " bits/second");
 															try {
 																toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PASS_PERCENT', compressionPass, '0'));
-																const ffmpegArgs = ["-y", "-ss", startSeconds, "-i", job.originalFilePath, ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:a", audioBitrateAdjusted, "-maxrate", audioBitrateAdjusted, "-bufsize", audioBitrateAdjusted / 2, "-vn", "-sn", "-map_chapters", "-1", "-c:a", job.options.advanced.audioEncoder.value, "-map", "0:" + audioStreamIndex, ...(outputBitDepth && (outputBitDepth < bitDepth || !bitDepth) ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, "-f", audioContainerSettings[audioContainer].containerFormat, job.compressionData.tempAudioPath];
+																const ffmpegArgs = ["-y", "-ss", startSeconds, "-i", job.originalFilePath.replace(/\\/g, '/'), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:a", audioBitrateAdjusted, "-maxrate", audioBitrateAdjusted, "-bufsize", audioBitrateAdjusted / 2, "-vn", "-sn", "-map_chapters", "-1", "-c:a", job.options.advanced.audioEncoder.value, "-map", "0:" + audioStreamIndex, ...(outputBitDepth && (outputBitDepth < bitDepth || !bitDepth) ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, "-f", audioContainerSettings[audioContainer].containerFormat, job.compressionData.tempAudioPath.replace(/\\/g, '/')];
 																job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
-																await ffmpeg.runWithArgs(ffmpegArgs, [{
+																await companion.runWithArgs('ffmpeg', ffmpegArgs, [{
 																			filter: str => {
 																				return str.includes("time=");
 																			},
@@ -4047,16 +3491,16 @@ module.exports = (() => {
 																throw new Error("Cannot find FFmpeg output");
 															}
 															try {
-																if (!mkvmerge || job.options.advanced.videoFileFormat.value != "mkv") {
+																if (!(await companion.requestAppStatus('mkvmerge')) || job.options.advanced.videoFileFormat.value != "mkv") {
 																	toasts.setToast(job.jobId, i18n.MESSAGES.PACKAGING);
-																	const ffmpegArgs = ["-y", ...(!stripAudio ? ["-i", job.compressionData.tempAudioPath] : []), "-i", job.compressionData.tempVideoPath, "-c", "copy", "-f", videoContainerSettings[job.options.advanced.videoFileFormat.value].containerFormat, job.compressionData.compressedPathPre];
+																	const ffmpegArgs = ["-y", ...(!stripAudio ? ["-i", job.compressionData.tempAudioPath.replace(/\\/g, '/')] : []), "-i", job.compressionData.tempVideoPath.replace(/\\/g, '/'), "-c", "copy", "-f", videoContainerSettings[job.options.advanced.videoFileFormat.value].containerFormat, job.compressionData.compressedPathPre.replace(/\\/g, '/')];
 																	job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
-																	await ffmpeg.runWithArgs(ffmpegArgs);
+																	await companion.runWithArgs('ffmpeg', ffmpegArgs);
 																} else {
 																	toasts.setToast(job.jobId, i18n.FORMAT('PACKAGING_PERCENT', '0'));
-																	const mkvmergeArgs = ["-o", job.compressionData.compressedPathPre, job.compressionData.tempVideoPath, ...(!stripAudio ? [job.compressionData.tempAudioPath] : [])];
+																	const mkvmergeArgs = ["-o", job.compressionData.compressedPathPre.replace(/\\/g, '/'), job.compressionData.tempVideoPath.replace(/\\/g, '/'), ...(!stripAudio ? [job.compressionData.tempAudioPath.replace(/\\/g, '/')] : [])];
 																	job.logs.push("[" + job.file.name + "] Running MKVmerge with " + mkvmergeArgs.join(" "));
-																	await mkvmerge.runWithArgs(mkvmergeArgs, str => {
+																	await companion.runWithArgs('mkvmerge', mkvmergeArgs, str => {
 																		return str.includes("Progress: ");
 																	}, str => {
 																		try {
@@ -4126,7 +3570,7 @@ module.exports = (() => {
 														}
 													}
 												} else {
-													const ffprobeOut = await ffmpeg.runProbeWithArgs(["-v", "error", "-show_format", "-show_streams", "-print_format", "json", job.compressionData.compressedPath]);
+													const ffprobeOut = await companion.execWithArgs('ffprobe', ["-v", "error", "-show_format", "-show_streams", "-print_format", "json", job.compressionData.compressedPath.replace(/\\/g, '/')]);
 													job.probeDataFinalRaw = ffprobeOut.data;
 													job.probeDataFinal = JSON.parse(ffprobeOut.data);
 													throw new Error("File bigger than allowed by Discord");
@@ -4136,7 +3580,7 @@ module.exports = (() => {
 										if (cache) {
 											cache.addToCache(job.compressionData.compressedPath, job.compressionData.name + "." + videoContainerSettings[job.options.advanced.videoFileFormat.value].fileTypeDiscord, job.fileKey);
 										}
-										const retFile = new File([fs.readFileSync(job.compressionData.compressedPath).buffer], job.compressionData.name + "." + videoContainerSettings[job.options.advanced.videoFileFormat.value].fileTypeDiscord, {
+										const retFile = new File([fs.readFileSync(job.compressionData.compressedPath, null).buffer], job.compressionData.name + "." + videoContainerSettings[job.options.advanced.videoFileFormat.value].fileTypeDiscord, {
 											type: job.file.type
 										});
 										if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
@@ -4301,6 +3745,10 @@ module.exports = (() => {
 							break;
 						case "cachePath":
 							this.updateCache();
+							break;
+						case "companionApp":
+						case "companionPort":
+							this.initCompanion();
 							break;
 						}
 						break;
