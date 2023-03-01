@@ -1,7 +1,7 @@
 /**
  * @name XposeRAW
  * @author PseudoResonance
- * @version 3.1.7
+ * @version 3.1.8
  * @description Custom theme.
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeRAW.theme.css
  */
@@ -19,7 +19,7 @@
  */
 
 :root, .theme-dark, .theme-light {
-	--xposeVersion:"3.1.7";
+	--xposeVersion:"3.1.8";
 	--blur-radius:10px;
 }
 
@@ -43,6 +43,8 @@
 	--background-secondary-alt:transparent;
 	--background-tertiary:transparent;
 	--home-background:transparent;
+	--bg-overlay-chat:transparent;
+	--bg-overlay-2:transparent;
 	--background-accent:rgba(79, 84, 92, 0.32);
 	--background-floating:rgba(24, 25, 28, 0.4);
 	--background-mobile-primary:#36393f;
@@ -122,6 +124,8 @@
 	--background-secondary-alt:transparent;
 	--background-tertiary:transparent;
 	--home-background:transparent;
+	--bg-overlay-chat:transparent;
+	--bg-overlay-2:transparent;
 	--background-accent:rgba(116, 127, 141, 0.24);
 	--background-floating:rgba(255, 255, 255, 0.4);
 	--background-mobile-primary:#f8f9f9;
@@ -924,7 +928,7 @@ div:not([class*="translate-"]) > .layerContainer-2lfOPe [role="dialog"]:not(#emo
 }
 
 /* Other Pages */
-[class*="applicationStore-"], [class*="guilds-"] ~ * [class*="sidebar-"] ~ [class*="container-"], [class*="guilds-"] ~ * [class*="sidebar-"] ~ [class*="pageWrapper-"], .theme-dark .container-3wLKDe {
+[class*="applicationStore-"], [class*="guilds-"] ~ * [class*="sidebar-"] ~ [class*="container-"], [class*="guilds-"] ~ * [class*="sidebar-"] ~ [class*="pageWrapper-"], .container-3wLKDe, .themed-Hp1KC_, .container-2IKOsH, .container-1um7CU {
 	background-color:transparent !important;
 }
 
