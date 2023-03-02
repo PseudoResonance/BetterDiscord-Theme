@@ -1,7 +1,7 @@
 /**
  * @name XposeRAW
  * @author PseudoResonance
- * @version 3.1.8
+ * @version 3.1.9
  * @description Custom theme.
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeRAW.theme.css
  */
@@ -19,7 +19,7 @@
  */
 
 :root, .theme-dark, .theme-light {
-	--xposeVersion:"3.1.8";
+	--xposeVersion:"3.1.9";
 	--blur-radius:10px;
 }
 
@@ -1201,7 +1201,7 @@ div:not([class*="translate-"]) > .layerContainer-2lfOPe [role="dialog"]:not(#emo
 }
 
 /* Shrink Guilds Inside Expanded Folder */
-[data-list-id="guildsnav"] [role="group"][id|="folder-items"] .wrapper-28eC3z, [data-list-id="guildsnav"] [role="group"][id|="folder-items"] .wrapper-28eC3z > svg, [data-list-id="guildsnav"] [role="group"][id|="folder-items"] [class*="pill-"] {
+[data-list-id="guildsnav"] [role="group"][id|="folder-items"] [class*="blobContainer-"] > [class*="wrapper-"], [data-list-id="guildsnav"] [role="group"][id|="folder-items"] [class*="blobContainer-"] > [class*="wrapper-"] > svg, [data-list-id="guildsnav"] [role="group"][id|="folder-items"] [class*="pill-"] {
 	width:38px;
 	height:38px;
 }
