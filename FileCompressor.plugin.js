@@ -1,7 +1,7 @@
 /**
  * @name FileCompressor
  * @author PseudoResonance
- * @version 2.0.4
+ * @version 2.0.5
  * @description Automatically compress files that are too large to send.
  * @authorLink https://github.com/PseudoResonance
  * @donate https://bit.ly/3hAnec5
@@ -25,7 +25,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "2.0.4",
+			version: "2.0.5",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -34,18 +34,7 @@ module.exports = (() => {
 				title: "Fixed",
 				type: "fixed",
 				items: [
-					"Fixed image compression with latest Discord update",
-					"Fixed video and audio compression with companion app",
-					"Increased timeouts - should result in less compression failures",
-					"Fixed compression on Linux/macOS",
-					"Fixed plugin trying to always deinterlace",
-					"Fixed unnecessary start time"
-				]
-			}, {
-				title: "Added",
-				type: "added",
-				items: [
-					"Images are now compressed by converting to WebP, and decreasing the compression quality each iteration"
+					"Fixed incorrect image file type extension"
 				]
 			}, {
 				title: "Broken",
@@ -2614,7 +2603,6 @@ module.exports = (() => {
 					switch (job.type) {
 					case "image":
 						this.finishProcessing(job, this.compressImage(job));
-						// https://github.com/davejm/client-compress
 						break;
 					case "video":
 						this.finishProcessing(job, this.compressVideo(job));
@@ -2941,16 +2929,16 @@ module.exports = (() => {
 										throw new Error("Cannot find FFmpeg output");
 									}
 									if (fs.existsSync(job.compressionData.compressedPath)) {
-											const finalFileStats = fs.statSync(job.compressionData.compressedPath);
-											const finalFileSize = finalFileStats ? finalFileStats.size : 0;
-											this.jobLoggerInfo(job, "Final file size: " + finalFileSize + " bytes");
-											this.jobLoggerInfo(job, "Upload size cap: " + job.maxSize + " bytes");
-											if (finalFileSize > job.maxSize) {
-												const ffprobeOut = await companion.execWithArgs('ffprobe', ["-v", "error", "-show_format", "-show_streams", "-print_format", "json", job.compressionData.compressedPath.replace(/\\/g, '/')]);
-												job.probeDataFinalRaw = ffprobeOut.data;
-												job.probeDataFinal = JSON.parse(ffprobeOut.data);
-												throw new Error("File bigger than allowed by Discord");
-											}
+										const finalFileStats = fs.statSync(job.compressionData.compressedPath);
+										const finalFileSize = finalFileStats ? finalFileStats.size : 0;
+										this.jobLoggerInfo(job, "Final file size: " + finalFileSize + " bytes");
+										this.jobLoggerInfo(job, "Upload size cap: " + job.maxSize + " bytes");
+										if (finalFileSize > job.maxSize) {
+											const ffprobeOut = await companion.execWithArgs('ffprobe', ["-v", "error", "-show_format", "-show_streams", "-print_format", "json", job.compressionData.compressedPath.replace(/\\/g, '/')]);
+											job.probeDataFinalRaw = ffprobeOut.data;
+											job.probeDataFinal = JSON.parse(ffprobeOut.data);
+											throw new Error("File bigger than allowed by Discord");
+										}
 										if (cache) {
 											cache.addToCache(job.compressionData.compressedPath, job.compressionData.name + "." + finalFileContainer.fileTypeDiscord, job.fileKey);
 										}
@@ -3362,170 +3350,170 @@ module.exports = (() => {
 										}
 										throw e;
 									}
-										if (fs.existsSync(job.compressionData.compressedPath)) {
-											const originalFinalFileStats = fs.statSync(job.compressionData.compressedPath);
-											const originalFinalFileSize = originalFinalFileStats ? originalFinalFileStats.size : 0;
-											let finalFileSize = originalFinalFileStats ? originalFinalFileStats.size : 0;
-											this.jobLoggerInfo(job, "Final file size: " + finalFileSize + " bytes");
-											this.jobLoggerInfo(job, "Upload size cap: " + job.maxSize + " bytes");
-											if (finalFileSize > job.maxSize) {
-												// Final file too large, recompress audio to shrink size
-												if (audioStreamIndex >= 0) {
-													for (let compressionPass = 2; compressionPass <= 4; compressionPass++) {
-														if (finalFileSize > job.maxSize) {
-															const sizeDiff = (originalFinalFileSize - cappedFileSize) + (Math.pow(10, (compressionPass - 2)) * 5000);
-															const audioBitrateDiff = (sizeDiff * 8) / duration;
-															const audioBitrateAdjusted = Math.floor(audioBitrate - audioBitrateDiff);
-															this.jobLoggerInfo(job, "Adjusted target audio bitrate: " + audioBitrateAdjusted + " bits/second");
-															this.jobLoggerInfo(job, "Adjusted target audio bitrate per channel: " + (audioBitrateAdjusted / outputChannels) + " bits/second");
-															try {
-																toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PASS_PERCENT', compressionPass, '0'));
-																const ffmpegArgs = ["-y", ...(startSeconds > 0 ? ["-ss", startSeconds] : []), "-i", job.originalFilePath.replace(/\\/g, '/'), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:a", audioBitrateAdjusted, "-maxrate", audioBitrateAdjusted, "-bufsize", audioBitrateAdjusted / 2, "-vn", "-sn", "-map_chapters", "-1", "-c:a", job.options.advanced.audioEncoder.value, "-map", "0:" + audioStreamIndex, ...(outputBitDepth && (outputBitDepth < bitDepth || !bitDepth) ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, "-f", audioContainerSettings[audioContainer].containerFormat, job.compressionData.tempAudioPath.replace(/\\/g, '/')];
-																job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
-																await companion.runWithArgs('ffmpeg', ffmpegArgs, [{
-																			filter: str => {
-																				return str.includes("time=");
-																			},
-																			process: str => {
-																				try {
-																					const timeStr = regexPatternTime.exec(str);
-																					if (timeStr?.length > 1) {
-																						const timeStrParts = timeStr[1].split(':');
-																						const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
-																						const percent = Math.round((elapsedTime / duration) * 100);
-																						toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PASS_PERCENT', compressionPass, percent ? percent : 0));
-																					}
-																				} catch (e) {
-																					this.jobLoggerError(job, e);
+									if (fs.existsSync(job.compressionData.compressedPath)) {
+										const originalFinalFileStats = fs.statSync(job.compressionData.compressedPath);
+										const originalFinalFileSize = originalFinalFileStats ? originalFinalFileStats.size : 0;
+										let finalFileSize = originalFinalFileStats ? originalFinalFileStats.size : 0;
+										this.jobLoggerInfo(job, "Final file size: " + finalFileSize + " bytes");
+										this.jobLoggerInfo(job, "Upload size cap: " + job.maxSize + " bytes");
+										if (finalFileSize > job.maxSize) {
+											// Final file too large, recompress audio to shrink size
+											if (audioStreamIndex >= 0) {
+												for (let compressionPass = 2; compressionPass <= 4; compressionPass++) {
+													if (finalFileSize > job.maxSize) {
+														const sizeDiff = (originalFinalFileSize - cappedFileSize) + (Math.pow(10, (compressionPass - 2)) * 5000);
+														const audioBitrateDiff = (sizeDiff * 8) / duration;
+														const audioBitrateAdjusted = Math.floor(audioBitrate - audioBitrateDiff);
+														this.jobLoggerInfo(job, "Adjusted target audio bitrate: " + audioBitrateAdjusted + " bits/second");
+														this.jobLoggerInfo(job, "Adjusted target audio bitrate per channel: " + (audioBitrateAdjusted / outputChannels) + " bits/second");
+														try {
+															toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PASS_PERCENT', compressionPass, '0'));
+															const ffmpegArgs = ["-y", ...(startSeconds > 0 ? ["-ss", startSeconds] : []), "-i", job.originalFilePath.replace(/\\/g, '/'), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:a", audioBitrateAdjusted, "-maxrate", audioBitrateAdjusted, "-bufsize", audioBitrateAdjusted / 2, "-vn", "-sn", "-map_chapters", "-1", "-c:a", job.options.advanced.audioEncoder.value, "-map", "0:" + audioStreamIndex, ...(outputBitDepth && (outputBitDepth < bitDepth || !bitDepth) ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, "-f", audioContainerSettings[audioContainer].containerFormat, job.compressionData.tempAudioPath.replace(/\\/g, '/')];
+															job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
+															await companion.runWithArgs('ffmpeg', ffmpegArgs, [{
+																		filter: str => {
+																			return str.includes("time=");
+																		},
+																		process: str => {
+																			try {
+																				const timeStr = regexPatternTime.exec(str);
+																				if (timeStr?.length > 1) {
+																					const timeStrParts = timeStr[1].split(':');
+																					const elapsedTime = (parseFloat(timeStrParts[0]) * 360) + (parseFloat(timeStrParts[1]) * 60) + parseFloat(timeStrParts[2]);
+																					const percent = Math.round((elapsedTime / duration) * 100);
+																					toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PASS_PERCENT', compressionPass, percent ? percent : 0));
 																				}
+																			} catch (e) {
+																				this.jobLoggerError(job, e);
 																			}
 																		}
-																	]);
-															} catch (e) {
-																if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
-																	try {
-																		fs.rmSync(job.originalFilePath);
-																	} catch (e) {}
-																}
-																if (!this.settings.compressor.keepTemp) {
-																	try {
-																		fs.rmSync(job.compressionData.videoPath);
-																	} catch (e) {}
-																	try {
-																		fs.rmSync(job.compressionData.tempAudioPath);
-																	} catch (e) {}
-																	try {
-																		fs.rmSync(job.compressionData.tempVideoPath);
-																	} catch (e) {}
-																	try {
-																		fs.rmSync(job.compressionData.compressedPath);
-																	} catch (e) {}
-																}
-																throw e;
+																	}
+																]);
+														} catch (e) {
+															if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
+																try {
+																	fs.rmSync(job.originalFilePath);
+																} catch (e) {}
 															}
-															if (fs.existsSync(job.compressionData.tempAudioPath)) {
-																const audioStats = fs.statSync(job.compressionData.tempAudioPath);
-																audioSize = audioStats ? audioStats.size : 0;
-																this.jobLoggerInfo(job, "Expected audio size: " + (duration * (audioBitrateAdjusted / 8)) + " bytes");
-																this.jobLoggerInfo(job, "Final audio size: " + audioSize + " bytes");
-															} else {
-																if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
-																	try {
-																		fs.rmSync(job.originalFilePath);
-																	} catch (e) {}
-																}
-																if (!this.settings.compressor.keepTemp) {
-																	try {
-																		fs.rmSync(job.compressionData.videoPath);
-																	} catch (e) {}
-																	try {
-																		fs.rmSync(job.compressionData.tempAudioPath);
-																	} catch (e) {}
-																	try {
-																		fs.rmSync(job.compressionData.tempVideoPath);
-																	} catch (e) {}
-																	try {
-																		fs.rmSync(job.compressionData.compressedPath);
-																	} catch (e) {}
-																}
-																throw new Error("Cannot find FFmpeg output");
+															if (!this.settings.compressor.keepTemp) {
+																try {
+																	fs.rmSync(job.compressionData.videoPath);
+																} catch (e) {}
+																try {
+																	fs.rmSync(job.compressionData.tempAudioPath);
+																} catch (e) {}
+																try {
+																	fs.rmSync(job.compressionData.tempVideoPath);
+																} catch (e) {}
+																try {
+																	fs.rmSync(job.compressionData.compressedPath);
+																} catch (e) {}
 															}
-															try {
-																if (!(await companion.requestAppStatus('mkvmerge')) || job.options.advanced.videoFileFormat.value != "mkv") {
-																	toasts.setToast(job.jobId, i18n.MESSAGES.PACKAGING);
-																	const ffmpegArgs = ["-y", ...(!stripAudio ? ["-i", job.compressionData.tempAudioPath.replace(/\\/g, '/')] : []), "-i", job.compressionData.tempVideoPath.replace(/\\/g, '/'), "-c", "copy", "-f", videoContainerSettings[job.options.advanced.videoFileFormat.value].containerFormat, job.compressionData.compressedPath.replace(/\\/g, '/')];
-																	job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
-																	await companion.runWithArgs('ffmpeg', ffmpegArgs);
-																} else {
-																	toasts.setToast(job.jobId, i18n.FORMAT('PACKAGING_PERCENT', '0'));
-																	const mkvmergeArgs = ["-o", job.compressionData.compressedPath.replace(/\\/g, '/'), job.compressionData.tempVideoPath.replace(/\\/g, '/'), ...(!stripAudio ? [job.compressionData.tempAudioPath.replace(/\\/g, '/')] : [])];
-																	job.logs.push("[" + job.file.name + "] Running MKVmerge with " + mkvmergeArgs.join(" "));
-																	await companion.runWithArgs('mkvmerge', mkvmergeArgs, str => {
-																		return str.includes("Progress: ");
-																	}, str => {
-																		try {
-																			const progressStr = regexPatternProgress.exec(str);
-																			if (progressStr?.length > 1)
-																				toasts.setToast(job.jobId, i18n.FORMAT('PACKAGING_PERCENT', progressStr[1]));
-																		} catch (e) {
-																			this.jobLoggerError(job, e);
-																		}
-																	});
-																}
-															} catch (e) {
-																if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
-																	try {
-																		fs.rmSync(job.originalFilePath);
-																	} catch (e) {}
-																}
-																if (!this.settings.compressor.keepTemp) {
-																	try {
-																		fs.rmSync(job.compressionData.tempAudioPath);
-																	} catch (e) {}
-																	try {
-																		fs.rmSync(job.compressionData.tempVideoPath);
-																	} catch (e) {}
-																	try {
-																		fs.rmSync(job.compressionData.compressedPath);
-																	} catch (e) {}
-																}
-																throw e;
-															}
-															if (fs.existsSync(job.compressionData.compressedPath)) {
-																	const finalFileStats = fs.statSync(job.compressionData.compressedPath);
-																	finalFileSize = finalFileStats ? finalFileStats.size : 0;
-																	this.jobLoggerInfo(job, "Final file size: " + finalFileSize + " bytes");
-																	this.jobLoggerInfo(job, "Upload size cap: " + job.maxSize + " bytes");
-															} else {
-																if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
-																	try {
-																		fs.rmSync(job.originalFilePath);
-																	} catch (e) {}
-																}
-																if (!this.settings.compressor.keepTemp) {
-																	try {
-																		fs.rmSync(job.compressionData.tempAudioPath);
-																	} catch (e) {}
-																	try {
-																		fs.rmSync(job.compressionData.tempVideoPath);
-																	} catch (e) {}
-																	try {
-																		fs.rmSync(job.compressionData.compressedPath);
-																	} catch (e) {}
-																}
-																throw new Error("Cannot find MKVmerge output");
-															}
-														} else {
-															break;
+															throw e;
 														}
+														if (fs.existsSync(job.compressionData.tempAudioPath)) {
+															const audioStats = fs.statSync(job.compressionData.tempAudioPath);
+															audioSize = audioStats ? audioStats.size : 0;
+															this.jobLoggerInfo(job, "Expected audio size: " + (duration * (audioBitrateAdjusted / 8)) + " bytes");
+															this.jobLoggerInfo(job, "Final audio size: " + audioSize + " bytes");
+														} else {
+															if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
+																try {
+																	fs.rmSync(job.originalFilePath);
+																} catch (e) {}
+															}
+															if (!this.settings.compressor.keepTemp) {
+																try {
+																	fs.rmSync(job.compressionData.videoPath);
+																} catch (e) {}
+																try {
+																	fs.rmSync(job.compressionData.tempAudioPath);
+																} catch (e) {}
+																try {
+																	fs.rmSync(job.compressionData.tempVideoPath);
+																} catch (e) {}
+																try {
+																	fs.rmSync(job.compressionData.compressedPath);
+																} catch (e) {}
+															}
+															throw new Error("Cannot find FFmpeg output");
+														}
+														try {
+															if (!(await companion.requestAppStatus('mkvmerge')) || job.options.advanced.videoFileFormat.value != "mkv") {
+																toasts.setToast(job.jobId, i18n.MESSAGES.PACKAGING);
+																const ffmpegArgs = ["-y", ...(!stripAudio ? ["-i", job.compressionData.tempAudioPath.replace(/\\/g, '/')] : []), "-i", job.compressionData.tempVideoPath.replace(/\\/g, '/'), "-c", "copy", "-f", videoContainerSettings[job.options.advanced.videoFileFormat.value].containerFormat, job.compressionData.compressedPath.replace(/\\/g, '/')];
+																job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
+																await companion.runWithArgs('ffmpeg', ffmpegArgs);
+															} else {
+																toasts.setToast(job.jobId, i18n.FORMAT('PACKAGING_PERCENT', '0'));
+																const mkvmergeArgs = ["-o", job.compressionData.compressedPath.replace(/\\/g, '/'), job.compressionData.tempVideoPath.replace(/\\/g, '/'), ...(!stripAudio ? [job.compressionData.tempAudioPath.replace(/\\/g, '/')] : [])];
+																job.logs.push("[" + job.file.name + "] Running MKVmerge with " + mkvmergeArgs.join(" "));
+																await companion.runWithArgs('mkvmerge', mkvmergeArgs, str => {
+																	return str.includes("Progress: ");
+																}, str => {
+																	try {
+																		const progressStr = regexPatternProgress.exec(str);
+																		if (progressStr?.length > 1)
+																			toasts.setToast(job.jobId, i18n.FORMAT('PACKAGING_PERCENT', progressStr[1]));
+																	} catch (e) {
+																		this.jobLoggerError(job, e);
+																	}
+																});
+															}
+														} catch (e) {
+															if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
+																try {
+																	fs.rmSync(job.originalFilePath);
+																} catch (e) {}
+															}
+															if (!this.settings.compressor.keepTemp) {
+																try {
+																	fs.rmSync(job.compressionData.tempAudioPath);
+																} catch (e) {}
+																try {
+																	fs.rmSync(job.compressionData.tempVideoPath);
+																} catch (e) {}
+																try {
+																	fs.rmSync(job.compressionData.compressedPath);
+																} catch (e) {}
+															}
+															throw e;
+														}
+														if (fs.existsSync(job.compressionData.compressedPath)) {
+															const finalFileStats = fs.statSync(job.compressionData.compressedPath);
+															finalFileSize = finalFileStats ? finalFileStats.size : 0;
+															this.jobLoggerInfo(job, "Final file size: " + finalFileSize + " bytes");
+															this.jobLoggerInfo(job, "Upload size cap: " + job.maxSize + " bytes");
+														} else {
+															if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
+																try {
+																	fs.rmSync(job.originalFilePath);
+																} catch (e) {}
+															}
+															if (!this.settings.compressor.keepTemp) {
+																try {
+																	fs.rmSync(job.compressionData.tempAudioPath);
+																} catch (e) {}
+																try {
+																	fs.rmSync(job.compressionData.tempVideoPath);
+																} catch (e) {}
+																try {
+																	fs.rmSync(job.compressionData.compressedPath);
+																} catch (e) {}
+															}
+															throw new Error("Cannot find MKVmerge output");
+														}
+													} else {
+														break;
 													}
-												} else {
-													const ffprobeOut = await companion.execWithArgs('ffprobe', ["-v", "error", "-show_format", "-show_streams", "-print_format", "json", job.compressionData.compressedPath.replace(/\\/g, '/')]);
-													job.probeDataFinalRaw = ffprobeOut.data;
-													job.probeDataFinal = JSON.parse(ffprobeOut.data);
-													throw new Error("File bigger than allowed by Discord");
 												}
+											} else {
+												const ffprobeOut = await companion.execWithArgs('ffprobe', ["-v", "error", "-show_format", "-show_streams", "-print_format", "json", job.compressionData.compressedPath.replace(/\\/g, '/')]);
+												job.probeDataFinalRaw = ffprobeOut.data;
+												job.probeDataFinal = JSON.parse(ffprobeOut.data);
+												throw new Error("File bigger than allowed by Discord");
 											}
+										}
 										if (cache) {
 											cache.addToCache(job.compressionData.compressedPath, job.compressionData.name + "." + videoContainerSettings[job.options.advanced.videoFileFormat.value].fileTypeDiscord, job.fileKey);
 										}
@@ -3618,7 +3606,7 @@ module.exports = (() => {
 					};
 					if (await this.compressImageLoop(job, image)) {
 						toasts.setToast(job.jobId, i18n.MESSAGES.PACKAGING);
-						const retFile = new File([image.outputData], image.file.name, {
+						const retFile = new File([image.outputData], (image.file.name.endsWith('.webp') ? image.file.name : image.file.name + '.webp'), {
 							type: image.file.type
 						});
 						if (cache) {
