@@ -1,7 +1,7 @@
 /**
  * @name FileCompressor
  * @author PseudoResonance
- * @version 2.0.5
+ * @version 2.0.6
  * @description Automatically compress files that are too large to send.
  * @authorLink https://github.com/PseudoResonance
  * @donate https://bit.ly/3hAnec5
@@ -25,7 +25,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "2.0.5",
+			version: "2.0.6",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -34,7 +34,7 @@ module.exports = (() => {
 				title: "Fixed",
 				type: "fixed",
 				items: [
-					"Fixed incorrect image file type extension"
+					"Fixed issue with uncommon file types"
 				]
 			}, {
 				title: "Broken",
@@ -1788,8 +1788,15 @@ module.exports = (() => {
 						if (file.size > uploadSizeCap || this.settings.upload.compressAll) {
 							// If file is returned, it was incompressible
 							let type = file.type;
-							if (!type && file.path)
+							if (!type && file.path) {
+								if (!companion || !companion.checkCompanion()) {
+									await this.initCompanion();
+								}
+								if (!companion || !companion.checkCompanion()) {
+									return false;
+								}
 								type = await companion.getMimeType(file.path);
+							}
 							const tempFile = this.checkIsCompressible(file, type ? type.split('/')[0] : "", maxDiscordSize, guildId, channelId, threadId, sidebar);
 							// Check if no files will be uploaded, and if so, trigger Discord's file too large modal by passing through large file
 							if (tempFile) {
