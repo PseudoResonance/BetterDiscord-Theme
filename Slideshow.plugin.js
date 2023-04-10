@@ -1,7 +1,7 @@
 /**
  * @name Slideshow
  * @author PseudoResonance
- * @version 5.0.0
+ * @version 5.0.1
  * @description Turns a transparent Discord background into a slideshow.
  * @authorLink https://github.com/PseudoResonance
  * @donate https://bit.ly/3hAnec5
@@ -26,7 +26,7 @@ const config = {
 				github_username: "PseudoResonance"
 			}
 		],
-		version: "5.0.0",
+		version: "5.0.1",
 		description: "Turns a transparent Discord background into a slideshow.",
 		github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/Slideshow.plugin.js",
 		github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/Slideshow.plugin.js"
@@ -37,7 +37,7 @@ const config = {
 			type: "fixed",
 			items:
 			[
-				"Updated to BetterDiscord 1.8.0"
+				"Fixed recovery when config is corrupted"
 			]
 		}
 	],
@@ -262,7 +262,9 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
 					backgroundIndex = this.getData(this.getName() +  + "-index", "index", 0);
 				} catch (e) {
 					backgroundIndex = 0;
-					Logger.err(this.getName(), e);
+					fs.rm(require('path').join(BdApi.Plugins.folder, this.getName() + '-index.config.json'));
+					BdApi.setData(this.getName() + "-index", "index", backgroundIndex);
+					Logger.err(this.getName(), 'Error while reading image index', e);
 				}
 				try {
 					backgrounds = JSON.parse(this.getData(this.getName(), "backgrounds", JSON.stringify(defaultBackgrounds)));
@@ -528,7 +530,13 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
 								}
 							}
 							// Save new index
-							BdApi.setData(this.getName() + "-index", "index", backgroundIndex);
+							try {
+								BdApi.setData(this.getName() + "-index", "index", backgroundIndex);
+							} catch (e) {
+								fs.rm(require('path').join(BdApi.Plugins.folder, this.getName() + '-index.config.json'));
+								BdApi.setData(this.getName() + "-index", "index", backgroundIndex);
+								Logger.err(this.getName(), 'Error while saving new index', e);
+							}
 							// Move new image to front
 							backgroundNode.children[backgroundIndex].style.zIndex = "-1";
 							// Set transition speed
@@ -561,7 +569,13 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
 					if (backgroundIndex < 0)
 						backgroundIndex = 0;
 					// Save index
-					BdApi.setData(this.getName() + "-index", "index", backgroundIndex);
+					try {
+						BdApi.setData(this.getName() + "-index", "index", backgroundIndex);
+					} catch (e) {
+						fs.rm(require('path').join(BdApi.Plugins.folder, this.getName() + '-index.config.json'));
+						BdApi.setData(this.getName() + "-index", "index", backgroundIndex);
+						Logger.err(this.getName(), 'Error while saving new index', e);
+					}
 					for (let i = 0; i < backgrounds.length; i++) {
 						if (i != backgroundIndex) {
 							// Set other images to be invisible
@@ -989,7 +1003,13 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
 							// If current image index matches moved row, adjust index to match new position
 							if (backgroundIndex == tableDragData.rowIndex) {
 								backgroundIndex = tableDragData.rowPlaceholderIndex;
-								BdApi.setData(this.getName() + "-index", "index", backgroundIndex);
+								try {
+									BdApi.setData(this.getName() + "-index", "index", backgroundIndex);
+								} catch (e) {
+									fs.rm(require('path').join(BdApi.Plugins.folder, this.getName() + '-index.config.json'));
+									BdApi.setData(this.getName() + "-index", "index", backgroundIndex);
+									Logger.err(this.getName(), 'Error while saving new index', e);
+								}
 							}
 							// Save new data
 							this.saveBackgrounds();
