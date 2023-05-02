@@ -1,7 +1,7 @@
 /**
  * @name FileCompressor
  * @author PseudoResonance
- * @version 2.0.7
+ * @version 2.0.8
  * @description Automatically compress files that are too large to send.
  * @authorLink https://github.com/PseudoResonance
  * @donate https://bit.ly/3hAnec5
@@ -25,7 +25,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "2.0.7",
+			version: "2.0.8",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -34,8 +34,7 @@ module.exports = (() => {
 				title: "Fixed",
 				type: "fixed",
 				items: [
-					"Fixed issue with uncommon file types",
-					"Removed dependency on crypto and events NodeJS modules"
+					"Fixed issue with encoding MKV files"
 				]
 			}, {
 				title: "Broken",
@@ -1565,6 +1564,11 @@ module.exports = (() => {
 				}
 			};
 
+			const copyFileSync = (source, destination) => {
+				const data = fs.readFileSync(source, new ArrayBuffer());
+				fs.writeFileSync(destination, data);
+			};
+
 			return class FileCompressor extends Plugin {
 				constructor() {
 					super();
@@ -2861,6 +2865,7 @@ module.exports = (() => {
 					if (companion && companion.checkCompanion()) {
 						if (await this.initTempFolder()) {
 							const videoContainer = audioEncoderSettings[job.options.basic.audioEncoder.value].defaultVideoContainer;
+							job.compressionData.compressedPathPre = path.join(this.tempDataPath, uuidv4().replace(/-/g, ""));
 							job.compressionData.videoPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".mp4");
 							const finalFileContainer = (job.options.advanced.sendAsVideo.value ? videoContainerSettings[videoContainer] : audioContainerSettings[job.options.advanced.audioFileFormat.value]);
 							if (cache) {
@@ -2953,7 +2958,7 @@ module.exports = (() => {
 									this.jobLoggerInfo(job, "Output bit depth: " + (outputBitDepth ? outputBitDepth : bitDepth) + " bits");
 									try {
 										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PASS_PERCENT', '1', '0'));
-										const ffmpegArgs = ["-y", ...(startSeconds > 0 ? ["-ss", startSeconds] : []), "-vn", "-i", job.originalFilePath.replace(/\\/g, '/'), ...(job.options.advanced.sendAsVideo.value ? ["-i", job.compressionData.videoPath.replace(/\\/g, '/')] : []), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:a", audioBitrate, "-maxrate", audioBitrate, "-bufsize", audioBitrate / 2, "-sn", "-map_chapters", "-1", "-c:a", job.options.basic.audioEncoder.value, "-map", "0:" + audioStreamIndex, ...((outputBitDepth && (outputBitDepth < bitDepth || !bitDepth)) ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, ...(job.options.advanced.sendAsVideo.value ? ["-map", "1:v", "-shortest"] : []), "-f", finalFileContainer.containerFormat, job.compressionData.compressedPath.replace(/\\/g, '/')];
+										const ffmpegArgs = ["-y", ...(startSeconds > 0 ? ["-ss", startSeconds] : []), "-vn", "-i", job.originalFilePath.replace(/\\/g, '/'), ...(job.options.advanced.sendAsVideo.value ? ["-i", job.compressionData.videoPath.replace(/\\/g, '/')] : []), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:a", audioBitrate, "-maxrate", audioBitrate, "-bufsize", audioBitrate / 2, "-sn", "-map_chapters", "-1", "-c:a", job.options.basic.audioEncoder.value, "-map", "0:" + audioStreamIndex, ...((outputBitDepth && (outputBitDepth < bitDepth || !bitDepth)) ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, ...(job.options.advanced.sendAsVideo.value ? ["-map", "1:v", "-shortest"] : []), "-f", finalFileContainer.containerFormat, job.compressionData.compressedPathPre.replace(/\\/g, '/')];
 										job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
 										await companion.runWithArgs('ffmpeg', ffmpegArgs, [{
 													filter: str => {
@@ -2982,7 +2987,7 @@ module.exports = (() => {
 										}
 										if (!this.settings.compressor.keepTemp) {
 											try {
-												fs.rmSync(job.compressionData.compressedPath);
+												fs.rmSync(job.compressionData.compressedPathPre);
 											} catch (e) {}
 										}
 										if (!this.settings.compressor.keepTemp) {
@@ -2992,8 +2997,8 @@ module.exports = (() => {
 										}
 										throw e;
 									}
-									if (fs.existsSync(job.compressionData.compressedPath)) {
-										let audioStats = fs.statSync(job.compressionData.compressedPath);
+									if (fs.existsSync(job.compressionData.compressedPathPre)) {
+										let audioStats = fs.statSync(job.compressionData.compressedPathPre);
 										let audioSize = audioStats ? audioStats.size : 0;
 										const originalAudioSize = audioSize;
 										this.jobLoggerInfo(job, "Expected audio size: " + (duration * (audioBitrate / 8)) + " bytes");
@@ -3007,7 +3012,7 @@ module.exports = (() => {
 												this.jobLoggerInfo(job, "Adjusted target audio bitrate per channel: " + (audioBitrateAdjusted / outputChannels) + " bits/second");
 												try {
 													toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PASS_PERCENT', compressionPass, '0'));
-													const ffmpegArgs = ["-y", ...(startSeconds > 0 ? ["-ss", startSeconds] : []), "-vn", "-i", job.originalFilePath.replace(/\\/g, '/'), ...(job.options.advanced.sendAsVideo.value ? ["-i", job.compressionData.videoPath.replace(/\\/g, '/')] : []), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:a", audioBitrateAdjusted, "-maxrate", audioBitrateAdjusted, "-bufsize", audioBitrateAdjusted / 2, "-sn", "-map_chapters", "-1", "-c:a", job.options.basic.audioEncoder.value, "-map", "0:" + audioStreamIndex, ...((outputBitDepth && (outputBitDepth < bitDepth || !bitDepth)) ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, ...(job.options.advanced.sendAsVideo.value ? ["-map", "1:v", "-shortest"] : []), "-f", finalFileContainer.containerFormat, job.compressionData.compressedPath.replace(/\\/g, '/')];
+													const ffmpegArgs = ["-y", ...(startSeconds > 0 ? ["-ss", startSeconds] : []), "-vn", "-i", job.originalFilePath.replace(/\\/g, '/'), ...(job.options.advanced.sendAsVideo.value ? ["-i", job.compressionData.videoPath.replace(/\\/g, '/')] : []), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:a", audioBitrateAdjusted, "-maxrate", audioBitrateAdjusted, "-bufsize", audioBitrateAdjusted / 2, "-sn", "-map_chapters", "-1", "-c:a", job.options.basic.audioEncoder.value, "-map", "0:" + audioStreamIndex, ...((outputBitDepth && (outputBitDepth < bitDepth || !bitDepth)) ? ["-af", "aresample=osf=s" + outputBitDepth + ":dither_method=triangular_hp"] : []), "-ac", outputChannels, ...(job.options.advanced.sendAsVideo.value ? ["-map", "1:v", "-shortest"] : []), "-f", finalFileContainer.containerFormat, job.compressionData.compressedPathPre.replace(/\\/g, '/')];
 													job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
 													await companion.runWithArgs('ffmpeg', ffmpegArgs, [{
 																filter: str => {
@@ -3036,7 +3041,7 @@ module.exports = (() => {
 													}
 													if (!this.settings.compressor.keepTemp) {
 														try {
-															fs.rmSync(job.compressionData.compressedPath);
+															fs.rmSync(job.compressionData.compressedPathPre);
 														} catch (e) {}
 													}
 													if (!this.settings.compressor.keepTemp) {
@@ -3046,8 +3051,8 @@ module.exports = (() => {
 													}
 													throw e;
 												}
-												if (fs.existsSync(job.compressionData.compressedPath)) {
-													audioStats = fs.statSync(job.compressionData.compressedPath);
+												if (fs.existsSync(job.compressionData.compressedPathPre)) {
+													audioStats = fs.statSync(job.compressionData.compressedPathPre);
 													audioSize = audioStats ? audioStats.size : 0;
 													this.jobLoggerInfo(job, "Expected audio size: " + (duration * (audioBitrateAdjusted / 8)) + " bytes");
 													this.jobLoggerInfo(job, "Final audio size: " + audioSize + " bytes");
@@ -3067,6 +3072,12 @@ module.exports = (() => {
 											} else {
 												break;
 											}
+										}
+										try {
+											fs.renameSync(job.compressionData.compressedPathPre, job.compressionData.compressedPath);
+										} catch (err) {
+											copyFileSync(job.compressionData.compressedPathPre, job.compressionData.compressedPath);
+											fs.rmSync(job.compressionData.compressedPathPre);
 										}
 									} else {
 										if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
@@ -3103,6 +3114,11 @@ module.exports = (() => {
 												fs.rmSync(job.originalFilePath);
 											} catch (e) {}
 										}
+										if (!this.settings.compressor.keepTemp) {
+											try {
+												fs.rmSync(job.compressionData.compressedPathPre);
+											} catch (e) {}
+										}
 										if (!cache && !this.settings.compressor.keepTemp) {
 											try {
 												fs.rmSync(job.compressionData.compressedPath);
@@ -3122,7 +3138,7 @@ module.exports = (() => {
 										}
 										if (!this.settings.compressor.keepTemp) {
 											try {
-												fs.rmSync(job.compressionData.compressedPath);
+												fs.rmSync(job.compressionData.compressedPathPre);
 											} catch (e) {}
 										}
 										if (!this.settings.compressor.keepTemp) {
@@ -3165,6 +3181,7 @@ module.exports = (() => {
 							job.compressionData.tempAudioPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, ""));
 							job.compressionData.tempVideoPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, ""));
 							job.compressionData.tempVideoTwoPassPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, ""));
+							job.compressionData.compressedPathPre = path.join(this.tempDataPath, uuidv4().replace(/-/g, ""));
 							if (cache) {
 								job.compressionData.compressedPath = path.join(cache.getCachePath(), uuidv4().replace(/-/g, "") + "." + (!stripVideo ? videoContainerSettings[job.options.advanced.videoFileFormat.value].fileTypeDiscord : audioContainerSettings[job.options.advanced.audioFileFormat.value].fileTypeDiscord));
 							} else {
@@ -3465,12 +3482,12 @@ module.exports = (() => {
 									try {
 										if (!(await companion.requestAppStatus('mkvmerge')) || job.options.advanced.videoFileFormat.value != "mkv") {
 											toasts.setToast(job.jobId, i18n.MESSAGES.PACKAGING);
-											const ffmpegArgs = ["-y", ...(!stripAudio ? ["-i", job.compressionData.tempAudioPath.replace(/\\/g, '/')] : []), "-i", job.compressionData.tempVideoPath.replace(/\\/g, '/'), "-c", "copy", "-f", videoContainerSettings[job.options.advanced.videoFileFormat.value].containerFormat, job.compressionData.compressedPath.replace(/\\/g, '/')];
+											const ffmpegArgs = ["-y", ...(!stripAudio ? ["-i", job.compressionData.tempAudioPath.replace(/\\/g, '/')] : []), "-i", job.compressionData.tempVideoPath.replace(/\\/g, '/'), "-c", "copy", "-f", videoContainerSettings[job.options.advanced.videoFileFormat.value].containerFormat, job.compressionData.compressedPathPre.replace(/\\/g, '/')];
 											job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
 											await companion.runWithArgs('ffmpeg', ffmpegArgs);
 										} else {
 											toasts.setToast(job.jobId, i18n.FORMAT('PACKAGING_PERCENT', '0'));
-											const mkvmergeArgs = ["-o", job.compressionData.compressedPath.replace(/\\/g, '/'), job.compressionData.tempVideoPath.replace(/\\/g, '/'), ...(!stripAudio ? [job.compressionData.tempAudioPath.replace(/\\/g, '/')] : [])];
+											const mkvmergeArgs = ["-o", job.compressionData.compressedPathPre.replace(/\\/g, '/'), job.compressionData.tempVideoPath.replace(/\\/g, '/'), ...(!stripAudio ? [job.compressionData.tempAudioPath.replace(/\\/g, '/')] : [])];
 											job.logs.push("[" + job.file.name + "] Running MKVmerge with " + mkvmergeArgs.join(" "));
 											await companion.runWithArgs('mkvmerge', mkvmergeArgs, str => {
 												return str.includes("Progress: ");
@@ -3498,10 +3515,36 @@ module.exports = (() => {
 												fs.rmSync(job.compressionData.tempVideoPath);
 											} catch (e) {}
 											try {
-												fs.rmSync(job.compressionData.compressedPath);
+												fs.rmSync(job.compressionData.compressedPathPre);
 											} catch (e) {}
 										}
 										throw e;
+									}
+									if (fs.existsSync(job.compressionData.compressedPathPre)) {
+										try {
+											fs.renameSync(job.compressionData.compressedPathPre, job.compressionData.compressedPath);
+										} catch (err) {
+											copyFileSync(job.compressionData.compressedPathPre, job.compressionData.compressedPath);
+											fs.rmSync(job.compressionData.compressedPathPre);
+										}
+									} else {
+										if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
+											try {
+												fs.rmSync(job.originalFilePath);
+											} catch (e) {}
+										}
+										if (!this.settings.compressor.keepTemp) {
+											try {
+												fs.rmSync(job.compressionData.tempAudioPath);
+											} catch (e) {}
+											try {
+												fs.rmSync(job.compressionData.tempVideoPath);
+											} catch (e) {}
+											try {
+												fs.rmSync(job.compressionData.compressedPathPre);
+											} catch (e) {}
+										}
+										throw new Error("Cannot find MKVmerge output");
 									}
 									if (fs.existsSync(job.compressionData.compressedPath)) {
 										const originalFinalFileStats = fs.statSync(job.compressionData.compressedPath);
@@ -3550,6 +3593,9 @@ module.exports = (() => {
 															}
 															if (!this.settings.compressor.keepTemp) {
 																try {
+																	fs.rmSync(job.compressionData.compressedPathPre);
+																} catch (e) {}
+																try {
 																	fs.rmSync(job.compressionData.videoPath);
 																} catch (e) {}
 																try {
@@ -3577,6 +3623,9 @@ module.exports = (() => {
 															}
 															if (!this.settings.compressor.keepTemp) {
 																try {
+																	fs.rmSync(job.compressionData.compressedPathPre);
+																} catch (e) {}
+																try {
 																	fs.rmSync(job.compressionData.videoPath);
 																} catch (e) {}
 																try {
@@ -3594,12 +3643,12 @@ module.exports = (() => {
 														try {
 															if (!(await companion.requestAppStatus('mkvmerge')) || job.options.advanced.videoFileFormat.value != "mkv") {
 																toasts.setToast(job.jobId, i18n.MESSAGES.PACKAGING);
-																const ffmpegArgs = ["-y", ...(!stripAudio ? ["-i", job.compressionData.tempAudioPath.replace(/\\/g, '/')] : []), "-i", job.compressionData.tempVideoPath.replace(/\\/g, '/'), "-c", "copy", "-f", videoContainerSettings[job.options.advanced.videoFileFormat.value].containerFormat, job.compressionData.compressedPath.replace(/\\/g, '/')];
+																const ffmpegArgs = ["-y", ...(!stripAudio ? ["-i", job.compressionData.tempAudioPath.replace(/\\/g, '/')] : []), "-i", job.compressionData.tempVideoPath.replace(/\\/g, '/'), "-c", "copy", "-f", videoContainerSettings[job.options.advanced.videoFileFormat.value].containerFormat, job.compressionData.compressedPathPre.replace(/\\/g, '/')];
 																job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
 																await companion.runWithArgs('ffmpeg', ffmpegArgs);
 															} else {
 																toasts.setToast(job.jobId, i18n.FORMAT('PACKAGING_PERCENT', '0'));
-																const mkvmergeArgs = ["-o", job.compressionData.compressedPath.replace(/\\/g, '/'), job.compressionData.tempVideoPath.replace(/\\/g, '/'), ...(!stripAudio ? [job.compressionData.tempAudioPath.replace(/\\/g, '/')] : [])];
+																const mkvmergeArgs = ["-o", job.compressionData.compressedPathPre.replace(/\\/g, '/'), job.compressionData.tempVideoPath.replace(/\\/g, '/'), ...(!stripAudio ? [job.compressionData.tempAudioPath.replace(/\\/g, '/')] : [])];
 																job.logs.push("[" + job.file.name + "] Running MKVmerge with " + mkvmergeArgs.join(" "));
 																await companion.runWithArgs('mkvmerge', mkvmergeArgs, str => {
 																	return str.includes("Progress: ");
@@ -3627,16 +3676,18 @@ module.exports = (() => {
 																	fs.rmSync(job.compressionData.tempVideoPath);
 																} catch (e) {}
 																try {
-																	fs.rmSync(job.compressionData.compressedPath);
+																	fs.rmSync(job.compressionData.compressedPathPre);
 																} catch (e) {}
 															}
 															throw e;
 														}
-														if (fs.existsSync(job.compressionData.compressedPath)) {
-															const finalFileStats = fs.statSync(job.compressionData.compressedPath);
-															finalFileSize = finalFileStats ? finalFileStats.size : 0;
-															this.jobLoggerInfo(job, "Final file size: " + finalFileSize + " bytes");
-															this.jobLoggerInfo(job, "Upload size cap: " + job.maxSize + " bytes");
+														if (fs.existsSync(job.compressionData.compressedPathPre)) {
+															try {
+																fs.renameSync(job.compressionData.compressedPathPre, job.compressionData.compressedPath);
+															} catch (err) {
+																copyFileSync(job.compressionData.compressedPathPre, job.compressionData.compressedPath);
+																fs.rmSync(job.compressionData.compressedPathPre);
+															}
 														} else {
 															if (job.isOriginalTemporary && !this.settings.compressor.keepTemp) {
 																try {
@@ -3651,10 +3702,16 @@ module.exports = (() => {
 																	fs.rmSync(job.compressionData.tempVideoPath);
 																} catch (e) {}
 																try {
-																	fs.rmSync(job.compressionData.compressedPath);
+																	fs.rmSync(job.compressionData.compressedPathPre);
 																} catch (e) {}
 															}
 															throw new Error("Cannot find MKVmerge output");
+														}
+														if (fs.existsSync(job.compressionData.compressedPath)) {
+															const finalFileStats = fs.statSync(job.compressionData.compressedPath);
+															finalFileSize = finalFileStats ? finalFileStats.size : 0;
+															this.jobLoggerInfo(job, "Final file size: " + finalFileSize + " bytes");
+															this.jobLoggerInfo(job, "Upload size cap: " + job.maxSize + " bytes");
 														}
 													} else {
 														break;
@@ -3679,6 +3736,9 @@ module.exports = (() => {
 											} catch (e) {}
 										}
 										if (!this.settings.compressor.keepTemp) {
+											try {
+												fs.rmSync(job.compressionData.compressedPathPre);
+											} catch (e) {}
 											try {
 												fs.rmSync(job.compressionData.tempAudioPath);
 											} catch (e) {}
@@ -3706,7 +3766,7 @@ module.exports = (() => {
 												fs.rmSync(job.compressionData.tempVideoPath);
 											} catch (e) {}
 											try {
-												fs.rmSync(job.compressionData.compressedPath);
+												fs.rmSync(job.compressionData.compressedPathPre);
 											} catch (e) {}
 										}
 										throw new Error("Cannot find MKVmerge output");
