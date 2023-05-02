@@ -1,7 +1,7 @@
 /**
  * @name FileCompressor
  * @author PseudoResonance
- * @version 2.0.9
+ * @version 2.0.10
  * @description Automatically compress files that are too large to send.
  * @authorLink https://github.com/PseudoResonance
  * @donate https://bit.ly/3hAnec5
@@ -25,17 +25,23 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "2.0.9",
+			version: "2.0.10",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
 		},
 		changelog: [{
+				title: "Added",
+				type: "added",
+				items: [
+					"Added audio normalization option"
+				]
+			}, {
 				title: "Fixed",
 				type: "fixed",
 				items: [
 					"Fixed issue with encoding MKV files",
-					"Added audio normalization option"
+					"Fixed bug with 2 pass or more audio encoding"
 				]
 			}, {
 				title: "Broken",
@@ -3103,7 +3109,7 @@ module.exports = (() => {
 												this.jobLoggerInfo(job, "Adjusted target audio bitrate per channel: " + (audioBitrateAdjusted / outputChannels) + " bits/second");
 												try {
 													toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_AUDIO_PASS_PERCENT', compressionPass, '0'));
-													const ffmpegArgs = ["-y", ...(startSeconds > 0 ? ["-ss", startSeconds] : []), "-vn", "-i", job.originalFilePath.replace(/\\/g, '/'), ...(job.options.advanced.sendAsVideo.value ? ["-i", job.compressionData.videoPath.replace(/\\/g, '/')] : []), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:a", audioBitrateAdjusted, "-maxrate", audioBitrateAdjusted, "-bufsize", audioBitrateAdjusted / 2, "-sn", "-map_chapters", "-1", "-c:a", job.options.basic.audioEncoder.value, "-map", "0:" + audioStreamIndex, ...((outputBitDepth && (outputBitDepth < bitDepth || !bitDepth)) ? ["-af", ] : []), "-ac", outputChannels, ...(job.options.advanced.sendAsVideo.value ? ["-map", "1:v", "-shortest"] : []), "-f", finalFileContainer.containerFormat, job.compressionData.compressedPathPre.replace(/\\/g, '/')];
+													const ffmpegArgs = ["-y", ...(startSeconds > 0 ? ["-ss", startSeconds] : []), "-vn", "-i", job.originalFilePath.replace(/\\/g, '/'), ...(job.options.advanced.sendAsVideo.value ? ["-i", job.compressionData.videoPath.replace(/\\/g, '/')] : []), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:a", audioBitrateAdjusted, "-maxrate", audioBitrateAdjusted, "-bufsize", audioBitrateAdjusted / 2, "-sn", "-map_chapters", "-1", "-c:a", job.options.basic.audioEncoder.value, "-map", "0:" + audioStreamIndex, ...(twoPassCompression ? (audioFiltersPass2.length > 0 ? ["-af", ...audioFiltersPass2] : []) : (audioFiltersPass1.length > 0 ? ["-af", ...audioFiltersPass1] : [])), "-ac", outputChannels, ...(job.options.advanced.sendAsVideo.value ? ["-map", "1:v", "-shortest"] : []), "-f", finalFileContainer.containerFormat, job.compressionData.compressedPathPre.replace(/\\/g, '/')];
 													job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
 													await companion.runWithArgs('ffmpeg', ffmpegArgs, [{
 																filter: str => {
