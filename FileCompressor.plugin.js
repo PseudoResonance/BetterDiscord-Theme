@@ -1,7 +1,7 @@
 /**
  * @name FileCompressor
  * @author PseudoResonance
- * @version 2.0.11
+ * @version 2.0.12
  * @description Automatically compress files that are too large to send.
  * @authorLink https://github.com/PseudoResonance
  * @donate https://bit.ly/3hAnec5
@@ -25,7 +25,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "2.0.11",
+			version: "2.0.12",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -43,7 +43,8 @@ module.exports = (() => {
 				type: "fixed",
 				items: [
 					"Fixed issue with encoding MKV files",
-					"Fixed bug with 2 pass or more audio encoding"
+					"Fixed bug with 2 pass or more audio encoding",
+					"Fixed issues with text-based subtitles (SRT, ASS) and some image-based subtitles (PGS, DVDSUB)"
 				]
 			}, {
 				title: "Broken",
@@ -3472,6 +3473,40 @@ module.exports = (() => {
 					}
 				}
 
+				joinVideoFilters(videoFilters, complex, videoStreamIndex) {
+					if (!complex) {
+						return ["-vf", videoFilters.join(",")];
+					} else {
+						let filterString = "";
+						for (let i = 0; i < videoFilters.length; i++) {
+							const filt = videoFilters[i];
+							if (typeof filt === "string" || filt instanceof String) {
+								videoFilters[i] = (i == 0 ? "[0:" + videoStreamIndex + "]" : "[F" + (i - 1) + "]") + filt + (i == videoFilters.length - 1 ? "[out]" : "[F" + i + "]");
+							} else {
+								for (let j = 0; j < filt.inputs.length; j++) {
+									if (filt.inputs[j].length == 0) {
+										filt.inputs[j] = i == 0 ? "[0:" + videoStreamIndex + "]" : "[F" + (i - 1) + "]";
+									}
+								}
+								for (let j = 0; j < filt.outputs.length; j++) {
+									if (filt.outputs[j].length == 0) {
+										filt.outputs[j] = i == videoFilters.length - 1 ? "[out]" : "[F" + i + "]";
+									}
+								}
+								filt.compiled = filt.inputs.join("") + filt.filter + filt.outputs.join("");
+							}
+						}
+						for (const filt of videoFilters) {
+							if (typeof filt === "string" || filt instanceof String) {
+								filterString += filt + ",";
+							} else {
+								filterString += filt.compiled + ",";
+							}
+						}
+						return ["-filter_complex", filterString.slice(0, -1)];
+					}
+				}
+
 				// Main function to compress a given video
 				async compressVideo(job) {
 					if (!companion || !companion.checkCompanion()) {
@@ -3483,7 +3518,7 @@ module.exports = (() => {
 							const stripVideo = job.options.basic.stripAudio.value && job.options.basic.stripVideo.value ? false : job.options.basic.stripVideo.value;
 							const videoContainer = videoEncoderSettings[job.options.basic.videoEncoder.value].defaultContainer;
 							const audioContainer = audioEncoderSettings[job.options.advanced.audioEncoder.value].defaultContainer;
-							job.compressionData.tempSubtitlePath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".mkv");
+							job.compressionData.tempSubtitlePath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".ass");
 							job.compressionData.tempAudioPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, ""));
 							job.compressionData.tempVideoPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, ""));
 							job.compressionData.tempVideoTwoPassPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, ""));
@@ -3506,21 +3541,7 @@ module.exports = (() => {
 									}
 									const videoFiltersPass1 = [];
 									const videoFiltersPass2 = [];
-									const videoFiltersComplexPass1 = [];
-									const videoFiltersComplexPass2 = [];
-									const additionalInputs = [];
-									const autoCropSettings = [-1, -1, -1, -1];
-									if (job.options.advanced.autoCrop.value) {
-										videoFiltersPass1.push("cropdetect=round=2");
-									}
-									if (job.options.advanced.interlace.value) {
-										videoFiltersPass1.push("interlace=lowpass=2");
-										videoFiltersPass2.push("interlace=lowpass=2");
-									}
-									if (job.options.advanced.deinterlace.value) {
-										videoFiltersPass1.push("yadif=mode=1");
-										videoFiltersPass2.push("yadif=mode=1");
-									}
+									let videoFiltersComplex = false;
 									const cappedFileSize = Math.floor((job.options.basic.sizeCap.value ? parseInt(job.options.basic.sizeCap.value) : job.maxSize)) - 150000;
 									const frameRateMatchesSplit = job.probeData.streams[videoStreamIndex].r_frame_rate ? job.probeData.streams[videoStreamIndex].r_frame_rate.split('/') : null;
 									const originalDuration = job.probeData.format.duration ? parseFloat(job.probeData.format.duration) : 0;
@@ -3529,11 +3550,6 @@ module.exports = (() => {
 									const colorPrimaries = job.probeData.streams[videoStreamIndex].color_primaries ? job.probeData.streams[videoStreamIndex].color_primaries : null;
 									const bitDepth = audioStreamIndex >= 0 && job.probeData.streams[audioStreamIndex].bits_per_raw_sample ? parseInt(job.probeData.streams[audioStreamIndex].bits_per_raw_sample) : null;
 									const numChannels = audioStreamIndex >= 0 && job.probeData.streams[audioStreamIndex].channels ? parseInt(job.probeData.streams[audioStreamIndex].channels) : null;
-									const isHDR = hdrColorPrimaries.includes(colorPrimaries);
-									if (isHDR) {
-										videoFiltersPass1.push("zscale=transfer=linear,tonemap=hable,zscale=transfer=bt709");
-										videoFiltersPass2.push("zscale=transfer=linear,tonemap=hable,zscale=transfer=bt709");
-									}
 									const frameRate = frameRateMatchesSplit?.length > 1 ? (parseFloat(frameRateMatchesSplit[0]) / parseFloat(frameRateMatchesSplit[1])) : null;
 									if (originalDuration == 0) {
 										throw new Error("Invalid file duration");
@@ -3555,6 +3571,47 @@ module.exports = (() => {
 									duration = endSeconds > 0 ? endSeconds : originalDuration - startSeconds;
 									if (duration <= 0)
 										duration = originalDuration;
+									if (job.options.advanced.deinterlace.value) {
+										videoFiltersPass1.push("yadif=mode=1");
+										videoFiltersPass2.push("yadif=mode=1");
+									}
+									if (job.options.track.burnSubtitles?.value) {
+										if (imageSubtitleFormats.includes(job.probeData.streams[subtitleStreamIndex].codec_name)) {
+											videoFiltersPass1.push({
+												inputs: ["", "[0:" + subtitleStreamIndex + "]"],
+												filter: "overlay",
+												outputs: [""]
+											});
+											videoFiltersPass2.push({
+												inputs: ["", "[0:" + subtitleStreamIndex + "]"],
+												filter: "overlay",
+												outputs: [""]
+											});
+											videoFiltersComplex = true;
+										} else {
+											const ffmpegArgs = ["-y", ...(startSeconds > 0 ? ["-ss", startSeconds] : []), "-i", job.originalFilePath.replace(/\\/g, '/'), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-map", "0:" + subtitleStreamIndex, "-f", "ass", job.compressionData.tempSubtitlePath];
+											job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
+											await companion.runWithArgs('ffmpeg', ffmpegArgs, []);
+											//videoFiltersPass1.push("subtitles=f=\'" + job.compressionData.tempSubtitlePath.replace(/\\/g, '/').replace(/:/g, '\\:').replace(/%/g, '\\%') + "\':original_size=" + originalWidth + "x" + originalHeight);
+											//videoFiltersPass2.push("subtitles=f=\'" + job.compressionData.tempSubtitlePath.replace(/\\/g, '/').replace(/:/g, '\\:').replace(/%/g, '\\%') + "\':original_size=" + originalWidth + "x" + originalHeight);
+											videoFiltersPass1.push("ass=\'" + job.compressionData.tempSubtitlePath.replace(/\\/g, '/').replace(/:/g, '\\:').replace(/%/g, '\\%') + "\'");
+											videoFiltersPass2.push("ass=\'" + job.compressionData.tempSubtitlePath.replace(/\\/g, '/').replace(/:/g, '\\:').replace(/%/g, '\\%') + "\'");
+										}
+									}
+									const autoCropSettings = [-1, -1, -1, -1];
+									if (job.options.advanced.autoCrop.value) {
+										videoFiltersPass1.push("cropdetect=round=2");
+										videoFiltersPass2.push("CROPDETECTPLACEHOLDER");
+									}
+									if (job.options.advanced.interlace.value) {
+										videoFiltersPass1.push("interlace=lowpass=2");
+										videoFiltersPass2.push("interlace=lowpass=2");
+									}
+									const isHDR = hdrColorPrimaries.includes(colorPrimaries);
+									if (isHDR) {
+										videoFiltersPass1.push("zscale=transfer=linear,tonemap=hable,zscale=transfer=bt709");
+										videoFiltersPass2.push("zscale=transfer=linear,tonemap=hable,zscale=transfer=bt709");
+									}
 									const fileStats = fs.statSync(job.originalFilePath);
 									this.jobLoggerInfo(job, "Original file size: " + (fileStats ? fileStats.size : 0) + " bytes");
 									this.jobLoggerInfo(job, "Max file size: " + cappedFileSize + " bytes");
@@ -3639,26 +3696,13 @@ module.exports = (() => {
 										videoFiltersPass1.push("scale=-1:" + maxVideoHeight + ",scale=trunc(iw/2)*2:" + maxVideoHeight);
 										videoFiltersPass2.push("scale=-1:" + maxVideoHeight + ",scale=trunc(iw/2)*2:" + maxVideoHeight);
 									}
-									if (job.options.track.burnSubtitles?.value) {
-										const ffmpegArgs = ["-y", ...(startSeconds > 0 ? ["-ss", startSeconds] : []), "-i", job.originalFilePath.replace(/\\/g, '/'), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-map", "0:" + subtitleStreamIndex, "-c:s", "copy", job.compressionData.tempSubtitlePath];
-										job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
-										await companion.runWithArgs('ffmpeg', ffmpegArgs, []);
-										if (imageSubtitleFormats.includes(job.probeData.streams[subtitleStreamIndex].codec_name)) {
-											videoFiltersComplexPass1.push(["[0:v:" + videoStreamIndex + "][1:s]overlay[out]"]);
-											videoFiltersComplexPass2.push(["[0:v:" + videoStreamIndex + "][1:s]overlay[out]"]);
-											additionalInputs.push("-i", job.compressionData.tempSubtitlePath);
-										} else {
-											videoFiltersPass1.push("subtitles=f=\'" + job.compressionData.tempSubtitlePath.replace(/\\/g, '/').replace(/:/g, '\\:').replace(/%/g, '\\%') + "\':original_size=" + originalWidth + "x" + originalHeight);
-											videoFiltersPass2.push("subtitles=f=\'" + job.compressionData.tempSubtitlePath.replace(/\\/g, '/').replace(/:/g, '\\:').replace(/%/g, '\\%') + "\':original_size=" + originalWidth + "x" + originalHeight);
-										}
-									}
 									this.jobLoggerInfo(job, "Max frame rate: " + maxFrameRate + " fps");
 									this.jobLoggerInfo(job, "Target video bitrate: " + videoBitrate + " bits/second");
 									this.jobLoggerInfo(job, "Max frame height: " + maxVideoHeight + " pixels");
 									this.jobLoggerInfo(job, "Output frame height: " + (maxVideoHeight < originalHeight || (!originalHeight && maxVideoHeight) ? maxVideoHeight : originalHeight) + " pixels");
 									try {
 										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_VIDEO_PASS_PERCENT', '1', '0'));
-										const ffmpegArgs = ["-y", ...(startSeconds > 0 ? ["-ss", startSeconds] : []), "-i", job.originalFilePath.replace(/\\/g, '/'), ...additionalInputs, ...(videoFiltersComplexPass1.length > 0 ? ["-filter_complex", videoFiltersComplexPass1.join(";")] : []), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate / 2, ...(videoFiltersPass1.length > 0 ? ["-vf", videoFiltersPass1.join(",")] : []), "-an", "-sn", "-map_chapters", "-1", ...(videoFiltersComplexPass1.length > 0 ? ["-map", "[out]"] : ["-map", "0:" + videoStreamIndex]), "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.basic.videoEncoder.value, ...videoEncoderSettings[job.options.basic.videoEncoder.value].encoderFlags, "-pass", "1", "-passlogfile", job.compressionData.tempVideoTwoPassPath, "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")];
+										const ffmpegArgs = ["-y", ...(startSeconds > 0 ? ["-ss", startSeconds] : []), "-i", job.originalFilePath.replace(/\\/g, '/'), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate / 2, ...(videoFiltersPass1.length > 0 ? this.joinVideoFilters(videoFiltersPass1, videoFiltersComplex, videoStreamIndex) : []), "-an", "-sn", "-map_chapters", "-1", ...(videoFiltersComplex ? ["-map", "[out]"] : ["-map", "0:" + videoStreamIndex]), "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.basic.videoEncoder.value, ...videoEncoderSettings[job.options.basic.videoEncoder.value].encoderFlags, "-pass", "1", "-passlogfile", job.compressionData.tempVideoTwoPassPath, "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")];
 										job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
 										await companion.runWithArgs('ffmpeg', ffmpegArgs, [{
 													filter: str => {
@@ -3733,11 +3777,14 @@ module.exports = (() => {
 									if (job.options.advanced.autoCrop.value && autoCropSettings.length == 4 && autoCropSettings.every(val => typeof val !== 'undefined')) {
 										const autoCropSettingsStr = autoCropSettings.join(':');
 										this.jobLoggerInfo(job, "Video crop settings: " + autoCropSettingsStr);
-										videoFiltersPass2.unshift("crop=" + autoCropSettingsStr);
+										for (let i = 0; i < videoFiltersPass2.length; i++) {
+											if (videoFiltersPass2[i] === "CROPDETECTPLACEHOLDER")
+												videoFiltersPass2[i] = "crop=" + autoCropSettingsStr;
+										}
 									}
 									try {
 										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_VIDEO_PASS_PERCENT', '2', '0'));
-										const ffmpegArgs = ["-y", ...(startSeconds > 0 ? ["-ss", startSeconds] : []), "-i", job.originalFilePath.replace(/\\/g, '/'), ...additionalInputs, ...(videoFiltersComplexPass2.length > 0 ? ["-filter_complex", videoFiltersComplexPass2.join(";")] : []), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate / 2, ...(videoFiltersPass2.length > 0 ? ["-vf", videoFiltersPass2.join(",")] : []), "-an", "-sn", "-map_chapters", "-1", ...(videoFiltersComplexPass2.length > 0 ? ["-map", "[out]"] : ["-map", "0:" + videoStreamIndex]), "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.basic.videoEncoder.value, ...videoEncoderSettings[job.options.basic.videoEncoder.value].encoderFlags, "-pass", "2", "-passlogfile", job.compressionData.tempVideoTwoPassPath.replace(/\\/g, '/'), "-f", videoContainerSettings[videoContainer].containerFormat, job.compressionData.tempVideoPath.replace(/\\/g, '/')];
+										const ffmpegArgs = ["-y", ...(startSeconds > 0 ? ["-ss", startSeconds] : []), "-i", job.originalFilePath.replace(/\\/g, '/'), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate / 2, ...(videoFiltersPass2.length > 0 ? this.joinVideoFilters(videoFiltersPass2, videoFiltersComplex, videoStreamIndex) : []), "-an", "-sn", "-map_chapters", "-1", ...(videoFiltersComplex ? ["-map", "[out]"] : ["-map", "0:" + videoStreamIndex]), "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.basic.videoEncoder.value, ...videoEncoderSettings[job.options.basic.videoEncoder.value].encoderFlags, "-pass", "2", "-passlogfile", job.compressionData.tempVideoTwoPassPath.replace(/\\/g, '/'), "-f", videoContainerSettings[videoContainer].containerFormat, job.compressionData.tempVideoPath.replace(/\\/g, '/')];
 										job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
 										await companion.runWithArgs('ffmpeg', ffmpegArgs, [{
 													filter: str => {
