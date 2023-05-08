@@ -1,7 +1,7 @@
 /**
  * @name FileCompressor
  * @author PseudoResonance
- * @version 2.0.10
+ * @version 2.0.11
  * @description Automatically compress files that are too large to send.
  * @authorLink https://github.com/PseudoResonance
  * @donate https://bit.ly/3hAnec5
@@ -25,7 +25,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "2.0.10",
+			version: "2.0.11",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -34,7 +34,9 @@ module.exports = (() => {
 				title: "Added",
 				type: "added",
 				items: [
-					"Added audio normalization option"
+					"Added audio normalization option",
+					"Option to select video, audio and subtitle tracks",
+					"Option to burn most subtitles (SRT, ASS, PGS, DVDSUB tested)"
 				]
 			}, {
 				title: "Fixed",
@@ -273,8 +275,17 @@ module.exports = (() => {
 			SETTINGS_KEEP_TEMP_DESC: 'Retain temporary files after compression.',
 			COMPRESSION_OPTIONS_TITLE: '{$0$} Compression Options',
 			COMPRESSION_OPTIONS_CATEGORIES_CACHE: 'Cache Options',
+			COMPRESSION_OPTIONS_CATEGORIES_TRACK: 'Track Options',
 			COMPRESSION_OPTIONS_CATEGORIES_BASIC: 'Basic Options',
 			COMPRESSION_OPTIONS_CATEGORIES_ADVANCED: 'Advanced Options',
+			COMPRESSION_OPTIONS_VIDEO_TRACK: 'Video Track',
+			COMPRESSION_OPTIONS_VIDEO_TRACK_INFO: '{$0$}: {$1$} ({$2$}×{$3$})',
+			COMPRESSION_OPTIONS_AUDIO_TRACK: 'Audio Track',
+			COMPRESSION_OPTIONS_AUDIO_TRACK_INFO: '{$0$}: {$1$} ({$2$} Channels)',
+			COMPRESSION_OPTIONS_SUBTITLE_TRACK: 'Subtitle Track',
+			COMPRESSION_OPTIONS_SUBTITLE_TRACK_INFO: '{$0$}: {$1$}',
+			COMPRESSION_OPTIONS_BURN_SUBTITLES: 'Burn Subtitles',
+			COMPRESSION_OPTIONS_BURN_SUBTITLES_DESC: 'Burns subtitles permanently into the video',
 			COMPRESSION_OPTIONS_USE_CACHE: 'Use Cached File',
 			COMPRESSION_OPTIONS_USE_CACHE_DESC: 'Use the previously cached file.',
 			COMPRESSION_OPTIONS_SIZE_CAP: 'Size Cap (bytes)',
@@ -379,8 +390,17 @@ module.exports = (() => {
 			SETTINGS_KEEP_TEMP_DESC: '圧縮後に一時ファイルを保持する。',
 			COMPRESSION_OPTIONS_TITLE: '{$0$}　圧縮設定',
 			COMPRESSION_OPTIONS_CATEGORIES_CACHE: 'キャッシュ設定',
+			COMPRESSION_OPTIONS_CATEGORIES_TRACK: 'トラック設定',
 			COMPRESSION_OPTIONS_CATEGORIES_BASIC: '基本設定',
 			COMPRESSION_OPTIONS_CATEGORIES_ADVANCED: '高度設定',
+			COMPRESSION_OPTIONS_VIDEO_TRACK: '動画トラック',
+			COMPRESSION_OPTIONS_VIDEO_TRACK_INFO: '{$0$}: {$1$} ({$2$}×{$3$})',
+			COMPRESSION_OPTIONS_AUDIO_TRACK: '音声トラック',
+			COMPRESSION_OPTIONS_AUDIO_TRACK_INFO: '{$0$}: {$1$} ({$2$}チャンネル)',
+			COMPRESSION_OPTIONS_SUBTITLE_TRACK: '字幕トラック',
+			COMPRESSION_OPTIONS_SUBTITLE_TRACK_INFO: '{$0$}: {$1$}',
+			COMPRESSION_OPTIONS_BURN_SUBTITLES: '字幕を書き込む',
+			COMPRESSION_OPTIONS_BURN_SUBTITLES_DESC: '動画に字幕を恒久的に書き込む',
 			COMPRESSION_OPTIONS_USE_CACHE: 'キャッシュされたファイルュを使用',
 			COMPRESSION_OPTIONS_USE_CACHE_DESC: '以前にキャッシュされたファイルを使用する。',
 			COMPRESSION_OPTIONS_SIZE_CAP: '最大ファイルサイズ（bytes）',
@@ -532,6 +552,8 @@ module.exports = (() => {
 			// Cache container
 			let cache = null;
 
+			// Subtitle information
+			const imageSubtitleFormats = ["hdmv_pgs_subtitle", "dvdsub"];
 			// Video container settings
 			const videoContainerSettings = {
 				"mkv": {
@@ -2131,6 +2153,10 @@ module.exports = (() => {
 							name: i18n.MESSAGES.COMPRESSION_OPTIONS_CATEGORIES_CACHE,
 							shown: true
 						},
+						track: {
+							name: i18n.MESSAGES.COMPRESSION_OPTIONS_CATEGORIES_TRACK,
+							shown: false
+						},
 						basic: {
 							name: i18n.MESSAGES.COMPRESSION_OPTIONS_CATEGORIES_BASIC,
 							shown: true
@@ -2157,6 +2183,7 @@ module.exports = (() => {
 							}
 						};
 					}
+					job.options.track = {};
 					job.options.basic = {};
 					job.options.advanced = {};
 					job.options.basic.sizeCap = {
@@ -2266,6 +2293,144 @@ module.exports = (() => {
 								value: name,
 								label: name
 							});
+						}
+						job.videoTrackIds = [];
+						job.audioTrackIds = [];
+						job.subtitleTrackIds = [];
+						job.otherTrackIds = [];
+						for (let i = 0; i < job.probeData.streams.length; i++) {
+							switch (job.probeData.streams[i].codec_type) {
+							case "video":
+								job.videoTrackIds.push(i);
+								break;
+							case "audio":
+								job.audioTrackIds.push(i);
+								break;
+							case "subtitle":
+								job.subtitleTrackIds.push(i);
+								break;
+							default:
+								job.otherTrackIds.push(i);
+								break;
+							}
+						}
+						job.defaultVideoTrack = -1;
+						job.defaultAudioTrack = -1;
+						job.defaultSubtitleTrack = -1;
+						if (job.videoTrackIds.length > 0) {
+							let defaultTrack = job.videoTrackIds[0];
+							let foundDefaultTrack = false;
+							const trackDescriptions = [];
+							for (const i of job.videoTrackIds) {
+								const stream = job.probeData.streams[i];
+								const trackDescription = [];
+								if (stream.tags && stream.tags.language && stream.tags.language != "und")
+									trackDescription.push(stream.tags.language);
+								if (stream.tags && stream.tags.title)
+									trackDescription.push(stream.tags.title);
+								trackDescriptions.push({
+									value: i,
+									name: i18n.FORMAT('COMPRESSION_OPTIONS_VIDEO_TRACK_INFO', i, stream.codec_name.toUpperCase(), stream.coded_width, stream.coded_height),
+									...(trackDescription.length > 0 ? {
+										desc: trackDescription.join(": ")
+									}
+										 : {})
+								});
+								if (!foundDefaultTrack && stream.disposition.default) {
+									foundDefaultTrack = true;
+									defaultTrack = i;
+								}
+							}
+							job.defaultVideoTrack = defaultTrack;
+							if (job.videoTrackIds.length > 1) {
+								job.options.track.videoTrack = {
+									name: i18n.MESSAGES.COMPRESSION_OPTIONS_VIDEO_TRACK,
+									type: "radiogroup",
+									defaultValue: defaultTrack,
+									props: {
+										values: trackDescriptions
+									}
+								};
+							}
+						}
+						if (job.audioTrackIds.length > 0) {
+							let defaultTrack = job.audioTrackIds[0];
+							let foundDefaultTrack = false;
+							const trackDescriptions = [];
+							for (const i of job.audioTrackIds) {
+								const stream = job.probeData.streams[i];
+								const trackDescription = [];
+								if (stream.tags && stream.tags.language && stream.tags.language != "und")
+									trackDescription.push(stream.tags.language);
+								if (stream.tags && stream.tags.title)
+									trackDescription.push(stream.tags.title);
+								trackDescriptions.push({
+									value: i,
+									name: i18n.FORMAT('COMPRESSION_OPTIONS_AUDIO_TRACK_INFO', i, stream.codec_name.toUpperCase(), stream.channel_layout ? stream.channel_layout : stream.channels),
+									...(trackDescription.length > 0 ? {
+										desc: trackDescription.join(": ")
+									}
+										 : {})
+								});
+								if (!foundDefaultTrack && stream.disposition.default) {
+									foundDefaultTrack = true;
+									defaultTrack = i;
+								}
+							}
+							job.defaultAudioTrack = defaultTrack;
+							if (job.audioTrackIds.length > 1) {
+								job.options.track.audioTrack = {
+									name: i18n.MESSAGES.COMPRESSION_OPTIONS_AUDIO_TRACK,
+									type: "radiogroup",
+									defaultValue: defaultTrack,
+									props: {
+										values: trackDescriptions
+									},
+									tags: ["audioValid"]
+								};
+							}
+						}
+						if (job.subtitleTrackIds.length > 0) {
+							let defaultTrack = job.subtitleTrackIds[0];
+							let foundDefaultTrack = false;
+							const trackDescriptions = [];
+							for (const i of job.subtitleTrackIds) {
+								const stream = job.probeData.streams[i];
+								const trackDescription = [];
+								if (stream.tags && stream.tags.language && stream.tags.language != "und")
+									trackDescription.push(stream.tags.language);
+								if (stream.tags && stream.tags.title)
+									trackDescription.push(stream.tags.title);
+								trackDescriptions.push({
+									value: i,
+									name: i18n.FORMAT('COMPRESSION_OPTIONS_SUBTITLE_TRACK_INFO', i, stream.codec_name.toUpperCase()),
+									...(trackDescription.length > 0 ? {
+										desc: trackDescription.join(": ")
+									}
+										 : {})
+								});
+								if (!foundDefaultTrack && stream.disposition.default) {
+									foundDefaultTrack = true;
+									defaultTrack = i;
+								}
+							}
+							job.defaultSubtitleTrack = defaultTrack;
+							if (job.subtitleTrackIds.length > 1) {
+								job.options.track.subtitleTrack = {
+									name: i18n.MESSAGES.COMPRESSION_OPTIONS_SUBTITLE_TRACK,
+									type: "radiogroup",
+									defaultValue: defaultTrack,
+									props: {
+										values: trackDescriptions
+									}
+								};
+							}
+							job.options.track.burnSubtitles = {
+								name: i18n.MESSAGES.COMPRESSION_OPTIONS_BURN_SUBTITLES,
+								description: i18n.MESSAGES.COMPRESSION_OPTIONS_BURN_SUBTITLES_DESC,
+								type: "switch",
+								defaultValue: false
+							};
 						}
 						job.options.basic.videoEncoder = {
 							name: i18n.MESSAGES.COMPRESSION_OPTIONS_VIDEO_ENCODER,
@@ -2586,6 +2751,55 @@ module.exports = (() => {
 								label: name
 							});
 						}
+						job.audioTrackIds = [];
+						job.otherTrackIds = [];
+						for (let i = 0; i < job.probeData.streams.length; i++) {
+							switch (job.probeData.streams[i].codec_type) {
+							case "audio":
+								job.audioTrackIds.push(i);
+								break;
+							default:
+								job.otherTrackIds.push(i);
+								break;
+							}
+						}
+						job.defaultAudioTrack = -1;
+						if (job.audioTrackIds.length > 0) {
+							let defaultTrack = job.audioTrackIds[0];
+							let foundDefaultTrack = false;
+							const trackDescriptions = [];
+							for (const i of job.audioTrackIds) {
+								const stream = job.probeData.streams[i];
+								const trackDescription = [];
+								if (stream.tags && stream.tags.language && stream.tags.language != "und")
+									trackDescription.push(stream.tags.language);
+								if (stream.tags && stream.tags.title)
+									trackDescription.push(stream.tags.title);
+								trackDescriptions.push({
+									value: i,
+									name: i18n.FORMAT('COMPRESSION_OPTIONS_AUDIO_TRACK_INFO', i, stream.codec_name.toUpperCase(), stream.channel_layout ? stream.channel_layout : stream.channels),
+									...(trackDescription.length > 0 ? {
+										desc: trackDescription.join(": ")
+									}
+										 : {})
+								});
+								if (!foundDefaultTrack && stream.disposition.default) {
+									foundDefaultTrack = true;
+									defaultTrack = i;
+								}
+							}
+							job.defaultAudioTrack = defaultTrack;
+							if (job.audioTrackIds.length > 1) {
+								job.options.track.audioTrack = {
+									name: i18n.MESSAGES.COMPRESSION_OPTIONS_AUDIO_TRACK,
+									type: "radiogroup",
+									defaultValue: defaultTrack,
+									props: {
+										values: trackDescriptions
+									}
+								};
+							}
+						}
 						job.options.basic.audioEncoder = {
 							name: i18n.MESSAGES.COMPRESSION_OPTIONS_AUDIO_ENCODER,
 							type: "dropdown",
@@ -2900,13 +3114,7 @@ module.exports = (() => {
 							toasts.setToast(job.jobId, i18n.MESSAGES.CALCULATING);
 							if (job.probeData) {
 								try {
-									let audioStreamIndex = -1;
-									for (const streamData of job.probeData.streams) {
-										if (streamData.codec_type == "audio") {
-											audioStreamIndex = streamData.index;
-											break;
-										}
-									}
+									const audioStreamIndex = job.options.track.audioTrack?.value ? job.options.track.audioTrack.value : job.defaultAudioTrack;
 									let compressionPass = 1;
 									const audioFiltersPass1 = [];
 									const audioFiltersPass2 = [];
@@ -3275,6 +3483,7 @@ module.exports = (() => {
 							const stripVideo = job.options.basic.stripAudio.value && job.options.basic.stripVideo.value ? false : job.options.basic.stripVideo.value;
 							const videoContainer = videoEncoderSettings[job.options.basic.videoEncoder.value].defaultContainer;
 							const audioContainer = audioEncoderSettings[job.options.advanced.audioEncoder.value].defaultContainer;
+							job.compressionData.tempSubtitlePath = path.join(this.tempDataPath, uuidv4().replace(/-/g, "") + ".mkv");
 							job.compressionData.tempAudioPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, ""));
 							job.compressionData.tempVideoPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, ""));
 							job.compressionData.tempVideoTwoPassPath = path.join(this.tempDataPath, uuidv4().replace(/-/g, ""));
@@ -3287,20 +3496,9 @@ module.exports = (() => {
 							toasts.setToast(job.jobId, i18n.MESSAGES.CALCULATING);
 							if (job.probeData) {
 								try {
-									let audioStreamIndex = -1;
-									let videoStreamIndex = -1;
-									for (const streamData of job.probeData.streams) {
-										if (streamData.codec_type == "audio") {
-											audioStreamIndex = streamData.index;
-											break;
-										}
-									}
-									for (const streamData of job.probeData.streams) {
-										if (streamData.codec_type == "video") {
-											videoStreamIndex = streamData.index;
-											break;
-										}
-									}
+									const audioStreamIndex = job.options.track.audioTrack?.value ? job.options.track.audioTrack.value : job.defaultAudioTrack;
+									const videoStreamIndex = job.options.track.videoTrack?.value ? job.options.track.videoTrack.value : job.defaultVideoTrack;
+									const subtitleStreamIndex = job.options.track.subtitleTrack?.value ? job.options.track.subtitleTrack.value : job.defaultSubtitleTrack;
 									if (audioStreamIndex < 0)
 										stripAudio = true;
 									if (stripVideo) {
@@ -3308,6 +3506,9 @@ module.exports = (() => {
 									}
 									const videoFiltersPass1 = [];
 									const videoFiltersPass2 = [];
+									const videoFiltersComplexPass1 = [];
+									const videoFiltersComplexPass2 = [];
+									const additionalInputs = [];
 									const autoCropSettings = [-1, -1, -1, -1];
 									if (job.options.advanced.autoCrop.value) {
 										videoFiltersPass1.push("cropdetect=round=2");
@@ -3324,6 +3525,7 @@ module.exports = (() => {
 									const frameRateMatchesSplit = job.probeData.streams[videoStreamIndex].r_frame_rate ? job.probeData.streams[videoStreamIndex].r_frame_rate.split('/') : null;
 									const originalDuration = job.probeData.format.duration ? parseFloat(job.probeData.format.duration) : 0;
 									const originalHeight = job.probeData.streams[videoStreamIndex].height ? parseInt(job.probeData.streams[videoStreamIndex].height) : null;
+									const originalWidth = job.probeData.streams[videoStreamIndex].width ? parseInt(job.probeData.streams[videoStreamIndex].width) : null;
 									const colorPrimaries = job.probeData.streams[videoStreamIndex].color_primaries ? job.probeData.streams[videoStreamIndex].color_primaries : null;
 									const bitDepth = audioStreamIndex >= 0 && job.probeData.streams[audioStreamIndex].bits_per_raw_sample ? parseInt(job.probeData.streams[audioStreamIndex].bits_per_raw_sample) : null;
 									const numChannels = audioStreamIndex >= 0 && job.probeData.streams[audioStreamIndex].channels ? parseInt(job.probeData.streams[audioStreamIndex].channels) : null;
@@ -3358,6 +3560,7 @@ module.exports = (() => {
 									this.jobLoggerInfo(job, "Max file size: " + cappedFileSize + " bytes");
 									this.jobLoggerInfo(job, "File length: " + originalDuration + " seconds");
 									this.jobLoggerInfo(job, "Clipped length: " + duration + " seconds");
+									this.jobLoggerInfo(job, "Video width: " + originalWidth + " pixels");
 									this.jobLoggerInfo(job, "Video height: " + originalHeight + " pixels");
 									this.jobLoggerInfo(job, "Frame rate: " + frameRate + " fps");
 									this.jobLoggerInfo(job, "Color primaries: " + colorPrimaries + (isHDR ? " (HDR)" : " (SDR)"));
@@ -3436,13 +3639,26 @@ module.exports = (() => {
 										videoFiltersPass1.push("scale=-1:" + maxVideoHeight + ",scale=trunc(iw/2)*2:" + maxVideoHeight);
 										videoFiltersPass2.push("scale=-1:" + maxVideoHeight + ",scale=trunc(iw/2)*2:" + maxVideoHeight);
 									}
+									if (job.options.track.burnSubtitles?.value) {
+										const ffmpegArgs = ["-y", ...(startSeconds > 0 ? ["-ss", startSeconds] : []), "-i", job.originalFilePath.replace(/\\/g, '/'), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-map", "0:" + subtitleStreamIndex, "-c:s", "copy", job.compressionData.tempSubtitlePath];
+										job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
+										await companion.runWithArgs('ffmpeg', ffmpegArgs, []);
+										if (imageSubtitleFormats.includes(job.probeData.streams[subtitleStreamIndex].codec_name)) {
+											videoFiltersComplexPass1.push(["[0:v:" + videoStreamIndex + "][1:s]overlay[out]"]);
+											videoFiltersComplexPass2.push(["[0:v:" + videoStreamIndex + "][1:s]overlay[out]"]);
+											additionalInputs.push("-i", job.compressionData.tempSubtitlePath);
+										} else {
+											videoFiltersPass1.push("subtitles=f=\'" + job.compressionData.tempSubtitlePath.replace(/\\/g, '/').replace(/:/g, '\\:').replace(/%/g, '\\%') + "\':original_size=" + originalWidth + "x" + originalHeight);
+											videoFiltersPass2.push("subtitles=f=\'" + job.compressionData.tempSubtitlePath.replace(/\\/g, '/').replace(/:/g, '\\:').replace(/%/g, '\\%') + "\':original_size=" + originalWidth + "x" + originalHeight);
+										}
+									}
 									this.jobLoggerInfo(job, "Max frame rate: " + maxFrameRate + " fps");
 									this.jobLoggerInfo(job, "Target video bitrate: " + videoBitrate + " bits/second");
 									this.jobLoggerInfo(job, "Max frame height: " + maxVideoHeight + " pixels");
 									this.jobLoggerInfo(job, "Output frame height: " + (maxVideoHeight < originalHeight || (!originalHeight && maxVideoHeight) ? maxVideoHeight : originalHeight) + " pixels");
 									try {
 										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_VIDEO_PASS_PERCENT', '1', '0'));
-										const ffmpegArgs = ["-y", ...(startSeconds > 0 ? ["-ss", startSeconds] : []), "-i", job.originalFilePath.replace(/\\/g, '/'), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate / 2, ...(videoFiltersPass1.length > 0 ? ["-vf", videoFiltersPass1.join(",")] : []), "-an", "-sn", "-map_chapters", "-1", "-map", "0:" + videoStreamIndex, "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.basic.videoEncoder.value, ...videoEncoderSettings[job.options.basic.videoEncoder.value].encoderFlags, "-pass", "1", "-passlogfile", job.compressionData.tempVideoTwoPassPath, "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")];
+										const ffmpegArgs = ["-y", ...(startSeconds > 0 ? ["-ss", startSeconds] : []), "-i", job.originalFilePath.replace(/\\/g, '/'), ...additionalInputs, ...(videoFiltersComplexPass1.length > 0 ? ["-filter_complex", videoFiltersComplexPass1.join(";")] : []), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate / 2, ...(videoFiltersPass1.length > 0 ? ["-vf", videoFiltersPass1.join(",")] : []), "-an", "-sn", "-map_chapters", "-1", ...(videoFiltersComplexPass1.length > 0 ? ["-map", "[out]"] : ["-map", "0:" + videoStreamIndex]), "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.basic.videoEncoder.value, ...videoEncoderSettings[job.options.basic.videoEncoder.value].encoderFlags, "-pass", "1", "-passlogfile", job.compressionData.tempVideoTwoPassPath, "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")];
 										job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
 										await companion.runWithArgs('ffmpeg', ffmpegArgs, [{
 													filter: str => {
@@ -3521,7 +3737,7 @@ module.exports = (() => {
 									}
 									try {
 										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_VIDEO_PASS_PERCENT', '2', '0'));
-										const ffmpegArgs = ["-y", ...(startSeconds > 0 ? ["-ss", startSeconds] : []), "-i", job.originalFilePath.replace(/\\/g, '/'), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate / 2, ...(videoFiltersPass2.length > 0 ? ["-vf", videoFiltersPass2.join(",")] : []), "-an", "-sn", "-map_chapters", "-1", "-map", "0:" + videoStreamIndex, "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.basic.videoEncoder.value, ...videoEncoderSettings[job.options.basic.videoEncoder.value].encoderFlags, "-pass", "2", "-passlogfile", job.compressionData.tempVideoTwoPassPath.replace(/\\/g, '/'), "-f", videoContainerSettings[videoContainer].containerFormat, job.compressionData.tempVideoPath.replace(/\\/g, '/')];
+										const ffmpegArgs = ["-y", ...(startSeconds > 0 ? ["-ss", startSeconds] : []), "-i", job.originalFilePath.replace(/\\/g, '/'), ...additionalInputs, ...(videoFiltersComplexPass2.length > 0 ? ["-filter_complex", videoFiltersComplexPass2.join(";")] : []), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate / 2, ...(videoFiltersPass2.length > 0 ? ["-vf", videoFiltersPass2.join(",")] : []), "-an", "-sn", "-map_chapters", "-1", ...(videoFiltersComplexPass2.length > 0 ? ["-map", "[out]"] : ["-map", "0:" + videoStreamIndex]), "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.basic.videoEncoder.value, ...videoEncoderSettings[job.options.basic.videoEncoder.value].encoderFlags, "-pass", "2", "-passlogfile", job.compressionData.tempVideoTwoPassPath.replace(/\\/g, '/'), "-f", videoContainerSettings[videoContainer].containerFormat, job.compressionData.tempVideoPath.replace(/\\/g, '/')];
 										job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
 										await companion.runWithArgs('ffmpeg', ffmpegArgs, [{
 													filter: str => {
