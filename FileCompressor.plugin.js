@@ -1,7 +1,7 @@
 /**
  * @name FileCompressor
  * @author PseudoResonance
- * @version 2.0.12
+ * @version 2.0.13
  * @description Automatically compress files that are too large to send.
  * @authorLink https://github.com/PseudoResonance
  * @donate https://bit.ly/3hAnec5
@@ -25,7 +25,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "2.0.12",
+			version: "2.0.13",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -44,7 +44,8 @@ module.exports = (() => {
 				items: [
 					"Fixed issue with encoding MKV files",
 					"Fixed bug with 2 pass or more audio encoding",
-					"Fixed issues with text-based subtitles (SRT, ASS) and some image-based subtitles (PGS, DVDSUB)"
+					"Fixed issues with subtitles not rendering properly",
+					"Fixed video artwork showing as another video stream"
 				]
 			}, {
 				title: "Broken",
@@ -2322,6 +2323,11 @@ module.exports = (() => {
 							let defaultTrack = job.videoTrackIds[0];
 							let foundDefaultTrack = false;
 							const trackDescriptions = [];
+							job.videoTrackIds = job.videoTrackIds.filter(id => {
+								if (job.probeData.streams[id]?.disposition?.attached_pic)
+									return false;
+								return true;
+							});
 							for (const i of job.videoTrackIds) {
 								const stream = job.probeData.streams[i];
 								const trackDescription = [];
@@ -3575,6 +3581,11 @@ module.exports = (() => {
 										videoFiltersPass1.push("yadif=mode=1");
 										videoFiltersPass2.push("yadif=mode=1");
 									}
+									const isHDR = hdrColorPrimaries.includes(colorPrimaries);
+									if (isHDR) {
+										videoFiltersPass1.push("zscale=transfer=linear,tonemap=hable,zscale=transfer=bt709");
+										videoFiltersPass2.push("zscale=transfer=linear,tonemap=hable,zscale=transfer=bt709");
+									}
 									if (job.options.track.burnSubtitles?.value) {
 										if (imageSubtitleFormats.includes(job.probeData.streams[subtitleStreamIndex].codec_name)) {
 											videoFiltersPass1.push({
@@ -3592,8 +3603,6 @@ module.exports = (() => {
 											const ffmpegArgs = ["-y", ...(startSeconds > 0 ? ["-ss", startSeconds] : []), "-i", job.originalFilePath.replace(/\\/g, '/'), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-map", "0:" + subtitleStreamIndex, "-f", "ass", job.compressionData.tempSubtitlePath];
 											job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
 											await companion.runWithArgs('ffmpeg', ffmpegArgs, []);
-											//videoFiltersPass1.push("subtitles=f=\'" + job.compressionData.tempSubtitlePath.replace(/\\/g, '/').replace(/:/g, '\\:').replace(/%/g, '\\%') + "\':original_size=" + originalWidth + "x" + originalHeight);
-											//videoFiltersPass2.push("subtitles=f=\'" + job.compressionData.tempSubtitlePath.replace(/\\/g, '/').replace(/:/g, '\\:').replace(/%/g, '\\%') + "\':original_size=" + originalWidth + "x" + originalHeight);
 											videoFiltersPass1.push("ass=\'" + job.compressionData.tempSubtitlePath.replace(/\\/g, '/').replace(/:/g, '\\:').replace(/%/g, '\\%') + "\'");
 											videoFiltersPass2.push("ass=\'" + job.compressionData.tempSubtitlePath.replace(/\\/g, '/').replace(/:/g, '\\:').replace(/%/g, '\\%') + "\'");
 										}
@@ -3606,11 +3615,6 @@ module.exports = (() => {
 									if (job.options.advanced.interlace.value) {
 										videoFiltersPass1.push("interlace=lowpass=2");
 										videoFiltersPass2.push("interlace=lowpass=2");
-									}
-									const isHDR = hdrColorPrimaries.includes(colorPrimaries);
-									if (isHDR) {
-										videoFiltersPass1.push("zscale=transfer=linear,tonemap=hable,zscale=transfer=bt709");
-										videoFiltersPass2.push("zscale=transfer=linear,tonemap=hable,zscale=transfer=bt709");
 									}
 									const fileStats = fs.statSync(job.originalFilePath);
 									this.jobLoggerInfo(job, "Original file size: " + (fileStats ? fileStats.size : 0) + " bytes");
@@ -3702,7 +3706,7 @@ module.exports = (() => {
 									this.jobLoggerInfo(job, "Output frame height: " + (maxVideoHeight < originalHeight || (!originalHeight && maxVideoHeight) ? maxVideoHeight : originalHeight) + " pixels");
 									try {
 										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_VIDEO_PASS_PERCENT', '1', '0'));
-										const ffmpegArgs = ["-y", ...(startSeconds > 0 ? ["-ss", startSeconds] : []), "-i", job.originalFilePath.replace(/\\/g, '/'), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate / 2, ...(videoFiltersPass1.length > 0 ? this.joinVideoFilters(videoFiltersPass1, videoFiltersComplex, videoStreamIndex) : []), "-an", "-sn", "-map_chapters", "-1", ...(videoFiltersComplex ? ["-map", "[out]"] : ["-map", "0:" + videoStreamIndex]), "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.basic.videoEncoder.value, ...videoEncoderSettings[job.options.basic.videoEncoder.value].encoderFlags, "-pass", "1", "-passlogfile", job.compressionData.tempVideoTwoPassPath, "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")];
+										const ffmpegArgs = ["-y", ...(startSeconds > 0 ? ["-ss", startSeconds] : []), "-canvas_size", originalWidth + "x" + originalHeight, "-i", job.originalFilePath.replace(/\\/g, '/'), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate / 2, ...(videoFiltersPass1.length > 0 ? this.joinVideoFilters(videoFiltersPass1, videoFiltersComplex, videoStreamIndex) : []), "-an", "-sn", "-map_chapters", "-1", ...(videoFiltersComplex ? ["-map", "[out]"] : ["-map", "0:" + videoStreamIndex]), "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.basic.videoEncoder.value, ...videoEncoderSettings[job.options.basic.videoEncoder.value].encoderFlags, "-pass", "1", "-passlogfile", job.compressionData.tempVideoTwoPassPath, "-f", "null", (process.platform === "win32" ? "NUL" : "/dev/null")];
 										job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
 										await companion.runWithArgs('ffmpeg', ffmpegArgs, [{
 													filter: str => {
@@ -3784,7 +3788,7 @@ module.exports = (() => {
 									}
 									try {
 										toasts.setToast(job.jobId, i18n.FORMAT('COMPRESSING_VIDEO_PASS_PERCENT', '2', '0'));
-										const ffmpegArgs = ["-y", ...(startSeconds > 0 ? ["-ss", startSeconds] : []), "-i", job.originalFilePath.replace(/\\/g, '/'), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate / 2, ...(videoFiltersPass2.length > 0 ? this.joinVideoFilters(videoFiltersPass2, videoFiltersComplex, videoStreamIndex) : []), "-an", "-sn", "-map_chapters", "-1", ...(videoFiltersComplex ? ["-map", "[out]"] : ["-map", "0:" + videoStreamIndex]), "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.basic.videoEncoder.value, ...videoEncoderSettings[job.options.basic.videoEncoder.value].encoderFlags, "-pass", "2", "-passlogfile", job.compressionData.tempVideoTwoPassPath.replace(/\\/g, '/'), "-f", videoContainerSettings[videoContainer].containerFormat, job.compressionData.tempVideoPath.replace(/\\/g, '/')];
+										const ffmpegArgs = ["-y", ...(startSeconds > 0 ? ["-ss", startSeconds] : []), "-canvas_size", originalWidth + "x" + originalHeight, "-i", job.originalFilePath.replace(/\\/g, '/'), ...(endSeconds > 0 ? ["-to", endSeconds] : []), "-b:v", videoBitrate, "-maxrate", videoBitrate, "-bufsize", videoBitrate / 2, ...(videoFiltersPass2.length > 0 ? this.joinVideoFilters(videoFiltersPass2, videoFiltersComplex, videoStreamIndex) : []), "-an", "-sn", "-map_chapters", "-1", ...(videoFiltersComplex ? ["-map", "[out]"] : ["-map", "0:" + videoStreamIndex]), "-pix_fmt", "yuv420p", "-vsync", "vfr", "-c:v", job.options.basic.videoEncoder.value, ...videoEncoderSettings[job.options.basic.videoEncoder.value].encoderFlags, "-pass", "2", "-passlogfile", job.compressionData.tempVideoTwoPassPath.replace(/\\/g, '/'), "-f", videoContainerSettings[videoContainer].containerFormat, job.compressionData.tempVideoPath.replace(/\\/g, '/')];
 										job.logs.push("[" + job.file.name + "] Running FFmpeg with " + ffmpegArgs.join(" "));
 										await companion.runWithArgs('ffmpeg', ffmpegArgs, [{
 													filter: str => {
