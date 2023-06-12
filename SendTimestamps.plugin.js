@@ -1,6 +1,6 @@
 /**
  * @name SendTimestamps
- * @version 2.2.0
+ * @version 2.2.1
  * @description Send timestamps in your messages easily by right clicking the text input.
  * @author Taimoor
  * @authorId 220161488516546561
@@ -381,7 +381,7 @@ module.exports = (() => {
 	const config = {
 		info: {
 			name: 'SendTimestamps',
-			version: '2.2.0',
+			version: '2.2.1',
 			description: 'Send timestamps in your messages easily by right clicking the text input.',
 			author: 'Taimoor',
 			authorId: '220161488516546561',
@@ -397,9 +397,9 @@ module.exports = (() => {
 			]
 		},
 		changelog: [{
-				title: 'v2.2.0 - Update',
+				title: 'v2.2.1 - Update',
 				type: 'improved',
-				items: ['Updated to latest Discord version', 'Removed in-text, side button and attachment menu buttons', 'Added text input context menu button']
+				items: ['Fixed timestamp not showing in text input under most cases']
 			}
 		],
 		main: 'index.js',
@@ -456,39 +456,8 @@ module.exports = (() => {
 					DiscordPermissions
 				},
 			} = Api;
-			/*let getComponentDispatchKey = null;
-			const setComponentDispatchKey = (val) => {
-			getComponentDispatchKey = val;
-			};
-			const getComponentDispatchModule = ZeresPluginLibrary.WebpackModules.getModule((m) => {
-			for (const k in m) {
-			if (typeof m[k] === 'function') {
-			if (m[k].prototype.dispatchToLastSubscribed) {
-			setComponentDispatchKey(k);
-			return true;
-			}
-			}
-			}
-			});
-			const ComponentDispatch = getComponentDispatchModule[getComponentDispatchKey].prototype;*/
-			const ComponentDispatch = BdApi.Webpack.getModule(m => m.dispatchToLastSubscribed && m.emitter?._events?.INSERT_TEXT, {
-				searchExports: true
-			});
-			let getComponentActionsKey = null;
-			const setComponentActionsKey = (val) => {
-				getComponentActionsKey = val;
-			};
-			const getComponentActionsModule = ZeresPluginLibrary.WebpackModules.getModule((m) => {
-				for (const k in m) {
-					for (const j in m[k]) {
-						if (m[k][j]?.toString().includes("CLEAR_TEXT")) {
-							setComponentActionsKey(k);
-							return true;
-						}
-					}
-				}
-			});
-			const ComponentActions = getComponentActionsModule[getComponentActionsKey];
+			let ComponentDispatch = null;
+			let ComponentActions = null;
 			const css = `.timestamp-button {
     margin-top: 4px;
     max-height: 40px;
@@ -627,6 +596,9 @@ input[type='date']::-webkit-calendar-picker-indicator {
 					};
 
 					this.replaceTextAreaText = (text) => {
+						if (!ComponentDispatch) {
+							this.getDiscordInternals()
+						}
 						ComponentDispatch.dispatchToLastSubscribed(ComponentActions.CLEAR_TEXT);
 						setImmediate(() => {
 							ComponentDispatch.dispatchToLastSubscribed(ComponentActions.INSERT_TEXT, {
@@ -638,6 +610,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 				}
 
 				onStart() {
+					this.getDiscordInternals();
 					PluginUtilities.addStyle(this.getName(), css);
 					this.patchButton();
 				}
@@ -677,6 +650,27 @@ input[type='date']::-webkit-calendar-picker-indicator {
 						});
 						Api.Modals.showChangelogModal(this.getName(), this.getVersion(), this._config.changelog);
 					}
+				}
+
+				getDiscordInternals() {
+					ComponentDispatch = BdApi.Webpack.getModule(m => m.dispatchToLastSubscribed && m.emitter?._events?.INSERT_TEXT, {
+						searchExports: true
+					});
+					let getComponentActionsKey = null;
+					const setComponentActionsKey = (val) => {
+						getComponentActionsKey = val;
+					};
+					const getComponentActionsModule = ZeresPluginLibrary.WebpackModules.getModule((m) => {
+						for (const k in m) {
+							for (const j in m[k]) {
+								if (m[k][j]?.toString().includes("CLEAR_TEXT")) {
+									setComponentActionsKey(k);
+									return true;
+								}
+							}
+						}
+					});
+					ComponentActions = getComponentActionsModule[getComponentActionsKey];
 				}
 
 				showTimestampModal() {
@@ -882,7 +876,9 @@ input[type='date']::-webkit-calendar-picker-indicator {
 						confirmText: 'Enter',
 						onConfirm: () => {
 							let ts_msg = `<t:${Math.floor(inputTimestamp.getTime() / 1000)}:${this.settings.timestampFormat}>`;
-
+							if (!ComponentDispatch) {
+								this.getDiscordInternals()
+							}
 							ComponentDispatch.dispatchToLastSubscribed(ComponentActions.INSERT_TEXT, {
 								content: ts_msg,
 								plainText: ts_msg
