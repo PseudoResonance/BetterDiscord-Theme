@@ -1,7 +1,7 @@
 /**
  * @name FileCompressor
  * @author PseudoResonance
- * @version 2.0.13
+ * @version 2.0.14
  * @description Automatically compress files that are too large to send.
  * @authorLink https://github.com/PseudoResonance
  * @donate https://bit.ly/3hAnec5
@@ -25,7 +25,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "2.0.13",
+			version: "2.0.14",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -34,18 +34,7 @@ module.exports = (() => {
 				title: "Added",
 				type: "added",
 				items: [
-					"Added audio normalization option",
-					"Option to select video, audio and subtitle tracks",
-					"Option to burn most subtitles (SRT, ASS, PGS, DVDSUB tested)"
-				]
-			}, {
-				title: "Fixed",
-				type: "fixed",
-				items: [
-					"Fixed issue with encoding MKV files",
-					"Fixed bug with 2 pass or more audio encoding",
-					"Fixed issues with subtitles not rendering properly",
-					"Fixed video artwork showing as another video stream"
+					"Global option to use included ReplayGain tags to speed up audio normalization (off by default)",
 				]
 			}, {
 				title: "Broken",
@@ -182,6 +171,16 @@ module.exports = (() => {
 						value: true
 					}, {
 						get name() {
+							return i18n.MESSAGES.SETTINGS_AUDIO_NORMALIZATION_USE_REPLAYGAIN
+						},
+						get note() {
+							return i18n.MESSAGES.SETTINGS_AUDIO_NORMALIZATION_USE_REPLAYGAIN_DESC
+						},
+						id: 'useReplaygain',
+						type: 'switch',
+						value: false
+					}, {
+						get name() {
 							return i18n.MESSAGES.SETTINGS_CONCURRENT_THREADS
 						},
 						get note() {
@@ -265,6 +264,8 @@ module.exports = (() => {
 			SETTINGS_PROMPT_FOR_OPTIONS_VIDEO_DESC: 'Prompt for compression options before compressing video.',
 			SETTINGS_PROMPT_FOR_OPTIONS_AUDIO: 'Prompt for Options (Audio)',
 			SETTINGS_PROMPT_FOR_OPTIONS_AUDIO_DESC: 'Prompt for compression options before compressing audio.',
+			SETTINGS_AUDIO_NORMALIZATION_USE_REPLAYGAIN: 'Normalize Audio With ReplayGain Tags Where Possible',
+			SETTINGS_AUDIO_NORMALIZATION_USE_REPLAYGAIN_DESC: 'Use included ReplayGain tags instead of FFmpeg to normalize audio.',
 			SETTINGS_CONCURRENT_THREADS: 'Concurrent Compression Jobs',
 			SETTINGS_CONCURRENT_THREADS_DESC: 'Number of compression jobs that can be processing simultaneously.',
 			SETTINGS_CACHE_PATH: 'Cache Location',
@@ -380,6 +381,8 @@ module.exports = (() => {
 			SETTINGS_PROMPT_FOR_OPTIONS_VIDEO_DESC: '動画の圧縮を開始前にオプションのプロンプト。',
 			SETTINGS_PROMPT_FOR_OPTIONS_AUDIO: 'オプションのプロンプト　（音声）',
 			SETTINGS_PROMPT_FOR_OPTIONS_AUDIO_DESC: '音声の圧縮を開始前にオプションのプロンプト。',
+			SETTINGS_AUDIO_NORMALIZATION_USE_REPLAYGAIN: 'ReplayGainのタグで音声をノーマライズ',
+			SETTINGS_AUDIO_NORMALIZATION_USE_REPLAYGAIN_DESC: '音声をノーマライズするのにReplayGainのタグが存在するときにはFFmpegの代わりに使う。',
 			SETTINGS_CONCURRENT_THREADS: '同時圧縮ジョブ',
 			SETTINGS_CONCURRENT_THREADS_DESC: '同時で圧縮できるジョブの数。',
 			SETTINGS_CACHE_PATH: 'キャッシュの所在',
@@ -3126,12 +3129,67 @@ module.exports = (() => {
 									const audioFiltersPass1 = [];
 									const audioFiltersPass2 = [];
 									let twoPassCompression = false;
-									if (job.options.advanced.normalizeAudio.value) {
-										twoPassCompression = true;
-										audioFiltersPass1.push("loudnorm=I=-24:LRA=11:TP=-2:print_format=json");
-									}
 									const originalDuration = job.probeData.format.duration ? parseFloat(job.probeData.format.duration) : 0;
 									const bitDepth = job.probeData.streams[audioStreamIndex].bits_per_raw_sample ? parseInt(job.probeData.streams[audioStreamIndex].bits_per_raw_sample) : null;
+									let useReplaygain = this.settings.compressor.useReplaygain;
+									let replaygainTrackGain = null;
+									let replaygainTrackPeak = null;
+									let replaygainAlbumGain = null;
+									let replaygainAlbumPeak = null;
+									let audioAdjustmentValue = 0;
+									if (job.options.advanced.normalizeAudio.value && useReplaygain) {
+										if (job.probeData.format.tags) {
+											try {
+												replaygainTrackGain = Number(job.probeData.format.tags.replaygain_track_gain.replaceAll(/[^\d+-.]/g, ""));
+											} catch (e) {
+												this.jobLoggerError(job, "Error while reading ReplayGain track gain", e);
+											}
+											try {
+												replaygainTrackPeak = Math.log10(Number(job.probeData.format.tags.replaygain_track_peak.replaceAll(/[^\d+-.]/g, ""))) * 20;
+											} catch (e) {
+												this.jobLoggerError(job, "Error while reading ReplayGain track peak", e);
+											}
+											try {
+												replaygainAlbumGain = Number(job.probeData.format.tags.replaygain_album_gain.replaceAll(/[^\d+-.]/g, ""));
+											} catch (e) {
+												this.jobLoggerError(job, "Error while reading ReplayGain album gain", e);
+											}
+											try {
+												replaygainAlbumPeak = Math.log10(Number(job.probeData.format.tags.replaygain_album_peak.replaceAll(/[^\d+-.]/g, ""))) * 20;
+											} catch (e) {
+												this.jobLoggerError(job, "Error while reading ReplayGain album peak", e);
+											}
+											if ((replaygainAlbumGain != null && replaygainAlbumPeak != null) || (replaygainTrackGain != null && replaygainTrackPeak != null)) {
+												if (replaygainAlbumGain != null && replaygainAlbumPeak != null) {
+													if (replaygainAlbumGain <= 0) {
+														audioAdjustmentValue = replaygainAlbumGain;
+													} else {
+														audioAdjustmentValue = Math.min(-1 * replaygainAlbumPeak, replaygainAlbumGain);
+													}
+												} else {
+													if (replaygainTrackGain <= 0) {
+														audioAdjustmentValue = replaygainTrackGain;
+													} else {
+														audioAdjustmentValue = Math.min(-1 * replaygainTrackPeak, replaygainTrackGain);
+													}
+												}
+											} else {
+												useReplaygain = false;
+											}
+										} else {
+											useReplaygain = false;
+										}
+									}
+									if (job.options.advanced.normalizeAudio.value) {
+										if (useReplaygain) {
+											this.jobLoggerInfo(job, "Normalizing audio with ReplayGain by: " + audioAdjustmentValue + "dB");
+											audioFiltersPass1.push("volume=" + audioAdjustmentValue + "dB");
+											audioFiltersPass2.push("volume=" + audioAdjustmentValue + "dB");
+										} else {
+											twoPassCompression = true;
+											audioFiltersPass1.push("loudnorm=I=-24:LRA=11:TP=-2:print_format=json");
+										}
+									}
 									const numChannels = job.probeData.streams[audioStreamIndex].channels ? parseInt(job.probeData.streams[audioStreamIndex].channels) : null;
 									if (originalDuration <= 0)
 										throw new Error("Invalid file duration");
@@ -3228,7 +3286,7 @@ module.exports = (() => {
 															this.jobLoggerError(job, e);
 														}
 													}
-												}, ...(job.options.advanced.normalizeAudio.value ? [{
+												}, ...(job.options.advanced.normalizeAudio.value && !useReplaygain ? [{
 															filter: str => {
 																return str.includes("[Parsed_loudnorm_");
 															},
