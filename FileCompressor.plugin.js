@@ -1,7 +1,7 @@
 /**
  * @name FileCompressor
  * @author PseudoResonance
- * @version 2.0.14
+ * @version 2.0.15
  * @description Automatically compress files that are too large to send.
  * @authorLink https://github.com/PseudoResonance
  * @donate https://bit.ly/3hAnec5
@@ -25,7 +25,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "2.0.14",
+			version: "2.0.15",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -35,6 +35,12 @@ module.exports = (() => {
 				type: "added",
 				items: [
 					"Global option to use included ReplayGain tags to speed up audio normalization (off by default)",
+				]
+			}, {
+				title: "Fixed",
+				type: "fixed",
+				items: [
+					"Fixed unknown file types when Discord fails to provide them",
 				]
 			}, {
 				title: "Broken",
@@ -1044,7 +1050,8 @@ module.exports = (() => {
 
 				async getMimeType(path) {
 					const data = await this.sendMessage({
-						type: 'mime'
+						type: 'mime',
+						path: path
 					}, 5000);
 					if (data.type === 'mime') {
 						if ('mimetype' in data) {
@@ -1975,14 +1982,19 @@ module.exports = (() => {
 						const file = files[i];
 						if (file.size > uploadSizeCap || this.settings.upload.compressAll) {
 							// If file is returned, it was incompressible
+							let canCheckMime = true;
 							let type = file.type;
-							if (!type && file.path) {
+							if (file.path) {
 								if (!companion || !companion.checkCompanion()) {
 									await this.initCompanion();
 								}
 								if (!companion || !companion.checkCompanion()) {
-									return false;
+									canCheckMime = false;
 								}
+							} else {
+								canCheckMime = false;
+							}
+							if (canCheckMime) {
 								type = await companion.getMimeType(file.path);
 							}
 							const tempFile = this.checkIsCompressible(file, type ? type.split('/')[0] : "", maxDiscordSize, guildId, channelId, threadId, sidebar);
@@ -3373,6 +3385,7 @@ module.exports = (() => {
 										this.jobLoggerInfo(job, "Expected audio size: " + (duration * (audioBitrate / 8)) + " bytes");
 										this.jobLoggerInfo(job, "Final audio size: " + audioSize + " bytes");
 										const maxCompressionPasses = compressionPass + 3;
+										compressionPass++;
 										for (; compressionPass <= maxCompressionPasses; compressionPass++) {
 											if (audioSize > cappedFileSize) {
 												const sizeDiff = (originalAudioSize - cappedFileSize) + (Math.pow(10, (compressionPass - 2)) * 5000);
@@ -4216,10 +4229,10 @@ module.exports = (() => {
 				loadImageElement(img, src) {
 					return new Promise((resolve, reject) => {
 						img.addEventListener("load", () => {
-							resolve(img)
+							resolve(img);
 						}, false);
 						img.addEventListener("error", (err) => {
-							reject(err)
+							reject(err);
 						}, false);
 						img.src = src;
 					});
