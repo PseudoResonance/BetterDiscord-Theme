@@ -1,7 +1,7 @@
 /**
  * @name FileCompressor
  * @author PseudoResonance
- * @version 2.0.15
+ * @version 2.0.16
  * @description Automatically compress files that are too large to send.
  * @authorLink https://github.com/PseudoResonance
  * @donate https://bit.ly/3hAnec5
@@ -25,7 +25,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "2.0.15",
+			version: "2.0.16",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -35,6 +35,7 @@ module.exports = (() => {
 				type: "added",
 				items: [
 					"Global option to use included ReplayGain tags to speed up audio normalization (off by default)",
+					"Split \"Compress All\" options for images, video and audio separately",
 				]
 			}, {
 				title: "Fixed",
@@ -46,7 +47,7 @@ module.exports = (() => {
 				title: "Broken",
 				type: "removed",
 				items: [
-					"Several features are still broken such as automatic channel switcing"
+					"Several features are still broken such as automatic channel switcing",
 				]
 			}
 		],
@@ -80,12 +81,32 @@ module.exports = (() => {
 						value: false
 					}, {
 						get name() {
-							return i18n.MESSAGES.SETTINGS_COMPRESS_ALL
+							return i18n.MESSAGES.SETTINGS_COMPRESS_ALL_IMAGE
 						},
 						get note() {
-							return i18n.MESSAGES.SETTINGS_COMPRESS_ALL_DESC
+							return i18n.MESSAGES.SETTINGS_COMPRESS_ALL_IMAGE_DESC
 						},
-						id: 'compressAll',
+						id: 'compressAllImage',
+						type: 'switch',
+						value: false
+					}, {
+						get name() {
+							return i18n.MESSAGES.SETTINGS_COMPRESS_ALL_VIDEO
+						},
+						get note() {
+							return i18n.MESSAGES.SETTINGS_COMPRESS_ALL_VIDEO_DESC
+						},
+						id: 'compressAllVideo',
+						type: 'switch',
+						value: false
+					}, {
+						get name() {
+							return i18n.MESSAGES.SETTINGS_COMPRESS_ALL_AUDIO
+						},
+						get note() {
+							return i18n.MESSAGES.SETTINGS_COMPRESS_ALL_AUDIO_DESC
+						},
+						id: 'compressAllAudio',
 						type: 'switch',
 						value: false
 					}, {
@@ -252,8 +273,12 @@ module.exports = (() => {
 			SETTINGS_AUTO_CHANNEL_SWITCH_DESC: 'Automatically switch to the required channel when a file is ready to be uploaded.',
 			SETTINGS_IMMEDIATE_UPLOAD: 'Immediate Upload',
 			SETTINGS_IMMEDIATE_UPLOAD_DESC: 'Immediately upload files without showing a preview.',
-			SETTINGS_COMPRESS_ALL: 'Compress All',
-			SETTINGS_COMPRESS_ALL_DESC: 'Prompt to compress all compressible files.',
+			SETTINGS_COMPRESS_ALL_IMAGE: 'Compress All Images',
+			SETTINGS_COMPRESS_ALL_IMAGE_DESC: 'Prompt to compress all compressible image files.',
+			SETTINGS_COMPRESS_ALL_VIDEO: 'Compress All Videos',
+			SETTINGS_COMPRESS_ALL_VIDEO_DESC: 'Prompt to compress all compressible video files.',
+			SETTINGS_COMPRESS_ALL_AUDIO: 'Compress All Audio',
+			SETTINGS_COMPRESS_ALL_AUDIO_DESC: 'Prompt to compress all compressible audio files.',
 			SETTINGS_MAX_FILE_SIZE: 'Max File Size (bytes)',
 			SETTINGS_MAX_FILE_SIZE_DESC: 'Default to this maximum file size for slower networks.',
 			SETTINGS_COMPRESSOR_CATEGORY: 'Compressor Settings',
@@ -371,6 +396,12 @@ module.exports = (() => {
 			SETTINGS_IMMEDIATE_UPLOAD_DESC: 'プレビューなしで直接アップロード。',
 			SETTINGS_COMPRESS_ALL: 'すべてを圧縮',
 			SETTINGS_COMPRESS_ALL_DESC: 'すべての圧縮可能なファイルを圧縮するプロンプト。',
+			SETTINGS_COMPRESS_ALL_IMAGE: 'すべての画像を圧縮',
+			SETTINGS_COMPRESS_ALL_IMAGE_DESC: 'すべての圧縮可能な画像のファイルを圧縮するプロンプト。',
+			SETTINGS_COMPRESS_ALL_VIDEO: 'すべての動画を圧縮',
+			SETTINGS_COMPRESS_ALL_VIDEO_DESC: 'すべての圧縮可能な動画のファイルを圧縮するプロンプト。',
+			SETTINGS_COMPRESS_ALL_AUDIO: 'すべての音声を圧縮',
+			SETTINGS_COMPRESS_ALL_AUDIO_DESC: 'すべての圧縮可能な音声のファイルを圧縮するプロンプト。',
 			SETTINGS_MAX_FILE_SIZE: '最大ファイルサイズ（bytes）',
 			SETTINGS_MAX_FILE_SIZE_DESC: '低速ネットワークの場合で最大ファイルサイズのデフォルト。',
 			SETTINGS_COMPRESSOR_CATEGORY: '圧縮設定',
@@ -1980,23 +2011,37 @@ module.exports = (() => {
 					let queuedFiles = 0;
 					for (let i = 0; i < files.length; i++) {
 						const file = files[i];
-						if (file.size > uploadSizeCap || this.settings.upload.compressAll) {
-							// If file is returned, it was incompressible
-							let canCheckMime = true;
-							let type = file.type;
-							if (file.path) {
-								if (!companion || !companion.checkCompanion()) {
-									await this.initCompanion();
-								}
-								if (!companion || !companion.checkCompanion()) {
-									canCheckMime = false;
-								}
-							} else {
+						let canCheckMime = true;
+						let type = file.type;
+						if (file.path) {
+							if (!companion || !companion.checkCompanion()) {
+								await this.initCompanion();
+							}
+							if (!companion || !companion.checkCompanion()) {
 								canCheckMime = false;
 							}
-							if (canCheckMime) {
-								type = await companion.getMimeType(file.path);
-							}
+						} else {
+							canCheckMime = false;
+						}
+						if (canCheckMime) {
+							type = await companion.getMimeType(file.path);
+						}
+						let tryCompress = false;
+						switch (type.split('/')[0]) {
+						case "image":
+							if (this.settings.upload.compressAllImage)
+								tryCompress = true;
+							break;
+						case "video":
+							if (this.settings.upload.compressAllVideo)
+								tryCompress = true;
+							break;
+						case "audio":
+							if (this.settings.upload.compressAllAudio)
+								tryCompress = true;
+							break;
+						}
+						if (file.size > uploadSizeCap || tryCompress) {
 							const tempFile = this.checkIsCompressible(file, type ? type.split('/')[0] : "", maxDiscordSize, guildId, channelId, threadId, sidebar);
 							// Check if no files will be uploaded, and if so, trigger Discord's file too large modal by passing through large file
 							if (tempFile) {
