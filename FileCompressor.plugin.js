@@ -1,7 +1,7 @@
 /**
  * @name FileCompressor
  * @author PseudoResonance
- * @version 2.0.16
+ * @version 2.0.17
  * @description Automatically compress files that are too large to send.
  * @authorLink https://github.com/PseudoResonance
  * @donate https://bit.ly/3hAnec5
@@ -25,23 +25,16 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "2.0.16",
+			version: "2.0.17",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
 		},
 		changelog: [{
-				title: "Added",
-				type: "added",
-				items: [
-					"Global option to use included ReplayGain tags to speed up audio normalization (off by default)",
-					"Split \"Compress All\" options for images, video and audio separately",
-				]
-			}, {
 				title: "Fixed",
 				type: "fixed",
 				items: [
-					"Fixed unknown file types when Discord fails to provide them",
+					"More consistent max file size usage to allow for compressing files not for Discord",
 				]
 			}, {
 				title: "Broken",
@@ -3524,8 +3517,8 @@ module.exports = (() => {
 										const finalFileStats = fs.statSync(job.compressionData.compressedPath);
 										const finalFileSize = finalFileStats ? finalFileStats.size : 0;
 										this.jobLoggerInfo(job, "Final file size: " + finalFileSize + " bytes");
-										this.jobLoggerInfo(job, "Upload size cap: " + job.maxSize + " bytes");
-										if (finalFileSize > job.maxSize) {
+										this.jobLoggerInfo(job, "Upload size cap: " + job.cappedFileSize + " bytes");
+										if (finalFileSize > job.cappedFileSize) {
 											const ffprobeOut = await companion.execWithArgs('ffprobe', ["-v", "error", "-show_format", "-show_streams", "-print_format", "json", job.compressionData.compressedPath.replace(/\\/g, '/')]);
 											job.probeDataFinalRaw = ffprobeOut.data;
 											job.probeDataFinal = JSON.parse(ffprobeOut.data);
@@ -4031,12 +4024,12 @@ module.exports = (() => {
 										const originalFinalFileSize = originalFinalFileStats ? originalFinalFileStats.size : 0;
 										let finalFileSize = originalFinalFileStats ? originalFinalFileStats.size : 0;
 										this.jobLoggerInfo(job, "Final file size: " + finalFileSize + " bytes");
-										this.jobLoggerInfo(job, "Upload size cap: " + job.maxSize + " bytes");
-										if (finalFileSize > job.maxSize) {
+										this.jobLoggerInfo(job, "Upload size cap: " + cappedFileSize + " bytes");
+										if (finalFileSize > cappedFileSize) {
 											// Final file too large, recompress audio to shrink size
 											if (audioStreamIndex >= 0) {
 												for (let compressionPass = 2; compressionPass <= 4; compressionPass++) {
-													if (finalFileSize > job.maxSize) {
+													if (finalFileSize > cappedFileSize) {
 														const sizeDiff = (originalFinalFileSize - cappedFileSize) + (Math.pow(10, (compressionPass - 2)) * 5000);
 														const audioBitrateDiff = (sizeDiff * 8) / duration;
 														const audioBitrateAdjusted = Math.floor(audioBitrate - audioBitrateDiff);
@@ -4191,7 +4184,7 @@ module.exports = (() => {
 															const finalFileStats = fs.statSync(job.compressionData.compressedPath);
 															finalFileSize = finalFileStats ? finalFileStats.size : 0;
 															this.jobLoggerInfo(job, "Final file size: " + finalFileSize + " bytes");
-															this.jobLoggerInfo(job, "Upload size cap: " + job.maxSize + " bytes");
+															this.jobLoggerInfo(job, "Upload size cap: " + cappedFileSize + " bytes");
 														}
 													} else {
 														break;
@@ -4288,6 +4281,7 @@ module.exports = (() => {
 					const objectUrl = URL.createObjectURL(job.file);
 					const img = new window.Image();
 					await this.loadImageElement(img, objectUrl);
+					job.cappedFileSize = Math.floor((job.options.basic.sizeCap.value ? parseInt(job.options.basic.sizeCap.value) : job.maxSize));
 					URL.revokeObjectURL(objectUrl);
 					const image = {
 						file: job.file,
@@ -4322,7 +4316,7 @@ module.exports = (() => {
 						this.jobLoggerInfo(job, "Image has " + (image.width * image.height) + " pixels. Reducing to " + (targetWidth * targetHeight) + " (" + targetWidth + "x" + targetHeight + ")");
 					}
 					image.outputData = await this.compressImageCanvas(job, image);
-					if (image.outputData.size >= job.maxSize) {
+					if (image.outputData.size >= job.cappedFileSize) {
 						if (image.iterations >= job.options.basic.maxIterations.value) {
 							throw new Error("Max iterations reached while compressing image");
 						} else {
