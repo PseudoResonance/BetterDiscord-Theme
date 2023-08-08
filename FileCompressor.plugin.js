@@ -1,7 +1,7 @@
 /**
  * @name FileCompressor
  * @author PseudoResonance
- * @version 2.0.18
+ * @version 2.0.19
  * @description Automatically compress files that are too large to send.
  * @authorLink https://github.com/PseudoResonance
  * @donate https://bit.ly/3hAnec5
@@ -25,7 +25,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "2.0.18",
+			version: "2.0.19",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -589,7 +589,7 @@ module.exports = (() => {
 			let cache = null;
 
 			// Subtitle information
-			const imageSubtitleFormats = ["hdmv_pgs_subtitle", "dvdsub", "dvdsubtitle"];
+			const imageSubtitleFormats = ["hdmv_pgs_subtitle", "dvdsub", "dvd_subtitle"];
 			// Video container settings
 			const videoContainerSettings = {
 				"mkv": {
