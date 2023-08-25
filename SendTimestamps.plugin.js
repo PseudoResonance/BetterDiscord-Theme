@@ -1,6 +1,6 @@
 /**
  * @name SendTimestamps
- * @version 2.2.1
+ * @version 2.2.2
  * @description Send timestamps in your messages easily by right clicking the text input.
  * @author Taimoor
  * @authorId 220161488516546561
@@ -381,7 +381,7 @@ module.exports = (() => {
 	const config = {
 		info: {
 			name: 'SendTimestamps',
-			version: '2.2.1',
+			version: '2.2.2',
 			description: 'Send timestamps in your messages easily by right clicking the text input.',
 			author: 'Taimoor',
 			authorId: '220161488516546561',
@@ -397,9 +397,9 @@ module.exports = (() => {
 			]
 		},
 		changelog: [{
-				title: 'v2.2.1 - Update',
-				type: 'improved',
-				items: ['Fixed timestamp not showing in text input under most cases']
+				title: 'v2.2.2 - Update',
+				type: 'fixed',
+				items: ['Updated to BetterDiscord 1.9.3']
 			}
 		],
 		main: 'index.js',
@@ -423,7 +423,7 @@ module.exports = (() => {
 			return config.info.version;
 		}
 		load() {
-			BdApi.showConfirmationModal('Library Missing', `The library plugin needed for ${config.info.name} is missing. Please click Download Now to install it.`, {
+			BdApi.UI.showConfirmationModal('Library Missing', `The library plugin needed for ${config.info.name} is missing. Please click Download Now to install it.`, {
 				confirmText: 'Download Now',
 				cancelText: 'Cancel',
 				onConfirm: () => {
@@ -573,7 +573,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 			const Button = WebpackModules.getByProps('Button').Button;
 
 			const canSendMessages = (channelId) => {
-				return BdApi.findModuleByProps('getChannelPermissions').canWithPartialContext(DiscordPermissions.SEND_MESSAGES, {
+				return BdApi.findModule(BdApi.Webpack.Filters.byProps('getChannelPermissions')).canWithPartialContext(DiscordPermissions.SEND_MESSAGES, {
 					channelId
 				});
 			};
