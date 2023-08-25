@@ -1,7 +1,7 @@
 /**
  * @name Slideshow
  * @author PseudoResonance
- * @version 5.0.1
+ * @version 5.0.2
  * @description Turns a transparent Discord background into a slideshow.
  * @authorLink https://github.com/PseudoResonance
  * @donate https://bit.ly/3hAnec5
@@ -26,7 +26,7 @@ const config = {
 				github_username: "PseudoResonance"
 			}
 		],
-		version: "5.0.1",
+		version: "5.0.2",
 		description: "Turns a transparent Discord background into a slideshow.",
 		github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/Slideshow.plugin.js",
 		github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/Slideshow.plugin.js"
@@ -37,7 +37,7 @@ const config = {
 			type: "fixed",
 			items:
 			[
-				"Fixed recovery when config is corrupted"
+				"Updated to BetterDiscord 1.9.3"
 			]
 		}
 	],
@@ -101,7 +101,7 @@ class Dummy {
 }
 
 if (!global.ZeresPluginLibrary) {
-	BdApi.showConfirmationModal("Library Missing", `The library plugin needed for ${config.name ?? config.info.name} is missing. Please click Download Now to install it.`, {
+	BdApi.UI.showConfirmationModal("Library Missing", `The library plugin needed for ${config.name ?? config.info.name} is missing. Please click Download Now to install it.`, {
 		confirmText: "Download Now",
 		cancelText: "Cancel",
 		onConfirm: () => {
@@ -263,7 +263,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
 				} catch (e) {
 					backgroundIndex = 0;
 					fs.rm(require('path').join(BdApi.Plugins.folder, this.getName() + '-index.config.json'));
-					BdApi.setData(this.getName() + "-index", "index", backgroundIndex);
+					BdApi.Data.save(this.getName() + "-index", "index", backgroundIndex);
 					Logger.err(this.getName(), 'Error while reading image index', e);
 				}
 				try {
@@ -465,8 +465,8 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
 
 			// Method to get certain data from settings
 			getData(name, key, defaultValue) {
-				const temp = BdApi.loadData(name, key, defaultValue);
-				if (typeof temp === 'undefined')
+				const temp = BdApi.Data.load(name, key);
+				if (typeof temp === 'undefined' || temp === null)
 					return defaultValue;
 				return temp;
 			}
@@ -531,10 +531,10 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
 							}
 							// Save new index
 							try {
-								BdApi.setData(this.getName() + "-index", "index", backgroundIndex);
+								BdApi.Data.save(this.getName() + "-index", "index", backgroundIndex);
 							} catch (e) {
 								fs.rm(require('path').join(BdApi.Plugins.folder, this.getName() + '-index.config.json'));
-								BdApi.setData(this.getName() + "-index", "index", backgroundIndex);
+								BdApi.Data.save(this.getName() + "-index", "index", backgroundIndex);
 								Logger.err(this.getName(), 'Error while saving new index', e);
 							}
 							// Move new image to front
@@ -570,10 +570,10 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
 						backgroundIndex = 0;
 					// Save index
 					try {
-						BdApi.setData(this.getName() + "-index", "index", backgroundIndex);
+						BdApi.Data.save(this.getName() + "-index", "index", backgroundIndex);
 					} catch (e) {
 						fs.rm(require('path').join(BdApi.Plugins.folder, this.getName() + '-index.config.json'));
-						BdApi.setData(this.getName() + "-index", "index", backgroundIndex);
+						BdApi.Data.save(this.getName() + "-index", "index", backgroundIndex);
 						Logger.err(this.getName(), 'Error while saving new index', e);
 					}
 					for (let i = 0; i < backgrounds.length; i++) {
@@ -1004,10 +1004,10 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
 							if (backgroundIndex == tableDragData.rowIndex) {
 								backgroundIndex = tableDragData.rowPlaceholderIndex;
 								try {
-									BdApi.setData(this.getName() + "-index", "index", backgroundIndex);
+									BdApi.Data.save(this.getName() + "-index", "index", backgroundIndex);
 								} catch (e) {
 									fs.rm(require('path').join(BdApi.Plugins.folder, this.getName() + '-index.config.json'));
-									BdApi.setData(this.getName() + "-index", "index", backgroundIndex);
+									BdApi.Data.save(this.getName() + "-index", "index", backgroundIndex);
 									Logger.err(this.getName(), 'Error while saving new index', e);
 								}
 							}
@@ -1238,7 +1238,7 @@ module.exports = !global.ZeresPluginLibrary ? Dummy : (([Plugin, Api]) => {
 			// Save the current background data
 			saveBackgrounds() {
 				const str = JSON.stringify(backgrounds);
-				BdApi.setData(this.getName(), "backgrounds", str);
+				BdApi.Data.save(this.getName(), "backgrounds", str);
 			}
 		};
 	}
