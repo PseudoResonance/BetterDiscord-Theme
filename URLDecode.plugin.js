@@ -1,7 +1,7 @@
 /**
  * @name URLDecode
  * @author PseudoResonance
- * @version 2.0.0
+ * @version 2.0.1
  * @description URL/embed decoder for non-ASCII text.
  * @authorLink https://github.com/PseudoResonance
  * @donate https://bit.ly/3hAnec5
@@ -19,7 +19,7 @@ const config = {
 				github_username: "PseudoResonance"
 			}
 		],
-		version: "2.0.0",
+		version: "2.0.1",
 		description: "URL/embed decoder for non-ASCII text.",
 		github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/URLDecode.plugin.js",
 		github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/URLDecode.plugin.js"
@@ -28,7 +28,7 @@ const config = {
 			title: "Fixed",
 			type: "fixed",
 			items: [
-				"Updated to BetterDiscord 1.8.0"
+				"Updated to BetterDiscord 1.9.3"
 			]
 		}
 	],
@@ -63,7 +63,7 @@ class Dummy {
 }
 
 if (!global.ZeresPluginLibrary) {
-	BdApi.showConfirmationModal("Library Missing", `The library plugin needed for ${config.name ?? config.info.name} is missing. Please click Download Now to install it.`, {
+	BdApi.UI.showConfirmationModal("Library Missing", `The library plugin needed for ${config.name ?? config.info.name} is missing. Please click Download Now to install it.`, {
 		confirmText: "Download Now",
 		cancelText: "Cancel",
 		onConfirm: () => {
