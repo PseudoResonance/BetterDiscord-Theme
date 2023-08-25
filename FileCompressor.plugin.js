@@ -1,7 +1,7 @@
 /**
  * @name FileCompressor
  * @author PseudoResonance
- * @version 2.0.19
+ * @version 2.0.20
  * @description Automatically compress files that are too large to send.
  * @authorLink https://github.com/PseudoResonance
  * @donate https://bit.ly/3hAnec5
@@ -25,7 +25,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "2.0.19",
+			version: "2.0.20",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -34,8 +34,7 @@ module.exports = (() => {
 				title: "Fixed",
 				type: "fixed",
 				items: [
-					"More consistent max file size usage to allow for compressing files not for Discord",
-					"Fixed burning dvd_subtitle format to video",
+					"Updated to BetterDiscord 1.9.3",
 				]
 			}, {
 				title: "Broken",
@@ -544,7 +543,7 @@ module.exports = (() => {
 	return !global.ZeresPluginLibrary ? class {
 		constructor() {
 			this._config = config;
-			BdApi.showConfirmationModal("Library Missing", `The library plugin needed for ${config.info.name} is missing. Please click Download Now to install it.`, {
+			BdApi.UI.showConfirmationModal("Library Missing", `The library plugin needed for ${config.info.name} is missing. Please click Download Now to install it.`, {
 				confirmText: "Download Now",
 				cancelText: "Cancel",
 				onConfirm: () => {
@@ -1475,7 +1474,7 @@ module.exports = (() => {
 									};
 									fr.onerror = e => {
 										Logger.err(config.info.name, fr.error);
-										BdApi.showToast(i18n.MESSAGES.ERROR_CACHING, {
+										BdApi.UI.showToast(i18n.MESSAGES.ERROR_CACHING, {
 											type: "error"
 										});
 									};
@@ -1483,12 +1482,12 @@ module.exports = (() => {
 								}
 							}
 							Logger.err(config.info.name, "Unable to find unused UUID for cache");
-							BdApi.showToast(i18n.MESSAGES.ERROR_CACHING, {
+							BdApi.UI.showToast(i18n.MESSAGES.ERROR_CACHING, {
 								type: "error"
 							});
 						} catch (err) {
 							Logger.err(config.info.name, err);
-							BdApi.showToast(i18n.MESSAGES.ERROR_CACHING, {
+							BdApi.UI.showToast(i18n.MESSAGES.ERROR_CACHING, {
 								type: "error"
 							});
 						}
@@ -1744,14 +1743,14 @@ module.exports = (() => {
 						return getMaxFileSizeModule[getMaxFileSizeKey](...args);
 					}
 					this.getCurrentSidebarChannelId = (...args) => {
-						const func = BdApi.findModuleByProps('getCurrentSidebarChannelId').getCurrentSidebarChannelId;
+						const func = BdApi.findModule(BdApi.Webpack.Filters.byProps('getCurrentSidebarChannelId')).getCurrentSidebarChannelId;
 						if (func) {
 							this.getCurrentSidebarChannelId = func;
 						}
 						return func(...args);
 					}
 					this.gotoThread = (...args) => {
-						const func = BdApi.findModuleByProps('gotoThread').gotoThread;
+						const func = BdApi.findModule(BdApi.Webpack.Filters.byProps('gotoThread')).gotoThread;
 						if (func) {
 							this.gotoThread = func;
 						}
@@ -1863,7 +1862,7 @@ module.exports = (() => {
 							});
 							Logger.info(config.info.name, "Successfully hooked into Discord upload handler!");
 						} else {
-							BdApi.showToast(i18n.MESSAGES.ERROR_HOOKING_UPLOAD, {
+							BdApi.UI.showToast(i18n.MESSAGES.ERROR_HOOKING_UPLOAD, {
 								type: "error"
 							});
 							if (this.originalUploadFunction) {
@@ -1873,7 +1872,7 @@ module.exports = (() => {
 							}
 						}
 					} else {
-						BdApi.showToast(i18n.MESSAGES.ERROR_HOOKING_UPLOAD, {
+						BdApi.UI.showToast(i18n.MESSAGES.ERROR_HOOKING_UPLOAD, {
 							type: "error"
 						});
 						Logger.err(config.info.name, "Unable to hook into Discord upload handler! promptToUpload module doesn't exist!");
@@ -1908,7 +1907,7 @@ module.exports = (() => {
 					try {
 						cache = new FileCache(this.settings.compressor.cachePath ? this.settings.compressor.cachePath : path.join(BdApi.Plugins.folder, "compressorcache"));
 					} catch (err) {
-						BdApi.showToast(i18n.MESSAGES.ERROR_CACHE_SETUP, {
+						BdApi.UI.showToast(i18n.MESSAGES.ERROR_CACHE_SETUP, {
 							type: "error"
 						});
 						Logger.err(config.info.name, "Error setting up cache!", err);
@@ -1979,7 +1978,7 @@ module.exports = (() => {
 						return true;
 					} else {
 						Logger.err(config.info.name, "Invalid upload event: fileList:", fileList, "channel:", channel, "draftType:", draftType, "uploadOptions:", uploadOptions);
-						BdApi.showToast(i18n.MESSAGES.ERROR_UPLOADING, {
+						BdApi.UI.showToast(i18n.MESSAGES.ERROR_UPLOADING, {
 							type: "error"
 						});
 					}
@@ -1993,7 +1992,7 @@ module.exports = (() => {
 						maxDiscordSize = this.getMaxFileSize(guildId);
 					} catch (e) {
 						Logger.err(config.info.name, e);
-						BdApi.showToast(i18n.MESSAGES.ERROR_GETTING_ACCOUNT_INFO, {
+						BdApi.UI.showToast(i18n.MESSAGES.ERROR_GETTING_ACCOUNT_INFO, {
 							type: "error"
 						});
 						maxDiscordSize = 8388608;
@@ -2053,7 +2052,7 @@ module.exports = (() => {
 					// Show toast saying a file was too large to upload if some files are being uploaded, but not others
 					if (originalDt.files.length > 0 && files.length > (originalDt.files.length + queuedFiles)) {
 						const num = (files.length - (originalDt.files.length + queuedFiles));
-						BdApi.showToast(i18n.FORMAT('FILES_TOO_LARGE_TO_UPLOAD', num), {
+						BdApi.UI.showToast(i18n.FORMAT('FILES_TOO_LARGE_TO_UPLOAD', num), {
 							type: "error"
 						});
 					}
@@ -2099,7 +2098,7 @@ module.exports = (() => {
 					if ((guildId ? this.getCurrentChannel().guild_id === guildId : !this.getCurrentChannel().guild_id) && (threadId ? ((this.getCurrentChannel().id === threadId && this.getCurrentChannel().parent_id === channelId) || this.getCurrentChannel().id === channelId && this.getCurrentSidebarChannelId(this.getCurrentChannel().id) === threadId) : this.getCurrentChannel().id === channelId)) {
 						return true;
 					} else {
-						BdApi.showToast(i18n.MESSAGES.UNABLE_TO_RETURN_TO_CHANNEL, {
+						BdApi.UI.showToast(i18n.MESSAGES.UNABLE_TO_RETURN_TO_CHANNEL, {
 							type: "error"
 						});
 						if (originalThreadId)
@@ -2121,7 +2120,7 @@ module.exports = (() => {
 						});
 					} catch (e) {
 						Logger.err(config.info.name, e);
-						BdApi.showToast(i18n.MESSAGES.ERROR_UPLOADING, {
+						BdApi.UI.showToast(i18n.MESSAGES.ERROR_UPLOADING, {
 							type: "error"
 						});
 					}
@@ -2990,7 +2989,7 @@ module.exports = (() => {
 								}
 							}
 							// Display modal with React elements
-							BdApi.showConfirmationModal(title, Object.values(settingsPanelsReact), {
+							BdApi.UI.showConfirmationModal(title, Object.values(settingsPanelsReact), {
 								onConfirm: () => {
 									resolve(true);
 								},
@@ -3097,12 +3096,12 @@ module.exports = (() => {
 						const compressionTimeMinutes = compressionTimeDiff % 60;
 						const compressionTimeHours = (compressionTimeDiff - compressionTimeMinutes) / 60;
 						this.jobLoggerInfo(job, "Time to error: " + (compressionTimeHours.toFixed(0) + ":" + compressionTimeMinutes.toFixed(0).padStart(2, 0) + ":" + compressionTimeSeconds.toFixed(3).padStart(6, 0)));
-						BdApi.showToast(i18n.MESSAGES.ERROR_COMPRESSING, {
+						BdApi.UI.showToast(i18n.MESSAGES.ERROR_COMPRESSING, {
 							type: "error"
 						});
 						this.jobLoggerError(job, error);
 						// Ask to save error logs for debugging
-						BdApi.showConfirmationModal(i18n.MESSAGES.SAVE_DEBUG_LOG, "", {
+						BdApi.UI.showConfirmationModal(i18n.MESSAGES.SAVE_DEBUG_LOG, "", {
 							onConfirm: () => {
 								// Convert logs to blob and trigger file download of blob
 								const downloadUrl = window.URL.createObjectURL(new Blob([job.logs.join("\n"), ...(job.probeDataRaw ? ["\n", job.probeDataRaw] : []), ...(job.probeDataFinalRaw ? ["\n", job.probeDataFinalRaw] : [])]));
