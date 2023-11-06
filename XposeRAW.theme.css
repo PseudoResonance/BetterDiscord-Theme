@@ -1,7 +1,7 @@
 /**
  * @name XposeRAW
  * @author PseudoResonance
- * @version 3.2.0
+ * @version 3.2.1
  * @description Custom theme.
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeRAW.theme.css
  */
@@ -19,7 +19,7 @@
  */
 
 :root, .theme-dark, .theme-light {
-	--xposeVersion:"3.2.0";
+	--xposeVersion:"3.2.1";
 	--blur-radius:10px;
 }
 
@@ -42,6 +42,7 @@
 	--background-secondary:transparent;
 	--background-secondary-alt:transparent;
 	--background-tertiary:transparent;
+	--modal-footer-background:transparent;
 	--home-background:transparent;
 	--bg-overlay-chat:transparent;
 	--bg-overlay-2:transparent;
@@ -123,6 +124,7 @@
 	--background-secondary:transparent;
 	--background-secondary-alt:transparent;
 	--background-tertiary:transparent;
+	--modal-footer-background:transparent;
 	--home-background:transparent;
 	--bg-overlay-chat:transparent;
 	--bg-overlay-2:transparent;
