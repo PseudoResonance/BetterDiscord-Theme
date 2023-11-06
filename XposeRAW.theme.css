@@ -1,7 +1,7 @@
 /**
  * @name XposeRAW
  * @author PseudoResonance
- * @version 3.2.1
+ * @version 3.2.2
  * @description Custom theme.
  * @source https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/XposeRAW.theme.css
  */
@@ -19,7 +19,7 @@
  */
 
 :root, .theme-dark, .theme-light {
-	--xposeVersion:"3.2.1";
+	--xposeVersion:"3.2.2";
 	--blur-radius:10px;
 }
 
@@ -46,6 +46,7 @@
 	--home-background:transparent;
 	--bg-overlay-chat:transparent;
 	--bg-overlay-2:transparent;
+	--primary-600:transparent;
 	--background-accent:rgba(79, 84, 92, 0.32);
 	--background-floating:rgba(24, 25, 28, 0.4);
 	--background-mobile-primary:#36393f;
@@ -76,16 +77,6 @@
 	--channeltextarea-background:transparent;
 	--activity-card-background:var(--background-attachment);
 	--textbox-markdown-syntax:#8e9297;
-	--deprecated-card-bg:rgba(32, 34, 37, 0.6);
-	--deprecated-card-editable-bg:rgba(32, 34, 37, 0.3);
-	--deprecated-store-bg:#36393f;
-	--deprecated-quickswitcher-input-background:#72767d;
-	--deprecated-quickswitcher-input-placeholder:hsla(0, 0%, 100%, 0.3);
-	--deprecated-text-input-bg:rgba(0, 0, 0, 0.1);
-	--deprecated-text-input-border:rgba(0, 0, 0, 0.3);
-	--deprecated-text-input-border-hover:#040405;
-	--deprecated-text-input-border-disabled:#202225;
-	--deprecated-text-input-prefix:#dcddde;
 	/* Custom Variables */
 	--background-attachment:rgba(47, 49, 54, 0.2);
 	--code-block-border:rgba(20, 20, 20, 0.8);
@@ -128,6 +119,7 @@
 	--home-background:transparent;
 	--bg-overlay-chat:transparent;
 	--bg-overlay-2:transparent;
+	--primary-600:transparent;
 	--background-accent:rgba(116, 127, 141, 0.24);
 	--background-floating:rgba(255, 255, 255, 0.4);
 	--background-mobile-primary:#f8f9f9;
@@ -158,16 +150,6 @@
 	--channeltextarea-background:transparent;
 	--activity-card-background:var(--background-attachment);
 	--textbox-markdown-syntax:#6a7480;
-	--deprecated-card-bg:#f8f9f9;
-	--deprecated-card-editable-bg:rgba(246, 246, 247, 0.6);
-	--deprecated-store-bg:#f8f9f9;
-	--deprecated-quickswitcher-input-background:#fff;
-	--deprecated-quickswitcher-input-placeholder:rgba(79, 84, 92, 0.3);
-	--deprecated-text-input-bg:rgba(79, 84, 92, 0.02);
-	--deprecated-text-input-border:rgba(79, 84, 92, 0.3);
-	--deprecated-text-input-border-hover:#b9bbbe;
-	--deprecated-text-input-border-disabled:#dcddde;
-	--deprecated-text-input-prefix:#b9bbbe;
 	/* Custom Variables */
 	--background-attachment:rgba(240, 240, 240, 0.2);
 	--code-block-border:rgba(240, 240, 240, 0.8);
@@ -189,11 +171,6 @@
 /*
  * Discord Styling
  */
-
-/* Login Screen */
-[class*="splashBackground_"] canvas, [class*="splashBackground_"] [class*="rightSplit_"] {
-	display:none;
-}
 
 /* Chat */
 
@@ -636,46 +613,26 @@ code.inline {
 }
 
 /* Popouts */
-.backdrop-1wrmKB, .container-16j22k, [class*="uploadArea_"][class*="droppable_"], .layerContainer-2v_Sit [class*="reactors_"], .layerContainer-2v_Sit .scroller-1-nKid {
-	background-color:transparent !important;
-}
 
-.container-16j22k, [class*="uploadArea_"][class*="droppable_"] {
-	backdrop-filter:blur(var(--blur-radius));
-}
-
-.backdrop-1wrmKB + div::before {
-	content:'';
-	position:fixed;
-	top:0;
-	bottom:0;
-	left:0;
-	right:0;
-	backdrop-filter:blur(var(--blur-radius));
-}
-
-[class*="layerContainer_"] > .theme-dark > [role="menu"]::before, [class*="layerContainer_"] > .theme-dark > [role="menu"] [class*="submenu_"]::before, [class*="accountProfilePopoutWrapper_"]::before, [class*="accountProfilePopoutWrapper_"] [class*="submenu_"]::before {
+[id*="popout_"]::before, [id*="popout_"] [class*="submenu_"]::before, .theme-dark:not([id*="popout_"]) > [role="menu"]::before, .theme-dark:not([id*="popout_"]) > [role="menu"] [class*="submenu_"]::before, [class*="profileCustomizationPreview_"]::before, [role*="dialog"] > div::before {
 	content:'';
 	position:absolute;
 	top:0;
 	bottom:0;
 	left:0;
 	right:0;
+	z-index:-1;
 	backdrop-filter:blur(var(--blur-radius));
 }
 
-/* Fix for Blurred BD Modals */
-.bd-modal::before {
-	backdrop-filter:none !important;
-}
-
-[class*="drawerSizingWrapper_"], div:not([class*="accountProfilePopoutWrapper_"]) > div > div > [class*="userPopoutInner_"], [class*="rootWithShadow_"], div:not([class*="translate_"]) > .layerContainer-2lfOPe [role="dialog"]:not([class*="colorPickerCustom_"]) > div:not([role="combobox"]):not(.modal-qgFCbT), .layerContainer-2lfOPe > [role="listbox"], .layerContainer-2lfOPe > * > [role="listbox"], [class*="translate_"], .popouts-2bnG9Z [style*="translate"], .layerContainer-2lfOPe  [class*="drawerSizingWrapper_"] > [class*="contentWrapper_"], [class*="addGamePopout_"], [class*="quickswitcher_"], #app-mount [class*="app_"] .wrapper-3lJCnD, [class*="splashBackground_"] [class*="authBox_"], [class*="profileBannerPreview_"], [class*="channelTextArea_"] .container-JHR0NT:not([class*="hidden_"]), .bd-modal-inner {
-	backdrop-filter:blur(var(--blur-radius));
-}
-
-.theme-dark > [role="menu"], [class*="drawerSizingWrapper_"], [class*="userPopoutInner_"], [class*="rootWithShadow_"], div:not([class*="translate_"]) > .layerContainer-2lfOPe [role="dialog"]:not([class*="colorPickerCustom_"]) > div:not([role="combobox"]):not(.modal-qgFCbT), .layerContainer-2lfOPe > [role="listbox"], .layerContainer-2lfOPe > * > [role="listbox"], .layerContainer-2lfOPe .container-3XJ8ns, .layerContainer-2lfOPe [class*="colorPickerCustom_"], [role="dialog"]:not([class*="userPopoutInner_"]) > [class*="body_"], [role="dialog"] [data-user-id] > [class*="body_"], .layerContainer-2lfOPe  [class*="drawerSizingWrapper_"] > [class*="contentWrapper_"], [class*="addGamePopout_"], [class*="quickswitcher_"], [class*="streamPreview_"], #app-mount [class*="app_"] .wrapper-3lJCnD, [class*="splashBackground_"] [class*="authBox_"], [class*="profileBannerPreview_"], [class*="channelTextArea_"] .container-JHR0NT:not([class*="hidden_"]), .bd-modal-inner {
+[id*="popout_"], [id*="popout_"] [class*="submenu_"], .theme-dark:not([id*="popout_"]) > [role="menu"], .theme-dark:not([id*="popout_"]) > [role="menu"] [class*="submenu_"], [class*="profileCustomizationPreview_"], [role*="dialog"] > div {
 	box-shadow:none !important;
 	background-color:var(--background-floating) !important;
+}
+
+[role="menu"] {
+	box-shadow:none !important;
+	background:transparent;
 }
 
 /* Transparent Message Preview */
@@ -760,6 +717,10 @@ code.inline {
 	background-color:transparent !important;
 }
 
+[class*="accountProfilePopoutWrapper_"] {
+	left:0 !important;
+}
+
 /* Profile Banner */
 [class*="userPopoutInner_"] [class*="popoutBanner_"]:not(#foo):not(#bar), [role="dialog"] [class*="profileBanner_"] {
 	opacity:0.7 !important;
@@ -812,19 +773,19 @@ code.inline {
 }
 
 /* Search */
-.layerContainer-2lfOPe [role="listbox"] [class*="resultsGroup_"] [class*="option"], .layerContainer-2lfOPe [role="listbox"] [class*="queryContainer_"] {
+[role="listbox"] [class*="resultsGroup_"] [class*="option"], [role="listbox"] [class*="queryContainer_"] {
 	background:transparent;
 }
 
-.layerContainer-2lfOPe [role="listbox"] [class*="resultsGroup_"] [class*="option"]:hover {
+[role="listbox"] [class*="resultsGroup_"] [class*="option"]:hover {
 	background:var(--background-modifier-hover);
 }
 
-.layerContainer-2lfOPe [role="listbox"] [class*="resultsGroup_"] [class*="option"]:active {
+[role="listbox"] [class*="resultsGroup_"] [class*="option"]:active {
 	background:var(--background-modifier-active);
 }
 
-.layerContainer-2lfOPe [role="listbox"] [class*="resultsGroup_"] [class*="option"]::before, .layerContainer-2lfOPe [role="listbox"] [class*="resultsGroup_"] [class*="option"]::after {
+[role="listbox"] [class*="resultsGroup_"] [class*="option"]::before, [role="listbox"] [class*="resultsGroup_"] [role="option"]::after {
 	display:none !important;
 }
 
