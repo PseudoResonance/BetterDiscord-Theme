@@ -1,7 +1,7 @@
 /**
  * @name FileCompressor
  * @author PseudoResonance
- * @version 2.0.20
+ * @version 2.0.21
  * @description Automatically compress files that are too large to send.
  * @authorLink https://github.com/PseudoResonance
  * @donate https://bit.ly/3hAnec5
@@ -25,7 +25,7 @@ module.exports = (() => {
 					github_username: "PseudoResonance"
 				}
 			],
-			version: "2.0.20",
+			version: "2.0.21",
 			description: "Automatically compress files that are too large to send.",
 			github: "https://github.com/PseudoResonance/BetterDiscord-Theme/blob/master/FileCompressor.plugin.js",
 			github_raw: "https://raw.githubusercontent.com/PseudoResonance/BetterDiscord-Theme/master/FileCompressor.plugin.js"
@@ -35,6 +35,7 @@ module.exports = (() => {
 				type: "fixed",
 				items: [
 					"Updated to BetterDiscord 1.9.3",
+					"Fixed uploading zip files"
 				]
 			}, {
 				title: "Broken",
@@ -2018,6 +2019,9 @@ module.exports = (() => {
 						}
 						if (canCheckMime) {
 							type = await companion.getMimeType(file.path);
+						}
+						if (typeof type !== 'string') {
+							type = "";
 						}
 						let tryCompress = false;
 						switch (type.split('/')[0]) {
